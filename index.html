@@ -483,25 +483,29 @@ async function handleAuthCallback() {
   const errorDesc = url.searchParams.get("error_description");
 
   if (error) {
-    console.error("Auth error:", error, errorDesc);
-    showToast("Login failed: " + error, 5000);
-    // Clean URL
     window.history.replaceState({}, document.title, REDIRECT_URI);
+    showToast("Login error: " + error + " — " + (errorDesc||""), 8000);
     return;
   }
 
-  if (!code) return; // No code in URL — normal page load
+  if (!code) return; // Normal page load — no auth code present
 
   const verifier = localStorage.getItem("yd-pkce-verifier");
   const savedState = localStorage.getItem("yd-pkce-state");
 
-  if (!verifier) { showToast("Auth error: missing verifier", 4000); return; }
-  if (state !== savedState) { showToast("Auth error: state mismatch", 4000); return; }
-
-  // Clean URL immediately so refresh doesn't re-trigger
+  // Clean URL immediately so a refresh doesn't re-trigger
   window.history.replaceState({}, document.title, REDIRECT_URI);
 
-  showToast("Signing in...", 3000);
+  if (!verifier) {
+    showToast("Auth error: verifier missing — try connecting again", 5000);
+    return;
+  }
+  if (state !== savedState) {
+    showToast("Auth error: state mismatch — try connecting again", 5000);
+    return;
+  }
+
+  showToast("Exchanging token...", 4000);
 
   try {
     const params = new URLSearchParams({
@@ -522,26 +526,29 @@ async function handleAuthCallback() {
     const data = await res.json();
 
     if (data.access_token) {
-      // Decode account info from id_token
       if (data.id_token) {
         try {
-          const payload = JSON.parse(atob(data.id_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
-          data.account = { username: payload.preferred_username || payload.email || payload.upn || "Connected", name: payload.name };
-        } catch {}
+          const parts = data.id_token.split(".");
+          const padded = parts[1].replace(/-/g,"+").replace(/_/g,"/");
+          const payload = JSON.parse(atob(padded + "===".slice((padded.length+3)%4)));
+          data.account = { username: payload.preferred_username || payload.email || payload.upn || "Connected", name: payload.name || "" };
+        } catch(pe) { data.account = { username: "Connected", name: "" }; }
+      } else {
+        data.account = { username: "Connected", name: "" };
       }
       storeToken(data);
       if (data.refresh_token) localStorage.setItem("yd-auth-refresh", data.refresh_token);
       localStorage.removeItem("yd-pkce-verifier");
       localStorage.removeItem("yd-pkce-state");
-      showToast("✓ Connected to OneNote!");
+      showToast("✓ Connected to OneNote!", 3000);
       updateLoginUI();
     } else {
-      console.error("Token exchange failed:", data);
-      showToast("Sign-in failed: " + (data.error_description || data.error || "unknown"), 5000);
+      // Show the exact error Microsoft returned
+      const errMsg = data.error_description || data.error || JSON.stringify(data);
+      showToast("Token failed: " + errMsg.substring(0, 120), 8000);
     }
   } catch(e) {
-    console.error("Token exchange error:", e);
-    showToast("Sign-in error: " + e.message, 4000);
+    showToast("Network error: " + e.message, 6000);
   }
 }
 
