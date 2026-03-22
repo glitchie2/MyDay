@@ -357,6 +357,18 @@ function showToast(msg, duration=2800) {
 let msalInstance, msalReady = false;
 
 async function initMsal() {
+  // Wait for MSAL script to fully load (mobile networks can be slow)
+  let attempts = 0;
+  while (typeof msal === "undefined" && attempts < 30) {
+    await new Promise(r => setTimeout(r, 200));
+    attempts++;
+  }
+  if (typeof msal === "undefined") {
+    console.error("MSAL library failed to load");
+    msalReady = true;
+    updateLoginUI();
+    return;
+  }
   try {
     msalInstance = new msal.PublicClientApplication({
       auth: {
@@ -370,18 +382,16 @@ async function initMsal() {
     });
     await msalInstance.initialize();
     msalReady = true;
-
-    // Handle redirect coming back from Microsoft login
-    const result = await msalInstance.handleRedirectPromise();
-    if (result && result.account) {
-      // Just returned from Microsoft login — show success
-      showToast("✓ Connected to OneNote!");
-    }
+    try {
+      const result = await msalInstance.handleRedirectPromise();
+      if (result && result.account) {
+        showToast("✓ Connected to OneNote!");
+      }
+    } catch(re) { console.warn("Redirect handling:", re); }
     updateLoginUI();
   } catch(e) {
     console.error("MSAL init failed:", e);
-    // Don't show error to user — just silently degrade
-    msalReady = true; // still mark ready so button works
+    msalReady = true;
     updateLoginUI();
   }
 }
@@ -410,32 +420,44 @@ async function getToken() {
 }
 
 async function handleOneNoteBtn() {
-  if (!msalReady || !msalInstance) { showToast("Please wait a moment..."); return; }
+  const btn = document.getElementById("onenote-btn");
+  if (btn) { btn.textContent = "..."; btn.disabled = true; }
+
+  // Wait up to 5s for MSAL to be ready
+  let waited = 0;
+  while (!msalReady && waited < 25) {
+    await new Promise(r => setTimeout(r, 200));
+    waited++;
+  }
+
+  if (btn) { btn.disabled = false; }
+
+  if (!msalReady || !msalInstance) {
+    showToast("Auth library failed to load. Try refreshing.", 4000);
+    if (btn) btn.textContent = "Connect";
+    return;
+  }
+
   if (getAccount()) {
-    // Logout
+    if (btn) btn.textContent = "Disconnecting...";
     try {
       await msalInstance.logoutRedirect({ postLogoutRedirectUri: REDIRECT_URI });
     } catch(e) {
-      // Fallback: clear accounts manually
-      msalInstance.getAllAccounts().forEach(a => {
-        try { msalInstance.clearCache(); } catch {}
-      });
+      try { localStorage.clear(); } catch {}
       updateLoginUI();
       showToast("Disconnected");
     }
   } else {
-    // Login via redirect — no popup, works on all mobile browsers
     try {
-      showToast("Redirecting to Microsoft...");
-      await msalInstance.loginRedirect({
-        scopes: SCOPES,
-        prompt: "select_account"
-      });
-      // Page will redirect away — execution stops here
+      showToast("Going to Microsoft login...", 4000);
+      await msalInstance.loginRedirect({ scopes: SCOPES, prompt: "select_account" });
+      // Execution stops here — page redirects to Microsoft
     } catch(e) {
       console.error("Login redirect error:", e);
-      showToast("Login failed: " + (e.message || "unknown error"));
+      const msg = e.errorCode || e.message || "unknown";
+      showToast("Error: " + msg, 5000);
       setSyncStatus("error", "Login failed");
+      if (btn) btn.textContent = "Connect";
     }
   }
 }
