@@ -608,22 +608,23 @@ async function graphPost(url, body, token, ct="application/json") {
 
 // Find notebook ID by name
 async function getNotebookId(token) {
-  const data = await graphGet(`${ON_BASE}/notebooks?$filter=displayName eq '${encodeURIComponent(ON_NOTEBOOK)}'`, token);
+  const data = await graphGet(`${ON_BASE}/notebooks?$filter=displayName eq '${ON_NOTEBOOK}'&$select=id,displayName`, token);
   if (!data.value || !data.value.length) throw new Error(`Notebook "${ON_NOTEBOOK}" not found`);
   return data.value[0].id;
 }
 
 // Find section ID by name within notebook
 async function getSectionId(nbId, token) {
-  const data = await graphGet(`${ON_BASE}/notebooks/${nbId}/sections?$filter=displayName eq '${encodeURIComponent(ON_SECTION)}'`, token);
+  const data = await graphGet(`${ON_BASE}/notebooks/${nbId}/sections?$filter=displayName eq '${ON_SECTION}'&$select=id,displayName`, token);
   if (!data.value || !data.value.length) throw new Error(`Section "${ON_SECTION}" not found in "${ON_NOTEBOOK}"`);
   return data.value[0].id;
 }
 
 // Find page ID by title within section
 async function getPageId(secId, pageTitle, token) {
-  const data = await graphGet(`${ON_BASE}/sections/${secId}/pages?$filter=title eq '${encodeURIComponent(pageTitle)}'`, token);
-  if (!data.value || !data.value.length) return null;
+  // Use single quotes around title, no encoding — OData requires exact string match
+  const data = await graphGet(`${ON_BASE}/sections/${secId}/pages?$filter=title eq '${pageTitle}'&$select=id,title`, token);
+  if (!data.value || !data.value.length) throw new Error(`Page "${pageTitle}" not found in "${ON_SECTION}"`);
   return data.value[0].id;
 }
 
