@@ -578,10 +578,23 @@ function setSyncStatus(state, text) {
 }
 
 // ===================== ONENOTE API =====================
+const ON_BASE = "https://graph.microsoft.com/v1.0/me/onenote";
+const ON_NOTEBOOK = "Projects";
+const ON_SECTION  = "Main";
+
 async function graphGet(url, token) {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) throw new Error(`GraphGet failed: ${res.status}`);
+  if (!res.ok) throw new Error(`GET ${res.status}: ${await res.text()}`);
   return res.json();
+}
+
+async function graphPatch(url, body, token) {
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  return res;
 }
 
 async function graphPost(url, body, token, ct="application/json") {
@@ -593,32 +606,93 @@ async function graphPost(url, body, token, ct="application/json") {
   return res;
 }
 
-async function getOrCreate(listUrl, createUrl, name, token) {
-  try {
-    const data = await graphGet(`${listUrl}?$filter=displayName eq '${encodeURIComponent(name)}'`, token);
-    if (data.value && data.value.length) return data.value[0].id;
-  } catch {}
-  const res = await graphPost(createUrl, JSON.stringify({ displayName: name }), token);
-  const created = await res.json();
-  return created.id;
+// Find notebook ID by name
+async function getNotebookId(token) {
+  const data = await graphGet(`${ON_BASE}/notebooks?$filter=displayName eq '${encodeURIComponent(ON_NOTEBOOK)}'`, token);
+  if (!data.value || !data.value.length) throw new Error(`Notebook "${ON_NOTEBOOK}" not found`);
+  return data.value[0].id;
 }
 
-async function syncToOneNote(sectionName, pageTitle, htmlBody) {
+// Find section ID by name within notebook
+async function getSectionId(nbId, token) {
+  const data = await graphGet(`${ON_BASE}/notebooks/${nbId}/sections?$filter=displayName eq '${encodeURIComponent(ON_SECTION)}'`, token);
+  if (!data.value || !data.value.length) throw new Error(`Section "${ON_SECTION}" not found in "${ON_NOTEBOOK}"`);
+  return data.value[0].id;
+}
+
+// Find page ID by title within section
+async function getPageId(secId, pageTitle, token) {
+  const data = await graphGet(`${ON_BASE}/sections/${secId}/pages?$filter=title eq '${encodeURIComponent(pageTitle)}'`, token);
+  if (!data.value || !data.value.length) return null;
+  return data.value[0].id;
+}
+
+// Append a table row to an existing page using PATCH
+// OneNote PATCH appends content to the page body
+async function appendRowToPage(pageId, rowHtml, token) {
+  const commands = [{
+    action: "append",
+    target: "body",
+    content: rowHtml,
+    position: "after"
+  }];
+  const res = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+  return res.ok;
+}
+
+// Main sync function — appends a table row to the named page
+// On first use, wraps in a table with a header row
+async function syncRowToPage(pageName, rowHtml) {
   setSyncStatus("syncing", "Syncing...");
   try {
     const token = await getToken();
     if (!token) { setSyncStatus("idle", "Not signed in"); showToast("Connect OneNote first"); return false; }
-    const base = "https://graph.microsoft.com/v1.0/me/onenote";
-    const nbId = await getOrCreate(`${base}/notebooks`, `${base}/notebooks`, "My Day", token);
-    const secId = await getOrCreate(`${base}/notebooks/${nbId}/sections`, `${base}/notebooks/${nbId}/sections`, sectionName, token);
-    const page = `<!DOCTYPE html><html><head><title>${pageTitle}</title></head><body>${htmlBody}</body></html>`;
-    const res = await graphPost(`${base}/sections/${secId}/pages`, page, token, "application/xhtml+xml");
-    if (res.ok) { setSyncStatus("connected", "Synced ✓"); showToast("✓ Saved to OneNote"); return true; }
-    else { setSyncStatus("error", "Sync failed"); showToast("Sync failed"); return false; }
+
+    const nbId = await getNotebookId(token);
+    const secId = await getSectionId(nbId, token);
+    const pageId = await getPageId(secId, pageName, token);
+
+    if (!pageId) {
+      setSyncStatus("error", "Page not found");
+      showToast(`Page "${pageName}" not found in ${ON_NOTEBOOK} > ${ON_SECTION}`, 6000);
+      return false;
+    }
+
+    // Check if table already exists on page by looking at page content
+    let tableExists = false;
+    try {
+      const res = await fetch(`${ON_BASE}/pages/${pageId}/content`, { headers: { Authorization: `Bearer ${token}` } });
+      const html = await res.text();
+      tableExists = html.includes("<table");
+    } catch {}
+
+    let appendHtml;
+    if (!tableExists) {
+      // First time — create table with header + first data row
+      const isEOD = pageName === "EOD closure";
+      const headerRow = isEOD
+        ? `<tr><th style="padding:6px 10px;border:1px solid #ddd;background:#f5f5f5">Date</th><th style="padding:6px 10px;border:1px solid #ddd;background:#f5f5f5">What I did</th><th style="padding:6px 10px;border:1px solid #ddd;background:#f5f5f5">What's next</th><th style="padding:6px 10px;border:1px solid #ddd;background:#f5f5f5">What's unclear</th></tr>`
+        : `<tr><th style="padding:6px 10px;border:1px solid #ddd;background:#f5f5f5">Date</th><th style="padding:6px 10px;border:1px solid #ddd;background:#f5f5f5">Entry</th></tr>`;
+      appendHtml = `<br/><table border="1" style="border-collapse:collapse;width:100%">${headerRow}${rowHtml}</table>`;
+    } else {
+      // Table exists — just append the row
+      appendHtml = rowHtml;
+    }
+
+    const ok = await appendRowToPage(pageId, appendHtml, token);
+    if (ok) {
+      setSyncStatus("connected", "Synced ✓");
+      showToast(`✓ Saved to "${pageName}"`);
+      return true;
+    } else {
+      setSyncStatus("error", "Append failed");
+      showToast(`Failed to write to "${pageName}"`, 4000);
+      return false;
+    }
   } catch(e) {
     console.error("OneNote sync error:", e);
-    setSyncStatus("error", "Error");
-    showToast("Sync error — check console");
+    setSyncStatus("error", "Sync error");
+    showToast("Sync error: " + e.message.substring(0, 80), 5000);
     return false;
   }
 }
@@ -873,12 +947,13 @@ async function saveCapture() {
   renderEntriesList();
   showToast("Saved locally ✓");
   if (getAccount()) {
-    const tagMap = { thought:"Thoughts", question:"Questions", idea:"Ideas" };
-    await syncToOneNote(
-      tagMap[entry.tag] || "Thoughts",
-      `${entry.tag} — ${entry.date}`,
-      `<h1>${entry.tag.toUpperCase()} — ${entry.date}</h1><p>${entry.text.replace(/\n/g,"<br/>")}</p>`
-    );
+    const pageMap = { thought:"Thoughts", question:"Questions", idea:"Ideas" };
+    const pageName = pageMap[entry.tag] || "Thoughts";
+    const safeText = entry.text
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/\n/g,"<br/>");
+    const rowHtml = `<tr><td style="min-width:110px;padding:6px 10px;border:1px solid #ddd;white-space:nowrap;font-weight:bold">${entry.date}</td><td style="padding:6px 10px;border:1px solid #ddd">${safeText}</td></tr>`;
+    await syncRowToPage(pageName, rowHtml);
   }
 }
 
@@ -908,14 +983,16 @@ async function saveReflection() {
   renderReflectionsList();
   showToast("Reflection saved ✓");
   if (getAccount()) {
-    await syncToOneNote(
-      "End of Day",
-      `Reflection — ${r.date}`,
-      `<h1>Reflection — ${r.date}</h1>
-       <h2>✦ What I did today</h2><p>${(r.did||"").replace(/\n/g,"<br/>")}</p>
-       <h2>→ What's next</h2><p>${(r.next||"").replace(/\n/g,"<br/>")}</p>
-       <h2>? What is unclear</h2><p>${(r.unclear||"").replace(/\n/g,"<br/>")}</p>`
-    );
+    const safe = (s) => (s||"")
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/\n/g,"<br/>");
+    const rowHtml = `<tr>
+      <td style="min-width:110px;padding:6px 10px;border:1px solid #ddd;white-space:nowrap;font-weight:bold">${r.date}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd">${safe(r.did)}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd">${safe(r.next)}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd">${safe(r.unclear)}</td>
+    </tr>`;
+    await syncRowToPage("EOD closure", rowHtml);
   } else {
     setSyncStatus("idle", "Saved locally");
   }
