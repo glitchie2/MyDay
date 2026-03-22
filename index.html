@@ -24,7 +24,6 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
-  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -353,112 +352,196 @@ function showToast(msg, duration=2800) {
   setTimeout(()=>t.classList.remove("show"), duration);
 }
 
-// ===================== MSAL (redirect-based — works on mobile) =====================
-let msalInstance, msalReady = false;
+// ===================== AUTH — OAuth2 PKCE (no external library needed) =====================
+// Pure JS implementation — works on all mobile browsers, zero dependencies
+const AUTH_ENDPOINT = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
+const TOKEN_ENDPOINT = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+const SCOPE_STR = SCOPES.join(" ");
 
-async function initMsal() {
-  // Wait for MSAL script to fully load (mobile networks can be slow)
-  let attempts = 0;
-  while (typeof msal === "undefined" && attempts < 30) {
-    await new Promise(r => setTimeout(r, 200));
-    attempts++;
-  }
-  if (typeof msal === "undefined") {
-    console.error("MSAL library failed to load");
-    msalReady = true;
-    updateLoginUI();
-    return;
-  }
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+
+async function pkceChallenge() {
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
+  const hashed = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+  const challenge = b64url(hashed);
+  return { verifier, challenge };
+}
+
+function getStoredAccount() {
   try {
-    msalInstance = new msal.PublicClientApplication({
-      auth: {
-        clientId: CLIENT_ID,
-        authority: "https://login.microsoftonline.com/common",
-        redirectUri: REDIRECT_URI,
-        navigateToLoginRequestUrl: true,
-      },
-      cache: { cacheLocation: "localStorage", storeAuthStateInCookie: true },
-      system: { allowRedirectInIframe: false }
-    });
-    await msalInstance.initialize();
-    msalReady = true;
-    try {
-      const result = await msalInstance.handleRedirectPromise();
-      if (result && result.account) {
-        showToast("✓ Connected to OneNote!");
-      }
-    } catch(re) { console.warn("Redirect handling:", re); }
-    updateLoginUI();
-  } catch(e) {
-    console.error("MSAL init failed:", e);
-    msalReady = true;
-    updateLoginUI();
-  }
+    const a = localStorage.getItem("yd-auth-account");
+    return a ? JSON.parse(a) : null;
+  } catch { return null; }
+}
+
+function getStoredToken() {
+  try {
+    const t = localStorage.getItem("yd-auth-token");
+    if (!t) return null;
+    const parsed = JSON.parse(t);
+    // Check expiry (with 5 min buffer)
+    if (parsed.expires_at && Date.now() > parsed.expires_at - 300000) return null;
+    return parsed.access_token;
+  } catch { return null; }
+}
+
+function storeToken(tokenData) {
+  try {
+    tokenData.expires_at = Date.now() + (tokenData.expires_in || 3600) * 1000;
+    localStorage.setItem("yd-auth-token", JSON.stringify(tokenData));
+    if (tokenData.account) localStorage.setItem("yd-auth-account", JSON.stringify(tokenData.account));
+  } catch {}
+}
+
+function clearAuth() {
+  localStorage.removeItem("yd-auth-token");
+  localStorage.removeItem("yd-auth-account");
+  localStorage.removeItem("yd-pkce-verifier");
+  localStorage.removeItem("yd-pkce-state");
 }
 
 function getAccount() {
-  if (!msalInstance) return null;
-  const accounts = msalInstance.getAllAccounts();
-  return accounts.length ? accounts[0] : null;
+  return getStoredAccount();
 }
 
 async function getToken() {
-  if (!msalReady || !msalInstance) return null;
-  const account = getAccount();
-  if (!account) return null;
-  try {
-    // Try silent first
-    const result = await msalInstance.acquireTokenSilent({ scopes: SCOPES, account });
-    return result.accessToken;
-  } catch(e) {
-    // Silent failed — redirect to get a fresh token
-    try {
-      await msalInstance.acquireTokenRedirect({ scopes: SCOPES, account });
-    } catch(e2) { console.warn("Token redirect error:", e2); }
-    return null; // Will return after redirect
+  const stored = getStoredToken();
+  if (stored) return stored;
+  // Token expired — need to re-login
+  const account = getStoredAccount();
+  if (account) {
+    // Try refresh token
+    const rt = localStorage.getItem("yd-auth-refresh");
+    if (rt) {
+      try {
+        const params = new URLSearchParams({
+          client_id: CLIENT_ID,
+          grant_type: "refresh_token",
+          refresh_token: rt,
+          scope: SCOPE_STR
+        });
+        const res = await fetch(TOKEN_ENDPOINT, { method: "POST", body: params, headers: {"Content-Type":"application/x-www-form-urlencoded"} });
+        if (res.ok) {
+          const data = await res.json();
+          storeToken(data);
+          if (data.refresh_token) localStorage.setItem("yd-auth-refresh", data.refresh_token);
+          return data.access_token;
+        }
+      } catch {}
+    }
+    // Refresh failed — re-login
+    clearAuth();
+    updateLoginUI();
+    showToast("Session expired — please reconnect", 4000);
   }
+  return null;
 }
 
 async function handleOneNoteBtn() {
-  const btn = document.getElementById("onenote-btn");
-  if (btn) { btn.textContent = "..."; btn.disabled = true; }
-
-  // Wait up to 5s for MSAL to be ready
-  let waited = 0;
-  while (!msalReady && waited < 25) {
-    await new Promise(r => setTimeout(r, 200));
-    waited++;
-  }
-
-  if (btn) { btn.disabled = false; }
-
-  if (!msalReady || !msalInstance) {
-    showToast("Auth library failed to load. Try refreshing.", 4000);
-    if (btn) btn.textContent = "Connect";
+  const account = getAccount();
+  if (account) {
+    clearAuth();
+    updateLoginUI();
+    showToast("Disconnected from OneNote");
     return;
   }
 
-  if (getAccount()) {
-    if (btn) btn.textContent = "Disconnecting...";
-    try {
-      await msalInstance.logoutRedirect({ postLogoutRedirectUri: REDIRECT_URI });
-    } catch(e) {
-      try { localStorage.clear(); } catch {}
+  // Start PKCE login flow
+  try {
+    const { verifier, challenge } = await pkceChallenge();
+    const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
+    localStorage.setItem("yd-pkce-verifier", verifier);
+    localStorage.setItem("yd-pkce-state", state);
+
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      response_type: "code",
+      redirect_uri: REDIRECT_URI,
+      scope: SCOPE_STR + " offline_access",
+      state: state,
+      code_challenge: challenge,
+      code_challenge_method: "S256",
+      prompt: "select_account"
+    });
+
+    showToast("Going to Microsoft login...", 3000);
+    setTimeout(() => { window.location.href = AUTH_ENDPOINT + "?" + params.toString(); }, 400);
+  } catch(e) {
+    console.error("Login error:", e);
+    showToast("Login error: " + (e.message || "unknown"), 4000);
+  }
+}
+
+async function handleAuthCallback() {
+  const url = new URL(window.location.href);
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const error = url.searchParams.get("error");
+  const errorDesc = url.searchParams.get("error_description");
+
+  if (error) {
+    console.error("Auth error:", error, errorDesc);
+    showToast("Login failed: " + error, 5000);
+    // Clean URL
+    window.history.replaceState({}, document.title, REDIRECT_URI);
+    return;
+  }
+
+  if (!code) return; // No code in URL — normal page load
+
+  const verifier = localStorage.getItem("yd-pkce-verifier");
+  const savedState = localStorage.getItem("yd-pkce-state");
+
+  if (!verifier) { showToast("Auth error: missing verifier", 4000); return; }
+  if (state !== savedState) { showToast("Auth error: state mismatch", 4000); return; }
+
+  // Clean URL immediately so refresh doesn't re-trigger
+  window.history.replaceState({}, document.title, REDIRECT_URI);
+
+  showToast("Signing in...", 3000);
+
+  try {
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: REDIRECT_URI,
+      code_verifier: verifier,
+      scope: SCOPE_STR + " offline_access"
+    });
+
+    const res = await fetch(TOKEN_ENDPOINT, {
+      method: "POST",
+      body: params,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" }
+    });
+
+    const data = await res.json();
+
+    if (data.access_token) {
+      // Decode account info from id_token
+      if (data.id_token) {
+        try {
+          const payload = JSON.parse(atob(data.id_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
+          data.account = { username: payload.preferred_username || payload.email || payload.upn || "Connected", name: payload.name };
+        } catch {}
+      }
+      storeToken(data);
+      if (data.refresh_token) localStorage.setItem("yd-auth-refresh", data.refresh_token);
+      localStorage.removeItem("yd-pkce-verifier");
+      localStorage.removeItem("yd-pkce-state");
+      showToast("✓ Connected to OneNote!");
       updateLoginUI();
-      showToast("Disconnected");
+    } else {
+      console.error("Token exchange failed:", data);
+      showToast("Sign-in failed: " + (data.error_description || data.error || "unknown"), 5000);
     }
-  } else {
-    try {
-      showToast("Going to Microsoft login...", 4000);
-      await msalInstance.loginRedirect({ scopes: SCOPES, prompt: "select_account" });
-      // Execution stops here — page redirects to Microsoft
-    } catch(e) {
-      console.error("Login redirect error:", e);
-      const msg = e.errorCode || e.message || "unknown";
-      showToast("Error: " + msg, 5000);
-      setSyncStatus("error", "Login failed");
-      if (btn) btn.textContent = "Connect";
-    }
+  } catch(e) {
+    console.error("Token exchange error:", e);
+    showToast("Sign-in error: " + e.message, 4000);
   }
 }
 
@@ -1027,7 +1110,8 @@ renderToday();
   btn.style.borderColor = i===0 ? "var(--text-muted)" : "var(--tab-border)";
 });
 
-initMsal();
+handleAuthCallback();
+updateLoginUI();
 </script>
 </body>
 </html>
