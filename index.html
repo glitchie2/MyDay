@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="My Day" />
+  <meta name="theme-color" content="#0a0a0c" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f5f2ec" media="(prefers-color-scheme: light)" />
+  <title>My Day</title>
+  <script>
+    const manifestData = {
+      name: "My Day", short_name: "My Day",
+      description: "Daily structure for nervous system regulation",
+      start_url: "/MyDay/", display: "standalone",
+      background_color: "#0a0a0c", theme_color: "#0a0a0c",
+      orientation: "portrait",
+      icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%230a0a0c'/><text y='130' x='30' font-size='120'>🌅</text></svg>", sizes: "192x192", type: "image/svg+xml" }]
+    };
+    const blob = new Blob([JSON.stringify(manifestData)], {type:"application/json"});
+    const ml = document.createElement("link"); ml.rel="manifest"; ml.href=URL.createObjectURL(blob);
+    document.head.appendChild(ml);
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg:#0a0a0c; --bg-card:#111113; --bg-input:#0f0f11;
+      --border:#1e1e1e; --border-strong:#2a2a2e;
+      --text:#d8d4cc; --text-heading:#f0ebe0; --text-muted:#555;
+      --text-dimmer:#3a3a3a; --text-done:#444; --note-text:#3e3e3e;
+      --tab-inactive:#555; --tab-border:#222;
+      --nav-bg:#0a0a0c; --nav-border:#1a1a1a;
+      --input-text:#d8d4cc; --placeholder:#333;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:#f5f2ec; --bg-card:#ffffff; --bg-input:#faf8f4;
+        --border:#e0dbd0; --border-strong:#ccc6ba;
+        --text:#2a2520; --text-heading:#1a1510; --text-muted:#8a8070;
+        --text-dimmer:#aaa090; --text-done:#b0a898; --note-text:#9a9080;
+        --tab-inactive:#8a8070; --tab-border:#ddd8cc;
+        --nav-bg:#f5f2ec; --nav-border:#ddd8cc;
+        --input-text:#2a2520; --placeholder:#bbb8b0;
+      }
+    }
+    html, body {
+      height: 100%; background: var(--bg); color: var(--text);
+      font-family: 'Georgia', serif; overscroll-behavior: none;
+      transition: background 0.3s, color 0.3s;
+    }
+    #app { max-width: 430px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+    .mono { font-family: 'DM Mono', monospace; }
+    .serif { font-family: 'Playfair Display', serif; }
+    button { cursor: pointer; font-family: inherit; }
+
+    /* BOTTOM NAV */
+    #main-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: var(--nav-bg); border-top: 1px solid var(--nav-border);
+      padding: 10px 0; padding-bottom: max(env(safe-area-inset-bottom), 10px);
+      display: flex; justify-content: space-around; z-index: 100;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 12px; }
+    .nav-btn:active { transform: scale(0.9); }
+    .nav-icon { font-size: 20px; opacity: 0.3; transition: opacity 0.2s; }
+    .nav-label { font-size: 9px; font-family: 'DM Mono', monospace; letter-spacing: 1px; color: var(--text-muted); opacity: 0.4; transition: opacity 0.2s; }
+    .nav-btn.active .nav-icon { opacity: 1; }
+    .nav-btn.active .nav-label { opacity: 1; color: var(--text); }
+
+    /* PAGES */
+    .page { display: none; flex: 1; flex-direction: column; }
+    .page.active { display: flex; }
+
+    /* TOPBAR */
+    .topbar {
+      padding: max(env(safe-area-inset-top), 20px) 20px 0;
+      background: var(--bg); position: sticky; top: 0; z-index: 10;
+      transition: background 0.3s;
+    }
+
+    /* SCROLL */
+    .scroll-area { flex: 1; overflow-y: auto; padding: 12px 20px 100px; }
+    .scroll-area::-webkit-scrollbar { display: none; }
+
+    /* PROGRESS */
+    .prog-track { height: 2px; background: var(--border); border-radius: 2px; margin-bottom: 18px; transition: background 0.3s; }
+    .prog-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease, background 0.3s; }
+
+    /* SECTION BLOCK (collapsible) */
+    .section-block { margin-bottom: 10px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); transition: border-color 0.3s; }
+    .section-toggle {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; background: var(--bg-card); border: none;
+      text-align: left; transition: background 0.3s;
+    }
+    .section-toggle:active { opacity: 0.85; }
+    .section-emoji { font-size: 20px; flex-shrink: 0; }
+    .section-info { flex: 1; min-width: 0; }
+    .section-name { font-size: 15px; color: var(--text-heading); font-family: 'Playfair Display', serif; font-weight: 400; transition: color 0.3s; }
+    .section-time { font-size: 10px; font-family: 'DM Mono', monospace; margin-top: 1px; }
+    .section-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .section-count { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text-muted); }
+    .section-chevron { font-size: 11px; color: var(--text-muted); transition: transform 0.25s ease; }
+    .section-chevron.open { transform: rotate(180deg); }
+    .section-purpose { font-size: 12px; color: var(--text-muted); font-style: italic; padding: 0 16px 12px 46px; background: var(--bg-card); transition: background 0.3s, color 0.3s; }
+
+    /* ITEMS CONTAINER */
+    .section-items {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: var(--bg);
+    }
+    .section-items.open { max-height: 2000px; }
+    .section-items-inner { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+
+    /* ITEM CARD */
+    .item-card {
+      display: flex; gap: 12px; padding: 13px 14px; border-radius: 5px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      cursor: pointer; user-select: none;
+      transition: opacity 0.2s, transform 0.15s, border-color 0.2s, background 0.3s;
+    }
+    .item-card:active { transform: scale(0.98); }
+    .item-card.done { opacity: 0.38; }
+    .check-circle {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 1.5px solid var(--border-strong); background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px; transition: all 0.15s;
+    }
+    .item-task { font-size: 15px; color: var(--text); margin-bottom: 4px; line-height: 1.3; font-family: 'Playfair Display', serif; transition: color 0.3s; }
+    .item-card.done .item-task { text-decoration: line-through; color: var(--text-done); }
+    .item-note { font-size: 11px; color: var(--note-text); font-style: italic; line-height: 1.4; transition: color 0.3s; }
+
+    /* COMPLETION BAR */
+    .section-prog { height: 2px; background: var(--border); }
+    .section-prog-fill { height: 100%; transition: width 0.4s ease; }
+
+    /* BUTTONS */
+    .btn-primary { background: #C8962A; color: #fff; border: none; border-radius: 20px; padding: 10px 20px; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.5px; transition: opacity 0.2s; }
+    .btn-primary:active { opacity: 0.8; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 20px; padding: 8px 16px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); transition: all 0.2s; }
+
+    /* INPUTS */
+    textarea, input[type="text"] {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 4px; padding: 12px; color: var(--input-text);
+      font-family: 'Georgia', serif; font-size: 14px; resize: none;
+      outline: none; transition: border-color 0.2s, background 0.3s;
+    }
+    textarea:focus, input[type="text"]:focus { border-color: var(--border-strong); }
+    textarea::placeholder, input::placeholder { color: var(--placeholder); }
+
+    /* TAG PILLS */
+    .tag-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .tag-pill { padding: 6px 14px; border-radius: 20px; font-family: 'DM Mono', monospace; font-size: 11px; border: 1.5px solid; cursor: pointer; transition: all 0.2s; }
+    .tag-pill:active { transform: scale(0.95); }
+
+    /* SECTION LABEL */
+    .section-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--text-dimmer); margin-bottom: 12px; margin-top: 20px; text-transform: uppercase; transition: color 0.3s; }
+
+    /* NOTES */
+    .note-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin-bottom: 10px; transition: background 0.3s, border-color 0.3s; }
+    .note-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .note-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; padding: 3px 8px; border-radius: 10px; }
+    .note-date { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dimmer); }
+    .note-text { font-size: 13px; color: var(--text); line-height: 1.5; font-style: italic; transition: color 0.3s; }
+
+    /* SYNC */
+    #sync-status { font-family: 'DM Mono', monospace; font-size: 10px; padding: 5px 10px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; }
+    .sync-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    /* REFLECT */
+    .reflection-block { margin-bottom: 16px; }
+    .reflection-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 8px; }
+
+    /* ONENOTE BAR */
+    #onenote-login-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+    /* ADD HABIT */
+    #add-habit-form { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 12px; }
+
+    /* STREAK */
+    .streak-badge { font-family: 'DM Mono', monospace; font-size: 9px; padding: 2px 7px; border-radius: 8px; }
+
+    /* HEATMAP */
+    .heatmap-grid { display: grid; gap: 3px; margin-bottom: 4px; }
+    .heatmap-cell { aspect-ratio: 1; border-radius: 2px; background: var(--border); transition: background 0.3s; }
+
+    /* ANIMATIONS */
+    @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-in { animation: slideIn 0.2s ease forwards; }
+
+    /* TOAST */
+    #toast {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: #222; color: #fff; padding: 10px 18px; border-radius: 20px;
+      font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0;
+      transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 200; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== TODAY ===== -->
+  <div class="page active" id="page-today">
+    <div class="topbar">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div class="mono" id="today-date" style="font-size:9px;letter-spacing:2px;color:var(--text-dimmer);margin-bottom:4px"></div>
+          <h1 class="serif" style="font-size:22px;font-weight:400;color:var(--text-heading);line-height:1.1">My Day</h1>
+        </div>
+        <div style="text-align:right">
+          <div class="mono" id="today-pct" style="font-size:22px;line-height:1"></div>
+          <div class="mono" id="today-count" style="font-size:9px;color:var(--text-muted);margin-top:2px"></div>
+        </div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="today-prog"></div></div>
+    </div>
+    <div class="scroll-area" id="today-content"></div>
+  </div>
+
+  <!-- ===== CAPTURE ===== -->
+  <div class="page" id="page-capture">
+    <div class="topbar">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border)">
+        <h2 class="serif" style="font-size:20px;font-weight:400;color:var(--text-heading)">Capture</h2>
+        <div id="sync-status"><span class="sync-dot" id="sync-dot" style="background:#555"></span><span id="sync-text" class="mono">Not synced</span></div>
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div id="onenote-login-bar">
+        <div>
+          <div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:2px">ONENOTE SYNC</div>
+          <div style="font-size:13px;color:var(--text)" id="login-status-text">Not connected</div>
+        </div>
+        <button class="btn-primary" id="onenote-btn" style="font-size:11px;padding:8px 16px" onclick="handleOneNoteBtn()">Connect</button>
+      </div>
+      <div class="section-label" style="margin-top:4px">NEW ENTRY</div>
+      <div class="tag-row" id="tag-row"></div>
+      <textarea id="capture-input" rows="4" placeholder="What's on your mind..."></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+        <button class="btn-primary" onclick="saveCapture()">Save + Sync</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;margin-bottom:12px">
+        <div class="section-label" style="margin:0">SAVED ENTRIES</div>
+        <span id="entries-count" class="mono" style="font-size:9px;color:var(--text-dimmer)"></span>
+      </div>
+      <div id="filter-row" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap"></div>
+      <div id="entries-list"></div>
+    </div>
+  </div>
+
+  <!-- ===== REFLECT ===== -->
+  <div class="page" id="page-reflect">
+    <div class="topbar">
+      <div style="padding-bottom:16px;border-bottom:1px solid var(--border)">
+        <div class="mono" id="reflect-date" style="font-size:9px;letter-spacing:2px;color:var(--text-dimmer);margin-bottom:4px"></div>
+        <h2 class="serif" style="font-size:20px;font-weight:400;color:var(--text-heading)">End of Day</h2>
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div class="reflection-block">
+        <div class="reflection-label">✦ WHAT I DID TODAY</div>
+        <textarea id="reflect-did" rows="4" placeholder="What actually happened today..."></textarea>
+      </div>
+      <div class="reflection-block">
+        <div class="reflection-label">→ WHAT'S NEXT</div>
+        <textarea id="reflect-next" rows="3" placeholder="What needs to happen tomorrow..."></textarea>
+      </div>
+      <div class="reflection-block">
+        <div class="reflection-label">? WHAT IS UNCLEAR</div>
+        <textarea id="reflect-unclear" rows="3" placeholder="What's still foggy or unresolved..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+        <button class="btn-ghost" onclick="loadTodayReflection()">Load Today</button>
+        <button class="btn-primary" onclick="saveReflection()">Save + Sync</button>
+      </div>
+      <div class="section-label" style="margin-top:24px">PAST REFLECTIONS</div>
+      <div id="reflections-list"></div>
+    </div>
+  </div>
+
+  <!-- ===== PROGRESS ===== -->
+  <div class="page" id="page-progress">
+    <div class="topbar">
+      <div style="padding-bottom:16px;border-bottom:1px solid var(--border)">
+        <h2 class="serif" style="font-size:20px;font-weight:400;color:var(--text-heading)">Progress</h2>
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="tag-pill mono" id="prog-week-btn" onclick="switchProgView('week')">Week</button>
+        <button class="tag-pill mono" id="prog-month-btn" onclick="switchProgView('month')">Month</button>
+      </div>
+      <div id="progress-content"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:12px">
+        <div class="section-label" style="margin:0">MANAGE HABITS</div>
+        <button class="btn-ghost" onclick="toggleAddHabit()" style="font-size:10px;padding:5px 12px">+ Add</button>
+      </div>
+      <div id="add-habit-form">
+        <div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:8px">HABIT NAME</div>
+        <input type="text" id="new-habit-input" placeholder="e.g. Cold shower, Meditate 10 min..." style="margin-bottom:12px" />
+        <div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:8px">SECTION</div>
+        <div id="section-picker" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn-ghost" onclick="toggleAddHabit()">Cancel</button>
+          <button class="btn-primary" onclick="saveNewHabit()">Add Habit</button>
+        </div>
+      </div>
+      <div id="habits-manage-list"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="main-nav">
+    <button class="nav-btn active" onclick="showPage('today')" id="nav-today">
+      <span class="nav-icon">📋</span><span class="nav-label">TODAY</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('capture')" id="nav-capture">
+      <span class="nav-icon">💡</span><span class="nav-label">CAPTURE</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('reflect')" id="nav-reflect">
+      <span class="nav-icon">🌙</span><span class="nav-label">REFLECT</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('progress')" id="nav-progress">
+      <span class="nav-icon">📈</span><span class="nav-label">PROGRESS</span>
+    </button>
+  </nav>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===================== CONFIG =====================
+const CLIENT_ID = "0f279efc-3872-4362-84b1-1c81f54eb9ba";
+const REDIRECT_URI = "https://glitchie2.github.io/MyDay/";
+const SCOPES = ["Notes.ReadWrite.CreatedByApp", "User.Read"];
+
+// ===================== TOAST =====================
+function showToast(msg, duration=2500) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), duration);
+}
+
+// ===================== MSAL =====================
+let msalInstance, msalReady = false;
+
+async function initMsal() {
+  try {
+    msalInstance = new msal.PublicClientApplication({
+      auth: { clientId: CLIENT_ID, authority: "https://login.microsoftonline.com/common", redirectUri: REDIRECT_URI },
+      cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
+    });
+    await msalInstance.initialize();
+    msalReady = true;
+    await msalInstance.handleRedirectPromise();
+    updateLoginUI();
+  } catch(e) {
+    console.error("MSAL init failed:", e);
+    setSyncStatus("error", "Auth error");
+  }
+}
+
+function getAccount() {
+  if (!msalInstance) return null;
+  const accounts = msalInstance.getAllAccounts();
+  return accounts.length ? accounts[0] : null;
+}
+
+async function getToken() {
+  if (!msalReady || !msalInstance) return null;
+  const account = getAccount();
+  if (!account) return null;
+  try {
+    return (await msalInstance.acquireTokenSilent({ scopes: SCOPES, account })).accessToken;
+  } catch {
+    try { return (await msalInstance.acquireTokenPopup({ scopes: SCOPES })).accessToken; }
+    catch(e) { console.warn("Token error:", e); return null; }
+  }
+}
+
+async function handleOneNoteBtn() {
+  if (!msalReady) { showToast("Still loading, please wait..."); return; }
+  if (getAccount()) {
+    try { await msalInstance.logoutPopup(); } catch(e) {}
+    updateLoginUI();
+    showToast("Disconnected from OneNote");
+  } else {
+    try {
+      showToast("Opening Microsoft login...");
+      await msalInstance.loginPopup({ scopes: SCOPES });
+      updateLoginUI();
+      showToast("✓ Connected to OneNote!");
+    } catch(e) {
+      console.error("Login error:", e);
+      showToast("Login failed — check popup blocker");
+      setSyncStatus("error", "Login failed");
+    }
+  }
+}
+
+function updateLoginUI() {
+  const account = getAccount();
+  const btn = document.getElementById("onenote-btn");
+  const txt = document.getElementById("login-status-text");
+  if (!btn || !txt) return;
+  if (account) {
+    txt.textContent = account.username || "Connected";
+    btn.textContent = "Disconnect";
+    setSyncStatus("connected", "Connected");
+  } else {
+    txt.textContent = "Not connected";
+    btn.textContent = "Connect";
+    setSyncStatus("idle", "Not synced");
+  }
+}
+
+function setSyncStatus(state, text) {
+  const dot = document.getElementById("sync-dot");
+  const lbl = document.getElementById("sync-text");
+  if (!dot || !lbl) return;
+  lbl.textContent = text;
+  const colors = { connected:"#3D8A5E", error:"#B05C5C", idle:"#555", syncing:"#C8962A" };
+  dot.style.background = colors[state] || "#555";
+}
+
+// ===================== ONENOTE API =====================
+async function graphGet(url, token) {
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`GraphGet failed: ${res.status}`);
+  return res.json();
+}
+
+async function graphPost(url, body, token, ct="application/json") {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": ct },
+    body
+  });
+  return res;
+}
+
+async function getOrCreate(listUrl, createUrl, name, token) {
+  try {
+    const data = await graphGet(`${listUrl}?$filter=displayName eq '${encodeURIComponent(name)}'`, token);
+    if (data.value && data.value.length) return data.value[0].id;
+  } catch {}
+  const res = await graphPost(createUrl, JSON.stringify({ displayName: name }), token);
+  const created = await res.json();
+  return created.id;
+}
+
+async function syncToOneNote(sectionName, pageTitle, htmlBody) {
+  setSyncStatus("syncing", "Syncing...");
+  try {
+    const token = await getToken();
+    if (!token) { setSyncStatus("idle", "Not signed in"); showToast("Connect OneNote first"); return false; }
+    const base = "https://graph.microsoft.com/v1.0/me/onenote";
+    const nbId = await getOrCreate(`${base}/notebooks`, `${base}/notebooks`, "My Day", token);
+    const secId = await getOrCreate(`${base}/notebooks/${nbId}/sections`, `${base}/notebooks/${nbId}/sections`, sectionName, token);
+    const page = `<!DOCTYPE html><html><head><title>${pageTitle}</title></head><body>${htmlBody}</body></html>`;
+    const res = await graphPost(`${base}/sections/${secId}/pages`, page, token, "application/xhtml+xml");
+    if (res.ok) { setSyncStatus("connected", "Synced ✓"); showToast("✓ Saved to OneNote"); return true; }
+    else { setSyncStatus("error", "Sync failed"); showToast("Sync failed"); return false; }
+  } catch(e) {
+    console.error("OneNote sync error:", e);
+    setSyncStatus("error", "Error");
+    showToast("Sync error — check console");
+    return false;
+  }
+}
+
+// ===================== DATA =====================
+const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed" };
+const today = () => new Date().toISOString().split("T")[0];
+const ld = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+// Full habits with all notes from original file
+const DEFAULT_HABITS = [
+  // MORNING
+  { id:"m1", task:"Same wake time", note:"Even weekends. Consistency = safety signal.", color:"#C8962A", section:"MORNING" },
+  { id:"m2", task:"No phone — 30 min", note:"Touch base with yourself first.", color:"#C8962A", section:"MORNING" },
+  { id:"m3", task:"Body grounding", note:"Stretch, breathe, or slow walk.", color:"#C8962A", section:"MORNING" },
+  { id:"m4", task:"Warm drink, no multitasking", note:"A micro-practice of presence.", color:"#C8962A", section:"MORNING" },
+  { id:"m5", task:"One journal sentence", note:"How do I feel right now?", color:"#C8962A", section:"MORNING" },
+  { id:"m6", task:"Sunlight in first hour", note:"Anchors rhythm. Affects serotonin.", color:"#C8962A", section:"MORNING" },
+  // WORK BLOCK
+  { id:"w1", task:"Set ONE clear intention", note:"What does done look like today?", color:"#4A90A4", section:"WORK BLOCK" },
+  { id:"w2", task:"45 min focus / 10 min break", note:"Each cycle = evidence you can.", color:"#4A90A4", section:"WORK BLOCK" },
+  { id:"w3", task:"Body breaks only", note:"Walk, stretch. No scrolling.", color:"#4A90A4", section:"WORK BLOCK" },
+  { id:"w4", task:"One task at a time", note:"Lists trigger overwhelm. One is enough.", color:"#4A90A4", section:"WORK BLOCK" },
+  // MIDDAY
+  { id:"n1", task:"Eat without a screen", note:"Sensory presence. Easy mindfulness.", color:"#B05C5C", section:"MIDDAY" },
+  { id:"n2", task:"Short walk outside", note:"Light + movement + being among humans.", color:"#B05C5C", section:"MIDDAY" },
+  { id:"n3", task:"Low-effort tasks only", note:"Admin, reading. Save hard thinking.", color:"#B05C5C", section:"MIDDAY" },
+  // AFTERNOON
+  { id:"a1", task:"No caffeine to fight the dip", note:"Use it for lighter tasks instead.", color:"#7A5FA8", section:"AFTERNOON" },
+  { id:"a2", task:"Second work block", note:"Emails, organizing, reading.", color:"#7A5FA8", section:"AFTERNOON" },
+  { id:"a3", task:"Hard stop — same time daily", note:"Boundaries with work = self-respect.", color:"#7A5FA8", section:"AFTERNOON" },
+  // EVENING
+  { id:"e1", task:"Small social contact", note:"A message or brief call. Isolation feeds itself.", color:"#3D8A5E", section:"EVENING" },
+  { id:"e2", task:"20 min walk if no morning move", note:"Mood + sleep improve within 2 weeks.", color:"#3D8A5E", section:"EVENING" },
+  { id:"e3", task:"One thing purely for pleasure", note:"Not earned — deserved.", color:"#3D8A5E", section:"EVENING" },
+  { id:"e4", task:"Wind-down routine", note:"30–45 min before sleep. No work, dim lights.", color:"#3D8A5E", section:"EVENING" },
+  { id:"e5", task:"Same sleep time", note:"Nervous system needs a runway, not a crash.", color:"#3D8A5E", section:"EVENING" },
+];
+
+const SECTION_DEFS = [
+  { key:"MORNING",    emoji:"🌅", time:"First 60 min",  color:"#C8962A", purpose:"Anchor before the world rushes in" },
+  { key:"WORK BLOCK", emoji:"🎯", time:"3–4 hours",     color:"#4A90A4", purpose:"Build evidence of capability" },
+  { key:"MIDDAY",     emoji:"☀️", time:"30–45 min",     color:"#B05C5C", purpose:"Don't let this become a black hole" },
+  { key:"AFTERNOON",  emoji:"🌤", time:"2–3 hours",     color:"#7A5FA8", purpose:"Work with your energy, not against it" },
+  { key:"EVENING",    emoji:"🌙", time:"Until sleep",   color:"#3D8A5E", purpose:"Bridge back to yourself" },
+];
+
+const TAGS = [
+  { key:"thought",  label:"#thought",  color:"#4A90A4" },
+  { key:"question", label:"#question", color:"#C8962A" },
+  { key:"idea",     label:"#idea",     color:"#3D8A5E" },
+];
+
+let history2 = {}, captures = [], reflections = {}, habits = [];
+let checked = {}, collapsedSections = {}, activeTag = "thought", filterTag = "all", progView = "week", newHabitSection = "MORNING";
+
+function loadAll() {
+  history2 = ld(SK.hist, {});
+  const t = today();
+  checked = history2[t] ? { ...history2[t] } : {};
+  captures = ld(SK.caps, []);
+  reflections = ld(SK.refs, {});
+  habits = ld(SK.habits, null) || DEFAULT_HABITS;
+  collapsedSections = ld(SK.collapsed, {});
+}
+
+function saveChecked() {
+  history2[today()] = { ...checked };
+  sv(SK.hist, history2);
+}
+
+// ===================== TODAY =====================
+function renderToday() {
+  // Header
+  document.getElementById("today-date").textContent =
+    new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" }).toUpperCase();
+
+  const total = habits.length;
+  const done = Object.values(checked).filter(Boolean).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+
+  // Use first non-complete section color for progress
+  let activeColor = "#C8962A";
+  for (const s of SECTION_DEFS) {
+    const sh = habits.filter(h => h.section === s.key);
+    if (sh.some(h => !checked[h.id])) { activeColor = s.color; break; }
+  }
+
+  document.getElementById("today-pct").textContent = pct + "%";
+  document.getElementById("today-pct").style.color = activeColor;
+  document.getElementById("today-count").textContent = `${done}/${total} done`;
+  document.getElementById("today-prog").style.width = pct + "%";
+  document.getElementById("today-prog").style.background = activeColor;
+
+  // Sections as collapsible blocks
+  const content = document.getElementById("today-content");
+  content.innerHTML = "";
+
+  SECTION_DEFS.forEach(s => {
+    const sHabits = habits.filter(h => h.section === s.key);
+    if (!sHabits.length) return;
+
+    const sDone = sHabits.filter(h => checked[h.id]).length;
+    const allDone = sDone === sHabits.length;
+    const isCollapsed = !!collapsedSections[s.key];
+
+    // Block wrapper
+    const block = document.createElement("div");
+    block.className = "section-block";
+    block.style.borderColor = allDone ? s.color + "44" : "var(--border)";
+
+    // Progress bar at top of block
+    const progBar = document.createElement("div");
+    progBar.className = "section-prog";
+    progBar.innerHTML = `<div class="section-prog-fill" style="width:${sHabits.length?Math.round(sDone/sHabits.length*100):0}%;background:${s.color}"></div>`;
+    block.appendChild(progBar);
+
+    // Toggle header
+    const toggle = document.createElement("button");
+    toggle.className = "section-toggle";
+    toggle.innerHTML = `
+      <span class="section-emoji">${s.emoji}</span>
+      <div class="section-info">
+        <div class="section-name">${s.key.charAt(0) + s.key.slice(1).toLowerCase()}</div>
+        <div class="section-time" style="color:${s.color}">${s.time}</div>
+      </div>
+      <div class="section-right">
+        <span class="section-count">${sDone}/${sHabits.length}</span>
+        ${allDone ? `<span style="color:${s.color};font-size:12px">✓</span>` : ""}
+        <span class="section-chevron ${isCollapsed ? "" : "open"}">▾</span>
+      </div>`;
+    toggle.addEventListener("click", () => {
+      collapsedSections[s.key] = !collapsedSections[s.key];
+      sv(SK.collapsed, collapsedSections);
+      renderToday();
+    });
+    block.appendChild(toggle);
+
+    // Purpose line
+    const purpose = document.createElement("div");
+    purpose.className = "section-purpose";
+    purpose.textContent = s.purpose;
+    block.appendChild(purpose);
+
+    // Items container
+    const itemsContainer = document.createElement("div");
+    itemsContainer.className = "section-items" + (isCollapsed ? "" : " open");
+
+    const itemsInner = document.createElement("div");
+    itemsInner.className = "section-items-inner";
+
+    sHabits.forEach(habit => {
+      const done = !!checked[habit.id];
+      const card = document.createElement("div");
+      card.className = "item-card" + (done ? " done" : "");
+      card.style.borderColor = done ? habit.color + "44" : "var(--border)";
+      card.innerHTML = `
+        <div class="check-circle" style="border-color:${done ? habit.color : "var(--border-strong)"};background:${done ? habit.color+"22" : "transparent"}">
+          ${done ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="${habit.color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ""}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="item-task">${habit.task}</div>
+          ${habit.note ? `<div class="item-note">${habit.note}</div>` : ""}
+        </div>`;
+      card.addEventListener("click", () => {
+        checked[habit.id] = !checked[habit.id];
+        saveChecked();
+        renderToday();
+      });
+      itemsInner.appendChild(card);
+    });
+
+    itemsContainer.appendChild(itemsInner);
+    block.appendChild(itemsContainer);
+    content.appendChild(block);
+  });
+
+  // Full day complete
+  const allComplete = habits.every(h => checked[h.id]);
+  if (allComplete && habits.length > 0) {
+    const msg = document.createElement("div");
+    msg.style.cssText = "margin-top:16px;padding:20px;border-radius:6px;background:#3D8A5E11;border:1px solid #3D8A5E33;text-align:center";
+    msg.innerHTML = `<div style="font-size:24px;margin-bottom:8px">✦</div><div class="serif" style="font-size:15px;color:#3D8A5E;font-style:italic">Full day complete.<br>You showed up for yourself today.</div>`;
+    content.appendChild(msg);
+  }
+}
+
+// ===================== CAPTURE =====================
+function renderTagRow() {
+  const row = document.getElementById("tag-row");
+  if (!row) return;
+  row.innerHTML = "";
+  TAGS.forEach(t => {
+    const p = document.createElement("button");
+    p.className = "tag-pill mono";
+    p.style.cssText = `border-color:${t.color};color:${activeTag===t.key?"#fff":t.color};background:${activeTag===t.key?t.color:"transparent"}`;
+    p.textContent = t.label;
+    p.onclick = () => { activeTag = t.key; renderTagRow(); };
+    row.appendChild(p);
+  });
+}
+
+function renderFilterRow() {
+  const row = document.getElementById("filter-row");
+  if (!row) return;
+  row.innerHTML = "";
+  const allP = document.createElement("button");
+  allP.className = "tag-pill mono";
+  allP.style.cssText = `border-color:var(--border-strong);color:${filterTag==="all"?"var(--text-heading)":"var(--text-muted)"};background:${filterTag==="all"?"var(--border-strong)":"transparent"};font-size:10px`;
+  allP.textContent = "all";
+  allP.onclick = () => { filterTag = "all"; renderEntriesList(); renderFilterRow(); };
+  row.appendChild(allP);
+  TAGS.forEach(t => {
+    const p = document.createElement("button");
+    p.className = "tag-pill mono";
+    p.style.cssText = `border-color:${t.color};color:${filterTag===t.key?"#fff":t.color};background:${filterTag===t.key?t.color:"transparent"};font-size:10px`;
+    p.textContent = t.label;
+    p.onclick = () => { filterTag = t.key; renderEntriesList(); renderFilterRow(); };
+    row.appendChild(p);
+  });
+}
+
+function renderEntriesList() {
+  const list = document.getElementById("entries-list");
+  const cnt = document.getElementById("entries-count");
+  if (!list) return;
+  const filtered = filterTag === "all" ? captures : captures.filter(e => e.tag === filterTag);
+  if (cnt) cnt.textContent = filtered.length + " entries";
+  list.innerHTML = "";
+  if (!filtered.length) {
+    list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dimmer);font-style:italic;font-size:13px">No entries yet</div>`;
+    return;
+  }
+  [...filtered].reverse().forEach(entry => {
+    const tag = TAGS.find(t => t.key === entry.tag) || TAGS[0];
+    const item = document.createElement("div");
+    item.className = "note-item";
+    item.innerHTML = `<div class="note-meta"><span class="note-tag" style="background:${tag.color}22;color:${tag.color}">${tag.label}</span><span class="note-date">${entry.date}</span></div><div class="note-text">${entry.text}</div>`;
+    list.appendChild(item);
+  });
+}
+
+async function saveCapture() {
+  const input = document.getElementById("capture-input");
+  const text = input.value.trim();
+  if (!text) { showToast("Write something first"); return; }
+  const entry = { id: Date.now(), tag: activeTag, text, date: today() };
+  captures.push(entry);
+  sv(SK.caps, captures);
+  input.value = "";
+  renderEntriesList();
+  showToast("Saved locally ✓");
+  if (getAccount()) {
+    const tagMap = { thought:"Thoughts", question:"Questions", idea:"Ideas" };
+    await syncToOneNote(
+      tagMap[entry.tag] || "Thoughts",
+      `${entry.tag} — ${entry.date}`,
+      `<h1>${entry.tag.toUpperCase()} — ${entry.date}</h1><p>${entry.text.replace(/\n/g,"<br/>")}</p>`
+    );
+  }
+}
+
+// ===================== REFLECT =====================
+function loadTodayReflection() {
+  const r = reflections[today()];
+  if (r) {
+    document.getElementById("reflect-did").value = r.did || "";
+    document.getElementById("reflect-next").value = r.next || "";
+    document.getElementById("reflect-unclear").value = r.unclear || "";
+    showToast("Loaded today's reflection");
+  } else {
+    showToast("No reflection saved today yet");
+  }
+}
+
+async function saveReflection() {
+  const t = today();
+  const r = {
+    date: t,
+    did: document.getElementById("reflect-did").value.trim(),
+    next: document.getElementById("reflect-next").value.trim(),
+    unclear: document.getElementById("reflect-unclear").value.trim()
+  };
+  reflections[t] = r;
+  sv(SK.refs, reflections);
+  renderReflectionsList();
+  showToast("Reflection saved ✓");
+  if (getAccount()) {
+    await syncToOneNote(
+      "End of Day",
+      `Reflection — ${r.date}`,
+      `<h1>Reflection — ${r.date}</h1>
+       <h2>✦ What I did today</h2><p>${(r.did||"").replace(/\n/g,"<br/>")}</p>
+       <h2>→ What's next</h2><p>${(r.next||"").replace(/\n/g,"<br/>")}</p>
+       <h2>? What is unclear</h2><p>${(r.unclear||"").replace(/\n/g,"<br/>")}</p>`
+    );
+  } else {
+    setSyncStatus("idle", "Saved locally");
+  }
+}
+
+function renderReflectionsList() {
+  const list = document.getElementById("reflections-list");
+  if (!list) return;
+  const keys = Object.keys(reflections).sort().reverse().slice(0, 7);
+  list.innerHTML = "";
+  if (!keys.length) {
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-style:italic;font-size:13px">No reflections yet</div>`;
+    return;
+  }
+  keys.forEach(date => {
+    const r = reflections[date];
+    const item = document.createElement("div");
+    item.className = "note-item";
+    item.style.cursor = "pointer";
+    item.innerHTML = `
+      <div class="note-meta"><span class="note-date mono" style="font-size:10px;color:var(--text-muted)">${date}</span></div>
+      ${r.did ? `<div style="margin-bottom:6px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:3px">DID</div><div class="note-text">${r.did.substring(0,100)}${r.did.length>100?"...":""}</div></div>` : ""}
+      ${r.next ? `<div><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:3px">NEXT</div><div class="note-text">${r.next.substring(0,80)}${r.next.length>80?"...":""}</div></div>` : ""}`;
+    item.onclick = () => {
+      document.getElementById("reflect-did").value = r.did || "";
+      document.getElementById("reflect-next").value = r.next || "";
+      document.getElementById("reflect-unclear").value = r.unclear || "";
+      showToast("Loaded reflection for " + date);
+    };
+    list.appendChild(item);
+  });
+}
+
+// ===================== PROGRESS =====================
+function switchProgView(v) {
+  progView = v;
+  ["week","month"].forEach(x => {
+    const btn = document.getElementById("prog-"+x+"-btn");
+    if (!btn) return;
+    const active = v === x;
+    btn.style.background = active ? "var(--text-muted)" : "transparent";
+    btn.style.color = active ? "var(--bg)" : "var(--text-muted)";
+    btn.style.borderColor = active ? "var(--text-muted)" : "var(--tab-border)";
+  });
+  renderProgress();
+}
+
+function getDays(n) {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (n - 1 - i));
+    return d.toISOString().split("T")[0];
+  });
+}
+
+function renderProgress() {
+  const content = document.getElementById("progress-content");
+  if (!content) return;
+  content.innerHTML = "";
+  const n = progView === "week" ? 7 : 30;
+  const cols = progView === "week" ? 7 : 10;
+  const days = getDays(n);
+
+  // Overall heatmap
+  const ol = document.createElement("div"); ol.className = "section-label"; ol.textContent = "OVERALL COMPLETION";
+  content.appendChild(ol);
+  const og = document.createElement("div"); og.className = "heatmap-grid"; og.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  days.forEach(day => {
+    const dd = history2[day] || {}; const tot = habits.length; const dn = Object.values(dd).filter(Boolean).length;
+    const pct = tot ? dn / tot : 0;
+    const cell = document.createElement("div"); cell.className = "heatmap-cell"; cell.title = `${day}: ${dn}/${tot}`;
+    if (pct > 0) cell.style.background = `rgba(200,150,42,${Math.max(0.12, pct)})`;
+    og.appendChild(cell);
+  });
+  content.appendChild(og);
+
+  // Per habit
+  const hl = document.createElement("div"); hl.className = "section-label"; hl.style.marginTop = "20px"; hl.textContent = "PER HABIT";
+  content.appendChild(hl);
+
+  SECTION_DEFS.forEach(sec => {
+    const sh = habits.filter(h => h.section === sec.key);
+    if (!sh.length) return;
+    const sl = document.createElement("div");
+    sl.style.cssText = `font-family:'DM Mono',monospace;font-size:9px;color:${sec.color};letter-spacing:2px;margin:14px 0 8px`;
+    sl.textContent = sec.key; content.appendChild(sl);
+
+    sh.forEach(habit => {
+      let streak = 0;
+      const rd = [...getDays(30)].reverse();
+      for (const day of rd) { if (history2[day] && history2[day][habit.id]) streak++; else break; }
+
+      const row = document.createElement("div"); row.style.marginBottom = "12px";
+      const lr = document.createElement("div"); lr.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:5px";
+      lr.innerHTML = `<span style="font-size:12px;color:var(--text);font-family:'Playfair Display',serif;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${habit.task}</span>${streak>0?`<span class="streak-badge" style="background:${sec.color}22;color:${sec.color};flex-shrink:0;margin-left:8px">${streak}🔥</span>`:""}`;
+      row.appendChild(lr);
+
+      const grid = document.createElement("div"); grid.className = "heatmap-grid"; grid.style.cssText = `grid-template-columns:repeat(${cols},1fr);gap:3px`;
+      days.forEach(day => {
+        const done = history2[day] && history2[day][habit.id];
+        const cell = document.createElement("div");
+        cell.style.cssText = `aspect-ratio:1;border-radius:2px;background:${done?sec.color:"var(--border)"};transition:background 0.3s`;
+        grid.appendChild(cell);
+      });
+      row.appendChild(grid);
+      content.appendChild(row);
+    });
+  });
+}
+
+// ===================== HABITS MANAGE =====================
+function renderHabitsManage() {
+  const list = document.getElementById("habits-manage-list");
+  if (!list) return;
+  list.innerHTML = "";
+  habits.forEach(habit => {
+    const sec = SECTION_DEFS.find(s => s.key === habit.section);
+    const col = sec ? sec.color : "#888";
+    const item = document.createElement("div");
+    item.style.cssText = "display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;margin-bottom:8px";
+    item.innerHTML = `
+      <div style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;color:var(--text);font-family:'Playfair Display',serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${habit.task}</div>
+        <div class="mono" style="font-size:9px;color:${col};margin-top:2px">${habit.section}</div>
+      </div>
+      ${habit.custom ? `<button onclick="deleteHabit('${habit.id}')" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;padding:4px 6px;line-height:1">×</button>` : ""}`;
+    list.appendChild(item);
+  });
+}
+
+function renderSectionPicker() {
+  const picker = document.getElementById("section-picker");
+  if (!picker) return;
+  picker.innerHTML = "";
+  SECTION_DEFS.forEach(s => {
+    const p = document.createElement("button");
+    p.className = "tag-pill mono";
+    p.style.cssText = `border-color:${s.color};color:${newHabitSection===s.key?"#fff":s.color};background:${newHabitSection===s.key?s.color:"transparent"};font-size:10px;padding:5px 10px`;
+    p.textContent = s.emoji + " " + s.key;
+    p.onclick = () => { newHabitSection = s.key; renderSectionPicker(); };
+    picker.appendChild(p);
+  });
+}
+
+function toggleAddHabit() {
+  const form = document.getElementById("add-habit-form");
+  const show = form.style.display !== "block";
+  form.style.display = show ? "block" : "none";
+  if (show) { renderSectionPicker(); document.getElementById("new-habit-input").focus(); }
+}
+
+function saveNewHabit() {
+  const name = document.getElementById("new-habit-input").value.trim();
+  if (!name) { showToast("Enter a habit name"); return; }
+  const sec = SECTION_DEFS.find(s => s.key === newHabitSection);
+  habits.push({ id:"c"+Date.now(), task:name, note:"", color:sec?sec.color:"#C8962A", section:newHabitSection, custom:true });
+  sv(SK.habits, habits);
+  document.getElementById("new-habit-input").value = "";
+  toggleAddHabit();
+  renderHabitsManage();
+  renderToday();
+  showToast("Habit added ✓");
+}
+
+function deleteHabit(id) {
+  if (!confirm("Remove this habit?")) return;
+  habits = habits.filter(h => h.id !== id);
+  sv(SK.habits, habits);
+  renderHabitsManage();
+  renderToday();
+  showToast("Habit removed");
+}
+
+// ===================== NAVIGATION =====================
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + name).classList.add("active");
+  document.getElementById("nav-" + name).classList.add("active");
+  if (name === "progress") { renderProgress(); renderHabitsManage(); }
+  if (name === "capture") { renderTagRow(); renderFilterRow(); renderEntriesList(); updateLoginUI(); }
+  if (name === "reflect") {
+    document.getElementById("reflect-date").textContent =
+      new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" }).toUpperCase();
+    renderReflectionsList();
+  }
+}
+
+// ===================== INIT =====================
+loadAll();
+renderToday();
+
+// Init progress buttons style
+["week","month"].forEach((x, i) => {
+  const btn = document.getElementById("prog-"+x+"-btn");
+  if (!btn) return;
+  btn.style.background = i===0 ? "var(--text-muted)" : "transparent";
+  btn.style.color = i===0 ? "var(--bg)" : "var(--text-muted)";
+  btn.style.borderColor = i===0 ? "var(--text-muted)" : "var(--tab-border)";
+});
+
+initMsal();
+</script>
+</body>
+</html>
