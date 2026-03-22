@@ -346,29 +346,43 @@ const REDIRECT_URI = "https://glitchie2.github.io/MyDay/";
 const SCOPES = ["Notes.ReadWrite.CreatedByApp", "User.Read"];
 
 // ===================== TOAST =====================
-function showToast(msg, duration=2500) {
+function showToast(msg, duration=2800) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"), duration);
 }
 
-// ===================== MSAL =====================
+// ===================== MSAL (redirect-based — works on mobile) =====================
 let msalInstance, msalReady = false;
 
 async function initMsal() {
   try {
     msalInstance = new msal.PublicClientApplication({
-      auth: { clientId: CLIENT_ID, authority: "https://login.microsoftonline.com/common", redirectUri: REDIRECT_URI },
-      cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
+      auth: {
+        clientId: CLIENT_ID,
+        authority: "https://login.microsoftonline.com/common",
+        redirectUri: REDIRECT_URI,
+        navigateToLoginRequestUrl: true,
+      },
+      cache: { cacheLocation: "localStorage", storeAuthStateInCookie: true },
+      system: { allowRedirectInIframe: false }
     });
     await msalInstance.initialize();
     msalReady = true;
-    await msalInstance.handleRedirectPromise();
+
+    // Handle redirect coming back from Microsoft login
+    const result = await msalInstance.handleRedirectPromise();
+    if (result && result.account) {
+      // Just returned from Microsoft login — show success
+      showToast("✓ Connected to OneNote!");
+    }
     updateLoginUI();
   } catch(e) {
     console.error("MSAL init failed:", e);
-    setSyncStatus("error", "Auth error");
+    // Don't show error to user — just silently degrade
+    msalReady = true; // still mark ready so button works
+    updateLoginUI();
   }
 }
 
@@ -383,28 +397,44 @@ async function getToken() {
   const account = getAccount();
   if (!account) return null;
   try {
-    return (await msalInstance.acquireTokenSilent({ scopes: SCOPES, account })).accessToken;
-  } catch {
-    try { return (await msalInstance.acquireTokenPopup({ scopes: SCOPES })).accessToken; }
-    catch(e) { console.warn("Token error:", e); return null; }
+    // Try silent first
+    const result = await msalInstance.acquireTokenSilent({ scopes: SCOPES, account });
+    return result.accessToken;
+  } catch(e) {
+    // Silent failed — redirect to get a fresh token
+    try {
+      await msalInstance.acquireTokenRedirect({ scopes: SCOPES, account });
+    } catch(e2) { console.warn("Token redirect error:", e2); }
+    return null; // Will return after redirect
   }
 }
 
 async function handleOneNoteBtn() {
-  if (!msalReady) { showToast("Still loading, please wait..."); return; }
+  if (!msalReady || !msalInstance) { showToast("Please wait a moment..."); return; }
   if (getAccount()) {
-    try { await msalInstance.logoutPopup(); } catch(e) {}
-    updateLoginUI();
-    showToast("Disconnected from OneNote");
-  } else {
+    // Logout
     try {
-      showToast("Opening Microsoft login...");
-      await msalInstance.loginPopup({ scopes: SCOPES });
-      updateLoginUI();
-      showToast("✓ Connected to OneNote!");
+      await msalInstance.logoutRedirect({ postLogoutRedirectUri: REDIRECT_URI });
     } catch(e) {
-      console.error("Login error:", e);
-      showToast("Login failed — check popup blocker");
+      // Fallback: clear accounts manually
+      msalInstance.getAllAccounts().forEach(a => {
+        try { msalInstance.clearCache(); } catch {}
+      });
+      updateLoginUI();
+      showToast("Disconnected");
+    }
+  } else {
+    // Login via redirect — no popup, works on all mobile browsers
+    try {
+      showToast("Redirecting to Microsoft...");
+      await msalInstance.loginRedirect({
+        scopes: SCOPES,
+        prompt: "select_account"
+      });
+      // Page will redirect away — execution stops here
+    } catch(e) {
+      console.error("Login redirect error:", e);
+      showToast("Login failed: " + (e.message || "unknown error"));
       setSyncStatus("error", "Login failed");
     }
   }
