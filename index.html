@@ -178,6 +178,21 @@
     /* REFLECT */
     .reflection-block { margin-bottom: 16px; }
     .reflection-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 8px; }
+    .bullet-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; min-height: 10px; }
+    .bullet-row { display: flex; align-items: center; gap: 8px; }
+    .bullet-dot { color: var(--text-muted); font-size: 18px; flex-shrink: 0; line-height: 1; user-select: none; }
+    .bullet-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--input-text); font-family: 'Georgia', serif; font-size: 14px; outline: none; transition: border-color 0.2s, background 0.3s; }
+    .bullet-input:focus { border-color: var(--border-strong); }
+    .bullet-input::placeholder { color: var(--placeholder); font-style: italic; }
+    .bullet-del { background: none; border: none; color: var(--text-dimmer); font-size: 20px; padding: 0 4px; line-height: 1; flex-shrink: 0; transition: color 0.2s; }
+    .bullet-del:hover { color: #B05C5C; }
+    .add-bullet-btn:active { opacity: 0.7; }
+    .bullet-row { display: flex; align-items: center; gap: 8px; }
+    .bullet-dot { color: var(--text-muted); font-size: 16px; flex-shrink: 0; line-height: 1; }
+    .bullet-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--input-text); font-family: 'Georgia', serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    .bullet-input:focus { border-color: var(--border-strong); }
+    .bullet-del { background: none; border: none; color: var(--text-dimmer); font-size: 18px; padding: 2px 6px; line-height: 1; flex-shrink: 0; }
+    .add-bullet-btn { background: none; border: 1px dashed var(--border); border-radius: 4px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; width: 100%; transition: all 0.2s; }
 
     /* ONENOTE BAR */
     #onenote-login-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -269,15 +284,18 @@
     <div class="scroll-area">
       <div class="reflection-block">
         <div class="reflection-label">✦ WHAT I DID TODAY</div>
-        <textarea id="reflect-did" rows="4" placeholder="What actually happened today..."></textarea>
+        <div id="bullets-did" class="bullet-list"></div>
+        <button class="add-bullet-btn" onclick="addBullet('did')">+ add point</button>
       </div>
       <div class="reflection-block">
         <div class="reflection-label">→ WHAT'S NEXT</div>
-        <textarea id="reflect-next" rows="3" placeholder="What needs to happen tomorrow..."></textarea>
+        <div id="bullets-next" class="bullet-list"></div>
+        <button class="add-bullet-btn" onclick="addBullet('next')">+ add point</button>
       </div>
       <div class="reflection-block">
         <div class="reflection-label">? WHAT IS UNCLEAR</div>
-        <textarea id="reflect-unclear" rows="3" placeholder="What's still foggy or unresolved..."></textarea>
+        <div id="bullets-unclear" class="bullet-list"></div>
+        <button class="add-bullet-btn" onclick="addBullet('unclear')">+ add point</button>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
         <button class="btn-ghost" onclick="loadTodayReflection()">Load Today</button>
@@ -636,9 +654,14 @@ async function getSectionId(nbId, token) {
 // Build page HTML with table header + first data row already inside
 function buildPageHtml(pageTitle, firstRowHtml) {
   const isEOD = pageTitle === "EOD closure";
-  const th = (t) => `<th style="padding:6px 10px;border:1px solid #ccc;background:#f0f0f0;font-weight:bold">${t}</th>`;
+  const th = (t) => '<th style="padding:6px 10px;border:1px solid #ccc;background:#f0f0f0;font-weight:bold">' + t + '</th>';
   const headerRow = isEOD
-    ? `<tr>${th("Date")}${th("What I did")}${th("What's next")}${th("What's unclear")}</tr>`
+    ? '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>'
+    : '<tr>' + th("Date") + th("Entry") + '</tr>';
+  return '<!DOCTYPE html><html><head><title>' + pageTitle + '</title></head><body><table border="1" style="border-collapse:collapse;width:100%">' + headerRow + firstRowHtml + '</table></body></html>';
+}</th>`;
+  const headerRow = isEOD
+    ? `<tr>${th("Date")}${th("What I did today")}${th("What\'s next")}${th("What is unclear")}</tr>`
     : `<tr>${th("Date")}${th("Entry")}</tr>`;
   return `<!DOCTYPE html><html><head><title>${pageTitle}</title></head><body><table data-id="maintable" border="1" style="border-collapse:collapse;width:100%">${headerRow}${firstRowHtml}</table></body></html>`;
 }
@@ -658,8 +681,10 @@ async function getOrCreatePage(secId, pageTitle, firstRowHtml, token) {
     body: pageHtml
   });
   if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Could not create page "${pageTitle}": ${res.status} ${errText.substring(0,100)}`);
+    let errText = "";
+    try { errText = await res.text(); } catch {}
+    console.error("Page create failed:", res.status, errText);
+    throw new Error("Create page " + res.status + ": " + errText.substring(0, 150));
   }
   const created = await res.json();
   return { id: created.id, isNew: true };
@@ -990,37 +1015,76 @@ async function saveCapture() {
 function loadTodayReflection() {
   const r = reflections[today()];
   if (r) {
-    document.getElementById("reflect-did").value = r.did || "";
-    document.getElementById("reflect-next").value = r.next || "";
-    document.getElementById("reflect-unclear").value = r.unclear || "";
+    setBullets("did", Array.isArray(r.did) ? r.did : (r.did ? [r.did] : []));
+    setBullets("next", Array.isArray(r.next) ? r.next : (r.next ? [r.next] : []));
+    setBullets("unclear", Array.isArray(r.unclear) ? r.unclear : (r.unclear ? [r.unclear] : []));
     showToast("Loaded today's reflection");
   } else {
     showToast("No reflection saved today yet");
   }
 }
 
+// Bullet point helpers
+function getBullets(field) {
+  const container = document.getElementById("bullets-" + field);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll(".bullet-input"))
+    .map(el => el.value.trim()).filter(Boolean);
+}
+
+function addBullet(field, value) {
+  value = value || "";
+  const container = document.getElementById("bullets-" + field);
+  if (!container) return;
+  const row = document.createElement("div");
+  row.className = "bullet-row";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "bullet-input";
+  input.placeholder = "Add a point...";
+  input.value = value;
+  const dot = document.createElement("span");
+  dot.className = "bullet-dot";
+  dot.textContent = "\u2022";
+  const del = document.createElement("button");
+  del.className = "bullet-del";
+  del.textContent = "\u00d7";
+  del.onclick = () => row.remove();
+  row.appendChild(dot);
+  row.appendChild(input);
+  row.appendChild(del);
+  container.appendChild(row);
+  input.focus();
+}
+
+function setBullets(field, items) {
+  const container = document.getElementById("bullets-" + field);
+  if (!container) return;
+  container.innerHTML = "";
+  (items || []).forEach(v => addBullet(field, v));
+}
+
+function bulletsToHtml(items) {
+  if (!items || !items.length) return "<em style=\'color:#999\'>\u2014</em>";
+  const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return "<ul style=\'margin:0;padding-left:16px\'>" + items.map(i => "<li>" + safe(i) + "</li>").join("") + "</ul>";
+}
+
 async function saveReflection() {
   const t = today();
   const r = {
     date: t,
-    did: document.getElementById("reflect-did").value.trim(),
-    next: document.getElementById("reflect-next").value.trim(),
-    unclear: document.getElementById("reflect-unclear").value.trim()
+    did: getBullets("did"),
+    next: getBullets("next"),
+    unclear: getBullets("unclear")
   };
   reflections[t] = r;
   sv(SK.refs, reflections);
   renderReflectionsList();
-  showToast("Reflection saved ✓");
+  showToast("Reflection saved \u2713");
   if (getAccount()) {
-    const safe = (s) => (s||"")
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/\n/g,"<br/>");
-    const rowHtml = `<tr>
-      <td style="min-width:110px;padding:6px 10px;border:1px solid #ddd;white-space:nowrap;font-weight:bold">${r.date}</td>
-      <td style="padding:6px 10px;border:1px solid #ddd">${safe(r.did)}</td>
-      <td style="padding:6px 10px;border:1px solid #ddd">${safe(r.next)}</td>
-      <td style="padding:6px 10px;border:1px solid #ddd">${safe(r.unclear)}</td>
-    </tr>`;
+    const td = (c) => "<td style=\'padding:8px 12px;border:1px solid #ccc;vertical-align:top\'>" + c + "</td>";
+    const rowHtml = "<tr><td style=\'min-width:100px;padding:8px 12px;border:1px solid #ccc;font-weight:bold;vertical-align:top;white-space:nowrap\'>" + r.date + "</td>" + td(bulletsToHtml(r.did)) + td(bulletsToHtml(r.next)) + td(bulletsToHtml(r.unclear)) + "</tr>";
     await syncRowToPage("EOD closure", rowHtml);
   } else {
     setSyncStatus("idle", "Saved locally");
@@ -1041,14 +1105,18 @@ function renderReflectionsList() {
     const item = document.createElement("div");
     item.className = "note-item";
     item.style.cursor = "pointer";
+    const preview = (v) => {
+      const arr = Array.isArray(v) ? v : (v ? [v] : []);
+      return arr.length ? "• " + arr.slice(0,2).join(" • ") + (arr.length>2?"...":"") : "";
+    };
     item.innerHTML = `
       <div class="note-meta"><span class="note-date mono" style="font-size:10px;color:var(--text-muted)">${date}</span></div>
-      ${r.did ? `<div style="margin-bottom:6px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:3px">DID</div><div class="note-text">${r.did.substring(0,100)}${r.did.length>100?"...":""}</div></div>` : ""}
-      ${r.next ? `<div><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:3px">NEXT</div><div class="note-text">${r.next.substring(0,80)}${r.next.length>80?"...":""}</div></div>` : ""}`;
+      ${r.did&&r.did.length ? `<div style="margin-bottom:6px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:3px">DID</div><div class="note-text">${preview(r.did)}</div></div>` : ""}
+      ${r.next&&r.next.length ? `<div><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:3px">NEXT</div><div class="note-text">${preview(r.next)}</div></div>` : ""}`;
     item.onclick = () => {
-      document.getElementById("reflect-did").value = r.did || "";
-      document.getElementById("reflect-next").value = r.next || "";
-      document.getElementById("reflect-unclear").value = r.unclear || "";
+      setBullets("did", Array.isArray(r.did) ? r.did : (r.did ? [r.did] : []));
+      setBullets("next", Array.isArray(r.next) ? r.next : (r.next ? [r.next] : []));
+      setBullets("unclear", Array.isArray(r.unclear) ? r.unclear : (r.unclear ? [r.unclear] : []));
       showToast("Loaded reflection for " + date);
     };
     list.appendChild(item);
@@ -1207,6 +1275,11 @@ function showPage(name) {
     document.getElementById("reflect-date").textContent =
       new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" }).toUpperCase();
     renderReflectionsList();
+    // Start each section with one empty bullet if none exist
+    ["did","next","unclear"].forEach(f => {
+      const c = document.getElementById("bullets-" + f);
+      if (c && c.querySelectorAll(".bullet-input").length === 0) addBullet(f);
+    });
   }
 }
 
