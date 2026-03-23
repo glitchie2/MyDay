@@ -23,7 +23,7 @@
     document.head.appendChild(ml);
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -48,12 +48,12 @@
     }
     html, body {
       height: 100%; background: var(--bg); color: var(--text);
-      font-family: 'Georgia', serif; overscroll-behavior: none;
+      font-family: 'Inter', sans-serif; overscroll-behavior: none;
       transition: background 0.3s, color 0.3s;
     }
     #app { max-width: 430px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
     .mono { font-family: 'DM Mono', monospace; }
-    .serif { font-family: 'Playfair Display', serif; }
+    .serif { font-family: 'Inter', sans-serif; font-weight: 500; letter-spacing: -0.01em; }
     button { cursor: pointer; font-family: inherit; }
 
     /* BOTTOM NAV */
@@ -150,7 +150,7 @@
     textarea, input[type="text"] {
       width: 100%; background: var(--bg-input); border: 1px solid var(--border);
       border-radius: 4px; padding: 12px; color: var(--input-text);
-      font-family: 'Georgia', serif; font-size: 14px; resize: none;
+      font-family: 'Inter', sans-serif; font-size: 14px; resize: none;
       outline: none; transition: border-color 0.2s, background 0.3s;
     }
     textarea:focus, input[type="text"]:focus { border-color: var(--border-strong); }
@@ -181,15 +181,23 @@
     .bullet-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; min-height: 10px; }
     .bullet-row { display: flex; align-items: center; gap: 8px; }
     .bullet-dot { color: var(--text-muted); font-size: 18px; flex-shrink: 0; line-height: 1; user-select: none; }
-    .bullet-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--input-text); font-family: 'Georgia', serif; font-size: 14px; outline: none; transition: border-color 0.2s, background 0.3s; }
+    .bullet-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--input-text); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s, background 0.3s; }
     .bullet-input:focus { border-color: var(--border-strong); }
     .bullet-input::placeholder { color: var(--placeholder); font-style: italic; }
     .bullet-del { background: none; border: none; color: var(--text-dimmer); font-size: 20px; padding: 0 4px; line-height: 1; flex-shrink: 0; transition: color 0.2s; }
     .bullet-del:hover { color: #B05C5C; }
     .add-bullet-btn:active { opacity: 0.7; }
+    /* Tooltip / info bubble */
+    .info-btn { background:none;border:none;cursor:pointer;padding:0 0 0 6px;line-height:1;position:relative;display:inline-flex;align-items:center; }
+    .info-btn-circle { width:14px;height:14px;border-radius:50%;border:1px solid var(--text-dimmer);color:var(--text-dimmer);font-size:8px;font-family:'DM Mono',monospace;display:inline-flex;align-items:center;justify-content:center;font-weight:600;transition:all 0.15s;flex-shrink:0; }
+    .info-btn:hover .info-btn-circle, .info-btn:focus .info-btn-circle { border-color:var(--text-muted);color:var(--text-muted); }
+    .info-bubble { position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:240px;background:var(--bg-card);border:1px solid var(--border-strong);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--text);line-height:1.6;z-index:200;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:'Inter',sans-serif; }
+    .info-bubble::after { content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--border-strong); }
+    .info-bubble b { color:var(--text-heading);font-weight:600; }
+    .info-btn:hover .info-bubble, .info-btn:focus .info-bubble { display:block; }
     .bullet-row { display: flex; align-items: center; gap: 8px; }
     .bullet-dot { color: var(--text-muted); font-size: 16px; flex-shrink: 0; line-height: 1; }
-    .bullet-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--input-text); font-family: 'Georgia', serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    .bullet-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--input-text); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
     .bullet-input:focus { border-color: var(--border-strong); }
     .bullet-del { background: none; border: none; color: var(--text-dimmer); font-size: 18px; padding: 2px 6px; line-height: 1; flex-shrink: 0; }
     .add-bullet-btn { background: none; border: 1px dashed var(--border); border-radius: 4px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; width: 100%; transition: all 0.2s; }
@@ -276,25 +284,67 @@
   <!-- ===== REFLECT ===== -->
   <div class="page" id="page-reflect">
     <div class="topbar">
-      <div style="padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <div style="padding-bottom:14px;border-bottom:1px solid var(--border)">
         <div class="mono" id="reflect-date" style="font-size:9px;letter-spacing:2px;color:var(--text-dimmer);margin-bottom:4px"></div>
-        <h2 class="serif" style="font-size:20px;font-weight:400;color:var(--text-heading)">End of Day</h2>
+        <h2 class="serif" style="font-size:20px;font-weight:500;color:var(--text-heading)">End of Day</h2>
       </div>
     </div>
     <div class="scroll-area">
+      <!-- MOOD / ENERGY CHECK-IN -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:14px 16px;margin-bottom:16px">
+        <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:14px;letter-spacing:2px">MOOD &amp; ENERGY — HOW WAS TODAY?</div>
+        <div style="margin-bottom:12px">
+          <div style="display:flex;align-items:center;margin-bottom:8px">
+            <span class="mono" style="font-size:9px;color:var(--text-muted)">MOOD</span>
+            <button class="info-btn" tabindex="0">
+              <span class="info-btn-circle">?</span>
+              <div class="info-bubble">
+                <b>How to rate your mood:</b><br/>
+                Mood reflects your <b>emotional state</b> — how you feel inside, independent of what happened.<br/><br/>
+                😞 <b>1</b> — Distressed, numb, or very low<br/>
+                😕 <b>2</b> — Irritable, anxious, or flat<br/>
+                😐 <b>3</b> — Neutral, neither good nor bad<br/>
+                🙂 <b>4</b> — Calm, content, generally okay<br/>
+                😊 <b>5</b> — Genuinely good, light, at ease<br/><br/>
+                <b>Tip:</b> Rate how you felt <em>most of the day</em>, not just right now.
+              </div>
+            </button>
+          </div>
+          <div id="mood-picker" style="display:flex;gap:6px"></div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;margin-bottom:8px">
+            <span class="mono" style="font-size:9px;color:var(--text-muted)">ENERGY</span>
+            <button class="info-btn" tabindex="0">
+              <span class="info-btn-circle">?</span>
+              <div class="info-bubble">
+                <b>How to rate your energy:</b><br/>
+                Energy reflects your <b>physical and mental capacity</b> — how much you had to give.<br/><br/>
+                🪫 <b>1</b> — Completely drained, couldn't function<br/>
+                😴 <b>2</b> — Low, tired, needed effort to do basics<br/>
+                ⚡ <b>3</b> — Moderate, got through the day<br/>
+                🔋 <b>4</b> — Good, felt capable and present<br/>
+                🚀 <b>5</b> — High, sharp, felt unstoppable<br/><br/>
+                <b>Tip:</b> Notice patterns — low energy often appears <em>before</em> mood drops.
+              </div>
+            </button>
+          </div>
+          <div id="energy-picker" style="display:flex;gap:6px"></div>
+        </div>
+      </div>
       <div class="reflection-block">
-        <div class="reflection-label">✦ WHAT I DID TODAY</div>
-        <div id="bullets-did" class="bullet-list"></div>
+        <div class="reflection-label" style="color:#3D8A5E">✦ WHAT I DID TODAY</div>
+        <div id="bullets-did" class="bullet-list" data-symbol="✦" data-color="#3D8A5E"></div>
         <button class="add-bullet-btn" onclick="addBullet('did')">+ add point</button>
       </div>
       <div class="reflection-block">
-        <div class="reflection-label">→ WHAT'S NEXT</div>
-        <div id="bullets-next" class="bullet-list"></div>
+        <div class="reflection-label" style="color:#4A90A4">→ WHAT IS NEXT</div>
+        <div id="bullets-next" class="bullet-list" data-symbol="→" data-color="#4A90A4"></div>
         <button class="add-bullet-btn" onclick="addBullet('next')">+ add point</button>
       </div>
       <div class="reflection-block">
-        <div class="reflection-label">? WHAT IS UNCLEAR</div>
-        <div id="bullets-unclear" class="bullet-list"></div>
+        <div class="reflection-label" style="color:#C8962A">? WHAT IS UNCLEAR</div>
+        <div id="bullets-unclear" class="bullet-list" data-symbol="?" data-color="#C8962A"></div>
         <button class="add-bullet-btn" onclick="addBullet('unclear')">+ add point</button>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
@@ -303,6 +353,47 @@
       </div>
       <div class="section-label" style="margin-top:24px">PAST REFLECTIONS</div>
       <div id="reflections-list"></div>
+
+      <!-- WEEKLY REVIEW — appears only on Saturdays -->
+      <div id="weekly-section" style="display:none;margin-top:8px">
+        <div style="height:1px;background:var(--border);margin:24px 0"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <span style="font-size:20px">📅</span>
+          <div>
+            <div class="serif" style="font-size:18px;font-weight:500;color:var(--text-heading)">Weekly Review</div>
+            <div class="mono" id="weekly-label" style="font-size:9px;color:var(--text-dimmer);margin-top:2px"></div>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:12px 14px;margin-bottom:16px">
+          <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">THIS WEEK AT A GLANCE</div>
+          <div id="weekly-stats" style="font-size:13px;color:var(--text-muted);line-height:1.8"></div>
+        </div>
+        <div class="reflection-block">
+          <div class="reflection-label" style="color:#3D8A5E">✦ WHAT WENT WELL THIS WEEK</div>
+          <div id="wbullets-well" class="bullet-list" data-symbol="✦" data-color="#3D8A5E"></div>
+          <button class="add-bullet-btn" onclick="addBullet('well','','weekly')">+ add point</button>
+        </div>
+        <div class="reflection-block">
+          <div class="reflection-label" style="color:#B05C5C">✕ WHAT DRAINED ME</div>
+          <div id="wbullets-drained" class="bullet-list" data-symbol="✕" data-color="#B05C5C"></div>
+          <button class="add-bullet-btn" onclick="addBullet('drained','','weekly')">+ add point</button>
+        </div>
+        <div class="reflection-block">
+          <div class="reflection-label" style="color:#4A90A4">→ WHAT I WANT TO DO DIFFERENTLY</div>
+          <div id="wbullets-differently" class="bullet-list" data-symbol="→" data-color="#4A90A4"></div>
+          <button class="add-bullet-btn" onclick="addBullet('differently','','weekly')">+ add point</button>
+        </div>
+        <div class="reflection-block">
+          <div class="reflection-label" style="color:#C8962A">◎ FOCUS FOR NEXT WEEK</div>
+          <div id="wbullets-focus" class="bullet-list" data-symbol="◎" data-color="#C8962A"></div>
+          <button class="add-bullet-btn" onclick="addBullet('focus','','weekly')">+ add point</button>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+          <button class="btn-primary" onclick="saveWeeklyReview()">Save Week + Sync</button>
+        </div>
+        <div class="section-label" style="margin-top:24px">PAST WEEKLY REVIEWS</div>
+        <div id="weekly-past-list"></div>
+      </div>
     </div>
   </div>
 
@@ -337,10 +428,49 @@
     </div>
   </div>
 
+  <!-- FOCUS PAGE -->
+  <div class="page" id="page-focus">
+    <div class="topbar">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div class="mono" id="focus-date" style="font-size:9px;letter-spacing:2px;color:var(--text-dimmer);margin-bottom:4px"></div>
+          <h1 class="serif" style="font-size:22px;font-weight:500;color:var(--text-heading);line-height:1.1">Focus</h1>
+        </div>
+        <div style="text-align:right">
+          <div class="mono" id="focus-pct" style="font-size:22px;line-height:1;color:#4A90A4"></div>
+          <div class="mono" id="focus-count" style="font-size:9px;color:var(--text-muted);margin-top:2px"></div>
+        </div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="focus-prog" style="background:#4A90A4"></div></div>
+    </div>
+    <div class="scroll-area">
+      <!-- Add task input -->
+      <div style="display:flex;gap:8px;margin-bottom:20px;align-items:center">
+        <input type="text" id="new-task-input" placeholder="Add a task..." style="flex:1;padding:11px 14px;font-size:14px"
+          onkeydown="if(event.key==='Enter')addTask()" />
+        <button onclick="addTask()" style="background:#4A90A4;color:#fff;border:none;border-radius:20px;padding:11px 16px;font-family:'DM Mono',monospace;font-size:12px;flex-shrink:0">Add</button>
+      </div>
+      <!-- Carried over banner -->
+      <div id="carried-banner" style="display:none;background:#4A90A4 14;border:1px solid #4A90A444;border-radius:4px;padding:10px 14px;margin-bottom:14px">
+        <span class="mono" style="font-size:10px;color:#4A90A4" id="carried-text"></span>
+      </div>
+      <!-- Task list -->
+      <div id="focus-task-list"></div>
+      <!-- Completed section -->
+      <div id="focus-done-section" style="display:none;margin-top:20px">
+        <div class="section-label" style="margin-top:0">COMPLETED TODAY</div>
+        <div id="focus-done-list"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <nav id="main-nav">
     <button class="nav-btn active" onclick="showPage('today')" id="nav-today">
       <span class="nav-icon">📋</span><span class="nav-label">TODAY</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('focus')" id="nav-focus">
+      <span class="nav-icon">🎯</span><span class="nav-label">FOCUS</span>
     </button>
     <button class="nav-btn" onclick="showPage('capture')" id="nav-capture">
       <span class="nav-icon">💡</span><span class="nav-label">CAPTURE</span>
@@ -653,12 +783,16 @@ async function getSectionId(nbId, token) {
 // Get or create a page by title within a section
 // Build page HTML with table header + first data row already inside
 function buildPageHtml(pageTitle, firstRowHtml) {
-  const isEOD = pageTitle === "EOD closure";
-  const th = (t) => '<th style="padding:6px 10px;border:1px solid #ccc;background:#f0f0f0;font-weight:bold">' + t + '</th>';
-  const headerRow = isEOD
-    ? '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>'
-    : '<tr>' + th("Date") + th("Entry") + '</tr>';
-  return '<!DOCTYPE html><html><head><title>' + pageTitle + '</title></head><body><table border="1" style="border-collapse:collapse;width:100%">' + headerRow + firstRowHtml + '</table></body></html>';
+  const th = (t) => '<th style="padding:6px 10px;border:1px solid #ccc;background:#f0f0f0;font-weight:bold;text-align:left">' + t + '</th>';
+  let headerRow;
+  if (pageTitle === "EOD closure") {
+    headerRow = '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>';
+  } else if (pageTitle === "Weekly Reviews") {
+    headerRow = '<tr>' + th("Week") + th("Stats") + th("✦ Went well") + th("✕ Drained me") + th("→ Do differently") + th("◎ Focus next week") + '</tr>';
+  } else {
+    headerRow = '<tr>' + th("Date") + th("Entry") + '</tr>';
+  }
+  return '<!DOCTYPE html><html><head><title>' + pageTitle + '</title></head><body><table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:14px">' + headerRow + firstRowHtml + '</table></body></html>';
 }
 
 // Get page ID, or create the page with the first row already inside the table
@@ -685,26 +819,46 @@ async function getOrCreatePage(secId, pageTitle, firstRowHtml, token) {
   return { id: created.id, isNew: true };
 }
 
-// Append a row inside the table using PATCH with table as target
+// Append a row inside the existing table using PATCH
 async function appendRowToPage(pageId, rowHtml, token) {
-  // Get page content to find the table element ID
   try {
+    // Fetch page HTML to extract the table element ID
     const res = await fetch(`${ON_BASE}/pages/${pageId}/content`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const html = await res.text();
-    // Extract the table's data-id or id attribute
-    const tableMatch = html.match(/<table[^>]*\sid="([^"]+)"/i) || html.match(/<table[^>]*data-id="([^"]+)"/i);
-    if (tableMatch) {
-      const tableId = tableMatch[1];
+    console.log("Page HTML snippet:", html.substring(0, 500));
+
+    // OneNote wraps elements with data-id attributes — try multiple patterns
+    const patterns = [
+      /id="([^"]{10,})"/i,           // Standard id attribute (min 10 chars to skip short ids)
+      /data-id="([^"]+)"/i,          // data-id attribute
+    ];
+    let tableId = null;
+    // Find the first <table and extract its ID
+    const tableIdx = html.indexOf("<table");
+    if (tableIdx > -1) {
+      const tableTag = html.substring(tableIdx, html.indexOf(">", tableIdx) + 1);
+      console.log("Table tag:", tableTag);
+      for (const pat of patterns) {
+        const m = tableTag.match(pat);
+        if (m) { tableId = m[1]; break; }
+      }
+    }
+
+    if (tableId) {
+      console.log("Appending to table ID:", tableId);
       const commands = [{ action: "append", target: tableId, content: rowHtml }];
       const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+      console.log("Patch status:", patchRes.status);
       if (patchRes.ok) return true;
+    } else {
+      console.warn("No table ID found in page — falling back to last-row append");
     }
-  } catch(e) { console.warn("Table target append failed, trying body:", e); }
+  } catch(e) { console.warn("Table append error:", e); }
 
-  // Fallback: append to body (row will appear after table, not ideal but data is saved)
-  const commands = [{ action: "append", target: "body", content: `<table border="1" style="border-collapse:collapse;width:100%">${rowHtml}</table>` }];
+  // Last resort fallback — append as new table (not ideal)
+  const commands = [{ action: "append", target: "body", content: rowHtml }];
   const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
   return patchRes.ok;
 }
@@ -747,7 +901,7 @@ async function syncRowToPage(pageName, rowHtml) {
 }
 
 // ===================== DATA =====================
-const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed" };
+const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly" };
 const today = () => new Date().toISOString().split("T")[0];
 const ld = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -798,6 +952,9 @@ const TAGS = [
 
 let history2 = {}, captures = [], reflections = {}, habits = [];
 let checked = {}, collapsedSections = {}, activeTag = "thought", filterTag = "all", progView = "week", newHabitSection = "MORNING";
+let moodData = {}, weeklyReviews = {};
+
+let tasks = [];
 
 function loadAll() {
   history2 = ld(SK.hist, {});
@@ -807,6 +964,15 @@ function loadAll() {
   reflections = ld(SK.refs, {});
   habits = ld(SK.habits, null) || DEFAULT_HABITS;
   collapsedSections = ld(SK.collapsed, {});
+  tasks = ld(SK.tasks, []);
+  moodData = ld(SK.mood, {});
+  weeklyReviews = ld(SK.weekly, {});
+  // Auto-delete tasks older than 7 days
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+  const cutoffStr = cutoff.toISOString().split("T")[0];
+  const before = tasks.length;
+  tasks = tasks.filter(t => t.done || t.createdAt >= cutoffStr);
+  if (tasks.length !== before) sv(SK.tasks, tasks);
 }
 
 function saveChecked() {
@@ -896,6 +1062,7 @@ function renderToday() {
 
     sHabits.forEach(habit => {
       const done = !!checked[habit.id];
+      const streak = getHabitStreak(habit.id);
       const card = document.createElement("div");
       card.className = "item-card" + (done ? " done" : "");
       card.style.borderColor = done ? habit.color + "44" : "var(--border)";
@@ -906,7 +1073,8 @@ function renderToday() {
         <div style="flex:1;min-width:0">
           <div class="item-task">${habit.task}</div>
           ${habit.note ? `<div class="item-note">${habit.note}</div>` : ""}
-        </div>`;
+        </div>
+        ${streak >= 2 ? `<span style="font-size:10px;font-family:'DM Mono',monospace;color:${habit.color};padding:2px 6px;background:${habit.color}18;border-radius:8px;flex-shrink:0;align-self:center">${streak}🔥</span>` : ""}`;
       card.addEventListener("click", () => {
         checked[habit.id] = !checked[habit.id];
         saveChecked();
@@ -1027,15 +1195,21 @@ function getBullets(field) {
     .map(el => el.value.trim()).filter(Boolean);
 }
 
-function addBullet(field, value, skipFocus) {
+function addBullet(field, value, mode) {
+  // mode: undefined/falsy = reflect, "weekly" = weekly review, true = skipFocus (legacy)
+  const skipFocus = mode === true;
+  const prefix = mode === "weekly" ? "wbullets-" : "bullets-";
   value = value || "";
-  const container = document.getElementById("bullets-" + field);
+  const container = document.getElementById(prefix + field);
   if (!container) return;
+  const symbol = container.dataset.symbol || "•";
+  const color = container.dataset.color || "var(--text-muted)";
   const row = document.createElement("div");
   row.className = "bullet-row";
   const dot = document.createElement("span");
   dot.className = "bullet-dot";
-  dot.textContent = "\u2022";
+  dot.textContent = symbol;
+  dot.style.color = color;
   const input = document.createElement("input");
   input.type = "text";
   input.className = "bullet-input";
@@ -1045,7 +1219,7 @@ function addBullet(field, value, skipFocus) {
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      addBullet(field, "");
+      addBullet(field, "", mode);
     } else if (e.key === "Backspace" && input.value === "") {
       // Backspace on empty bullet removes it and focuses previous
       e.preventDefault();
@@ -1072,13 +1246,14 @@ function setBullets(field, items) {
   const container = document.getElementById("bullets-" + field);
   if (!container) return;
   container.innerHTML = "";
-  (items || []).forEach(v => addBullet(field, v, true));
+  (items || []).forEach(v => addBullet(field, v, true)); // true = skipFocus
 }
 
-function bulletsToHtml(items) {
-  if (!items || !items.length) return "<em style=\'color:#999\'>\u2014</em>";
+function bulletsToHtml(items, symbol) {
+  symbol = symbol || "•";
+  if (!items || !items.length) return '<em style="color:#999">—</em>';
   const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  return "<ul style=\'margin:0;padding-left:16px\'>" + items.map(i => "<li>" + safe(i) + "</li>").join("") + "</ul>";
+  return items.map(i => symbol + " " + safe(i)).join("<br/>");
 }
 
 async function saveReflection() {
@@ -1091,11 +1266,12 @@ async function saveReflection() {
   };
   reflections[t] = r;
   sv(SK.refs, reflections);
+  if (moodData[t]) sv(SK.mood, moodData);
   renderReflectionsList();
-  showToast("Reflection saved \u2713");
+  showToast("Reflection saved ✓");
   if (getAccount()) {
-    const td = (c) => "<td style=\'padding:8px 12px;border:1px solid #ccc;vertical-align:top\'>" + c + "</td>";
-    const rowHtml = "<tr><td style=\'min-width:100px;padding:8px 12px;border:1px solid #ccc;font-weight:bold;vertical-align:top;white-space:nowrap\'>" + r.date + "</td>" + td(bulletsToHtml(r.did)) + td(bulletsToHtml(r.next)) + td(bulletsToHtml(r.unclear)) + "</tr>";
+    const td = (c) => '<td style="padding:8px 12px;border:1px solid #ccc;vertical-align:top;line-height:1.6">' + c + '</td>';
+    const rowHtml = '<tr><td style="min-width:100px;padding:8px 12px;border:1px solid #ccc;font-weight:bold;vertical-align:top;white-space:nowrap">' + r.date + '</td>' + td(bulletsToHtml(r.did,"✦")) + td(bulletsToHtml(r.next,"→")) + td(bulletsToHtml(r.unclear,"?")) + '</tr>';
     await syncRowToPage("EOD closure", rowHtml);
   } else {
     setSyncStatus("idle", "Saved locally");
@@ -1308,23 +1484,382 @@ function deleteHabit(id) {
   showToast("Habit removed");
 }
 
+// ===================== FOCUS =====================
+function addTask(text, createdAt, fromPull) {
+  const input = document.getElementById("new-task-input");
+  text = text || (input ? input.value.trim() : "");
+  if (!text) return;
+  const task = {
+    id: "t" + Date.now() + Math.random().toString(36).slice(2,6),
+    text,
+    done: false,
+    createdAt: createdAt || today(),
+    doneAt: null,
+  };
+  tasks.push(task);
+  sv(SK.tasks, tasks);
+  if (input && !fromPull) { input.value = ""; input.focus(); }
+  renderFocus();
+}
+
+function toggleTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  task.done = !task.done;
+  task.doneAt = task.done ? today() : null;
+  sv(SK.tasks, tasks);
+  renderFocus();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  sv(SK.tasks, tasks);
+  renderFocus();
+}
+
+function getTaskAge(createdAt) {
+  const created = new Date(createdAt);
+  const now = new Date();
+  return Math.floor((now - created) / (1000 * 60 * 60 * 24));
+}
+
+function taskAgeColor(createdAt) {
+  const age = getTaskAge(createdAt);
+  if (age >= 5) return "#B05C5C";
+  if (age >= 2) return "#C8962A";
+  return null;
+}
+
+function renderFocus() {
+  const t = today();
+  document.getElementById("focus-date").textContent =
+    new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" }).toUpperCase();
+
+  // Auto-pull from yesterday's What is Next once per day
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yKey = yesterday.toISOString().split("T")[0];
+  const yRef = reflections[yKey];
+  const alreadyPulled = ld("yd2-pulled-" + t, false);
+  if (yRef && yRef.next && yRef.next.length && !alreadyPulled) {
+    const nextItems = Array.isArray(yRef.next) ? yRef.next : [yRef.next];
+    let added = 0;
+    nextItems.forEach(item => {
+      if (item && !tasks.find(task => task.text === item && !task.done)) {
+        addTask(item, t, true);
+        added++;
+      }
+    });
+    sv("yd2-pulled-" + t, true);
+    if (added > 0) {
+      const banner = document.getElementById("carried-banner");
+      const bannerText = document.getElementById("carried-text");
+      if (banner && bannerText) {
+        bannerText.textContent = added + " task" + (added>1?"s":"") + " pulled from yesterday\'s What is Next";
+        banner.style.display = "block";
+      }
+    }
+  }
+
+  const active = tasks.filter(task => !task.done).sort((a,b) => a.createdAt.localeCompare(b.createdAt));
+  const done = tasks.filter(task => task.done && task.doneAt === t);
+
+  const total = active.length + done.length;
+  const pct = total ? Math.round(done.length / total * 100) : 0;
+  document.getElementById("focus-pct").textContent = pct + "%";
+  document.getElementById("focus-count").textContent = done.length + "/" + total + " done";
+  document.getElementById("focus-prog").style.width = pct + "%";
+
+  const list = document.getElementById("focus-task-list");
+  list.innerHTML = "";
+
+  if (!active.length) {
+    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-dimmer);font-style:italic;font-size:14px">${done.length > 0 ? "All tasks done ✦" : "No tasks yet — add one above"}</div>`;
+  }
+
+  active.forEach(task => {
+    const ageColor = taskAgeColor(task.createdAt);
+    const age = getTaskAge(task.createdAt);
+    const card = document.createElement("div");
+    card.style.cssText = `display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg-card);border:1px solid ${ageColor ? ageColor+"55" : "var(--border)"};border-radius:5px;margin-bottom:8px;transition:all 0.2s`;
+    card.innerHTML = `
+      <div onclick="toggleTask('${task.id}')" style="width:26px;height:26px;border-radius:50%;border:1.5px solid ${ageColor||"var(--border-strong)"};background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.15s" title="Mark done"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;color:${ageColor||"var(--text)"};font-weight:500;line-height:1.3">${task.text}</div>
+        ${age > 0 ? `<div class="mono" style="font-size:9px;color:${ageColor||"var(--text-dimmer)"};margin-top:4px">Day ${age+1}</div>` : ""}
+      </div>
+      <button onclick="deleteTask('${task.id}')" style="background:none;border:none;padding:4px 6px;font-size:18px;color:var(--text-dimmer);cursor:pointer;flex-shrink:0;line-height:1">×</button>`;
+    list.appendChild(card);
+  });
+
+  const doneSection = document.getElementById("focus-done-section");
+  const doneList = document.getElementById("focus-done-list");
+  if (done.length > 0) {
+    doneSection.style.display = "block";
+    doneList.innerHTML = "";
+    done.forEach(task => {
+      const item = document.createElement("div");
+      item.style.cssText = "display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:5px;margin-bottom:6px;opacity:0.4";
+      item.innerHTML = `
+        <div style="width:24px;height:24px;border-radius:50%;border:1.5px solid #3D8A5E;background:#3D8A5E22;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="#3D8A5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="flex:1;font-size:14px;color:var(--text-done);text-decoration:line-through;font-weight:500">${task.text}</div>
+        <button onclick="toggleTask('${task.id}')" style="background:none;border:none;font-size:10px;color:var(--text-dimmer);font-family:'DM Mono',monospace;cursor:pointer;padding:4px">↩</button>`;
+      doneList.appendChild(item);
+    });
+  } else {
+    doneSection.style.display = "none";
+  }
+}
+
+
+// ===================== MOOD TRACKER =====================
+const MOOD_EMOJIS   = ["😞","😕","😐","🙂","😊"];
+const ENERGY_EMOJIS = ["🪫","😴","⚡","🔋","🚀"];
+
+function renderMoodPicker() {
+  const t = today();
+  const saved = moodData[t] || {};
+  ["mood","energy"].forEach(type => {
+    const picker = document.getElementById(type + "-picker");
+    if (!picker) return;
+    const emojis = type === "mood" ? MOOD_EMOJIS : ENERGY_EMOJIS;
+    picker.innerHTML = "";
+    emojis.forEach((e, i) => {
+      const val = i + 1;
+      const selected = saved[type] === val;
+      const btn = document.createElement("button");
+      btn.style.cssText = `font-size:20px;background:${selected?"var(--border-strong)":"transparent"};border:2px solid ${selected?"var(--border-strong)":"transparent"};border-radius:8px;padding:4px 6px;cursor:pointer;transition:all 0.15s;line-height:1;flex:1;max-width:44px`;
+      btn.textContent = e;
+      btn.title = val + "/5";
+      btn.onclick = () => {
+        if (!moodData[t]) moodData[t] = {};
+        moodData[t][type] = val;
+        sv(SK.mood, moodData);
+        renderMoodPicker();
+      };
+      picker.appendChild(btn);
+    });
+  });
+}
+
+// ===================== HABIT STREAKS =====================
+function getHabitStreak(habitId) {
+  let streak = 0;
+  const d = new Date();
+  // Don't count today — streak is about consecutive past days completed
+  d.setDate(d.getDate() - 1);
+  for (let i = 0; i < 365; i++) {
+    const key = d.toISOString().split("T")[0];
+    if (history2[key] && history2[key][habitId]) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else break;
+  }
+  return streak;
+}
+
+// ===================== WEEKLY REVIEW =====================
+function getWeekKey() {
+  const d = new Date();
+  const day = d.getDay(); // 0=Sun
+  const diffToMon = (day === 0 ? -6 : 1 - day);
+  const mon = new Date(d); mon.setDate(d.getDate() + diffToMon);
+  return mon.toISOString().split("T")[0]; // Monday date as key
+}
+
+function getWeekLabel() {
+  const key = getWeekKey();
+  const mon = new Date(key);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const fmt = (d) => d.toLocaleDateString("en-US", { month:"short", day:"numeric" });
+  return "Week of " + fmt(mon) + " – " + fmt(sun);
+}
+
+function computeWeekStats() {
+  const mon = new Date(getWeekKey());
+  let habitTotal = 0, habitDone = 0, taskTotal = 0, taskDone = 0;
+  let moodSum = 0, moodCount = 0, energySum = 0, energyCount = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const key = d.toISOString().split("T")[0];
+    if (key > today()) continue;
+    const dayHabits = history2[key] || {};
+    habitTotal += habits.length;
+    habitDone += Object.values(dayHabits).filter(Boolean).length;
+    const m = moodData[key];
+    if (m && m.mood)   { moodSum += m.mood;   moodCount++; }
+    if (m && m.energy) { energySum += m.energy; energyCount++; }
+  }
+  const weekTasks = tasks.filter(t => t.createdAt >= getWeekKey());
+  taskTotal = weekTasks.length;
+  taskDone  = weekTasks.filter(t => t.done).length;
+
+  const pct = habitTotal ? Math.round(habitDone/habitTotal*100) : 0;
+  const avgMood   = moodCount   ? (moodSum/moodCount).toFixed(1)   : "–";
+  const avgEnergy = energyCount ? (energySum/energyCount).toFixed(1) : "–";
+
+  return { pct, habitDone, habitTotal, taskDone, taskTotal, avgMood, avgEnergy };
+}
+
+function renderWeeklyPage() {
+  const label = document.getElementById("weekly-label");
+  if (label) label.textContent = getWeekLabel().toUpperCase();
+
+  const stats = computeWeekStats();
+  const statsEl = document.getElementById("weekly-stats");
+  if (statsEl) {
+    statsEl.innerHTML =
+      "Habits: <strong>" + stats.habitDone + "/" + stats.habitTotal + "</strong> (" + stats.pct + "%)&nbsp;&nbsp;•&nbsp;&nbsp;" +
+      "Tasks: <strong>" + stats.taskDone + "/" + stats.taskTotal + "</strong>&nbsp;&nbsp;•&nbsp;&nbsp;" +
+      "Avg mood: <strong>" + stats.avgMood + "/5</strong>&nbsp;&nbsp;•&nbsp;&nbsp;" +
+      "Avg energy: <strong>" + stats.avgEnergy + "/5</strong>";
+  }
+
+  // Load saved weekly review if exists
+  const saved = weeklyReviews[getWeekKey()];
+  ["well","drained","differently","focus"].forEach(f => {
+    const items = saved ? (saved[f] || []) : [];
+    const container = document.getElementById("wbullets-" + f);
+    if (!container) return;
+    container.innerHTML = "";
+    items.forEach(v => addBullet(f, v, "weekly"));
+    if (!items.length) addBullet(f, "", "weekly");
+  });
+
+  renderWeeklyPastList();
+}
+
+function getWeeklyBullets(field) {
+  const container = document.getElementById("wbullets-" + field);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll(".bullet-input"))
+    .map(el => el.value.trim()).filter(Boolean);
+}
+
+async function saveWeeklyReview() {
+  const key = getWeekKey();
+  const stats = computeWeekStats();
+  const review = {
+    key,
+    label: getWeekLabel(),
+    stats,
+    well:        getWeeklyBullets("well"),
+    drained:     getWeeklyBullets("drained"),
+    differently: getWeeklyBullets("differently"),
+    focus:       getWeeklyBullets("focus"),
+    savedAt: today()
+  };
+  weeklyReviews[key] = review;
+  sv(SK.weekly, weeklyReviews);
+  showToast("Weekly review saved ✓");
+  renderWeeklyPastList();
+
+  if (getAccount()) {
+    const s = review.stats;
+    const safe = (str) => (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const bulletCell = (items, sym) =>
+      items && items.length ? items.map(i => sym + " " + safe(i)).join("<br/>") : '<em style="color:#999">—</em>';
+    const td = (c) => '<td style="padding:8px 12px;border:1px solid #ccc;vertical-align:top;line-height:1.7">' + c + '</td>';
+
+    // One row per week appended to a single "Weekly Reviews" page
+    const rowHtml =
+      '<tr>' +
+        '<td style="padding:8px 12px;border:1px solid #ccc;font-weight:bold;white-space:nowrap;vertical-align:top">' + safe(review.label) + '</td>' +
+        '<td style="padding:8px 12px;border:1px solid #ccc;vertical-align:top;font-size:12px;color:#666">' +
+          'Habits ' + s.habitDone + '/' + s.habitTotal + ' (' + s.pct + '%) · Tasks ' + s.taskDone + '/' + s.taskTotal + ' · Mood ' + s.avgMood + '/5 · Energy ' + s.avgEnergy + '/5' +
+        '</td>' +
+        td(bulletCell(review.well,"✦")) +
+        td(bulletCell(review.drained,"✕")) +
+        td(bulletCell(review.differently,"→")) +
+        td(bulletCell(review.focus,"◎")) +
+      '</tr>';
+
+    await syncRowToPage("Weekly Reviews", rowHtml);
+  }
+}
+
+async function getOrCreateSection(nbId, sectionName, token) {
+  const data = await graphGet(ON_BASE + "/notebooks/" + nbId + "/sections?$select=id,displayName", token);
+  if (data.value) {
+    const sec = data.value.find(s => s.displayName === sectionName);
+    if (sec) return sec.id;
+  }
+  const res = await fetch(ON_BASE + "/notebooks/" + nbId + "/sections", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ displayName: sectionName })
+  });
+  const created = await res.json();
+  return created.id;
+}
+
+function renderWeeklyPastList() {
+  const list = document.getElementById("weekly-past-list");
+  if (!list) return;
+  const currentKey = getWeekKey();
+  const keys = Object.keys(weeklyReviews).filter(k => k !== currentKey).sort().reverse().slice(0,8);
+  list.innerHTML = "";
+  if (!keys.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-style:italic;font-size:13px">Past reviews will appear here</div>';
+    return;
+  }
+  keys.forEach(key => {
+    const r = weeklyReviews[key];
+    const card = document.createElement("div");
+    card.className = "note-item";
+    card.style.cursor = "pointer";
+    const s = r.stats || {};
+    const header = document.createElement("div");
+    header.style.cssText = "display:flex;justify-content:space-between;align-items:center";
+    header.innerHTML = '<span class="mono" style="font-size:10px;color:var(--text-muted)">' + (r.label||key) + '</span><span class="expand-chevron" style="font-size:11px;color:var(--text-dimmer);transition:transform 0.2s">▾</span>';
+    const summary = document.createElement("div");
+    summary.style.cssText = "font-size:11px;color:var(--note-text);margin-top:5px";
+    summary.textContent = s.pct !== undefined ? "Habits " + s.pct + "% · Tasks " + (s.taskDone||0) + "/" + (s.taskTotal||0) + " · Mood " + (s.avgMood||"–") + "/5" : "";
+    const detail = document.createElement("div");
+    detail.style.cssText = "display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px";
+    const sec = (sym, label, items) => {
+      const arr = items || [];
+      return '<div style="margin-bottom:10px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:4px">' + label + '</div>' +
+        '<div style="font-size:13px;color:var(--text);line-height:1.6">' + (arr.length ? arr.map(i=>sym+" "+i).join("<br/>") : '<em style="color:var(--text-dimmer)">—</em>') + '</div></div>';
+    };
+    detail.innerHTML = sec("✦","WENT WELL",r.well) + sec("✕","DRAINED ME",r.drained) + sec("→","DO DIFFERENTLY",r.differently) + sec("◎","FOCUS NEXT WEEK",r.focus);
+    card.appendChild(header); card.appendChild(summary); card.appendChild(detail);
+    card.addEventListener("click", () => {
+      const open = detail.style.display !== "none";
+      detail.style.display = open ? "none" : "block";
+      header.querySelector(".expand-chevron").style.transform = open ? "" : "rotate(180deg)";
+      summary.style.display = open ? "" : "none";
+    });
+    list.appendChild(card);
+  });
+}
+
 // ===================== NAVIGATION =====================
 function showPage(name) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("page-" + name).classList.add("active");
   document.getElementById("nav-" + name).classList.add("active");
+  if (name === "focus") { renderFocus(); }
   if (name === "progress") { renderProgress(); renderHabitsManage(); }
   if (name === "capture") { renderTagRow(); renderFilterRow(); renderEntriesList(); updateLoginUI(); }
   if (name === "reflect") {
     document.getElementById("reflect-date").textContent =
       new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" }).toUpperCase();
     renderReflectionsList();
-    // Start each section with one empty bullet if none exist
+    renderMoodPicker();
     ["did","next","unclear"].forEach(f => {
       const c = document.getElementById("bullets-" + f);
       if (c && c.querySelectorAll(".bullet-input").length === 0) addBullet(f);
     });
+    // Show weekly review section on Saturdays (day 6)
+    const isSaturday = new Date().getDay() === 6;
+    const weeklySection = document.getElementById("weekly-section");
+    if (weeklySection) {
+      weeklySection.style.display = isSaturday ? "block" : "none";
+      if (isSaturday) renderWeeklyPage();
+    }
   }
 }
 
