@@ -836,19 +836,25 @@ async function getSectionId(nbId, token) {
 // Find page ID by title within section
 // Get or create a page by title within a section
 // Build page HTML with table header + first data row already inside
+function getHeaderRow(pageTitle) {
+  const th = (t) => '<th style="padding:8px 12px;border:1px solid #bbb;background:#f2f2f2;font-weight:bold;text-align:left;font-family:sans-serif;font-size:13px">' + t + '</th>';
+  if (pageTitle === "EOD closure")
+    return '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>';
+  if (pageTitle === "Weekly Reviews")
+    return '<tr>' + th("Week") + th("Stats") + th("Went well") + th("Drained me") + th("Do differently") + th("Focus next week") + '</tr>';
+  if (pageTitle === "Weekly Summary")
+    return '<tr>' + th("Week") + th("Habits %") + th("Habits done") + th("Tasks done") + th("Avg mood") + th("Avg energy") + '</tr>';
+  return '<tr>' + th("Date") + th("Entry") + '</tr>';
+}
+
 function buildPageHtml(pageTitle, firstRowHtml) {
-  const th = (t) => '<th style="padding:6px 10px;border:1px solid #ccc;background:#f0f0f0;font-weight:bold;text-align:left">' + t + '</th>';
-  let headerRow;
-  if (pageTitle === "EOD closure") {
-    headerRow = '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>';
-  } else if (pageTitle === "Weekly Reviews") {
-    headerRow = '<tr>' + th("Week") + th("Stats") + th("✦ Went well") + th("✕ Drained me") + th("→ Do differently") + th("◎ Focus next week") + '</tr>';
-  } else if (pageTitle === "Weekly Summary") {
-    headerRow = '<tr>' + th("Week") + th("Habits %") + th("Habits done") + th("Tasks done") + th("Avg mood") + th("Avg energy") + '</tr>';
-  } else {
-    headerRow = '<tr>' + th("Date") + th("Entry") + '</tr>';
-  }
-  return '<!DOCTYPE html><html><head><title>' + pageTitle + '</title></head><body><table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:14px">' + headerRow + firstRowHtml + '</table></body></html>';
+  // Valid XHTML required by OneNote API
+  return '<?xml version="1.0" encoding="utf-8"?>' +
+    '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' +
+    '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>' + pageTitle + '</title></head><body>' +
+    '<table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">' +
+    getHeaderRow(pageTitle) + firstRowHtml +
+    '</table></body></html>';
 }
 
 // Get page ID, or create the page with the first row already inside the table
@@ -913,10 +919,12 @@ async function appendRowToPage(pageId, rowHtml, token) {
     }
   } catch(e) { console.warn("Table append error:", e); }
 
-  // Last resort fallback — append as new table (not ideal)
-  const commands = [{ action: "append", target: "body", content: rowHtml }];
-  const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-  return patchRes.ok;
+  // Fallback — no table found, this page needs rebuilding
+  // Instead of appending raw tr, we skip and tell the user to delete and re-sync
+  console.warn("Could not find table on page — page may need to be deleted and re-synced");
+  showToast("Page table not found — delete the OneNote page and sync again", 6000);
+  setSyncStatus("error", "Page needs reset");
+  return false;
 }
 
 // Main sync — finds or creates the page, then appends a row inside the table
