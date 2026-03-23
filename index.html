@@ -884,46 +884,41 @@ async function getOrCreatePage(secId, pageTitle, firstRowHtml, token) {
 // Append a row inside the existing table using PATCH
 async function appendRowToPage(pageId, rowHtml, token) {
   try {
-    // Fetch page HTML to extract the table element ID
+    // Fetch page HTML to find the last <tr> ID — insert after it
     const res = await fetch(`${ON_BASE}/pages/${pageId}/content`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const html = await res.text();
-    console.log("Page HTML snippet:", html.substring(0, 500));
 
-    // OneNote wraps elements with data-id attributes — try multiple patterns
-    const patterns = [
-      /id="([^"]{10,})"/i,           // Standard id attribute (min 10 chars to skip short ids)
-      /data-id="([^"]+)"/i,          // data-id attribute
-    ];
-    let tableId = null;
-    // Find the first <table and extract its ID
-    const tableIdx = html.indexOf("<table");
-    if (tableIdx > -1) {
-      const tableTag = html.substring(tableIdx, html.indexOf(">", tableIdx) + 1);
-      console.log("Table tag:", tableTag);
-      for (const pat of patterns) {
-        const m = tableTag.match(pat);
-        if (m) { tableId = m[1]; break; }
-      }
-    }
+    // Find ALL tr element IDs — use the last one as insertAfter target
+    // OneNote uses id="{guid}" on tr elements
+    const trIds = [];
+    const trRegex = /<tr[^>]*\sid="([^"]+)"/gi;
+    let m;
+    while ((m = trRegex.exec(html)) !== null) { trIds.push(m[1]); }
 
-    if (tableId) {
-      console.log("Appending to table ID:", tableId);
-      const commands = [{ action: "append", target: tableId, content: rowHtml }];
+    if (trIds.length > 0) {
+      // Insert after the last data row
+      const lastTrId = trIds[trIds.length - 1];
+      const commands = [{ action: "insertAfter", target: lastTrId, content: rowHtml }];
       const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-      console.log("Patch status:", patchRes.status);
       if (patchRes.ok) return true;
-    } else {
-      console.warn("No table ID found in page — falling back to last-row append");
+      console.warn("insertAfter failed:", patchRes.status, await patchRes.text().catch(()=>""));
     }
+
+    // Fallback: try appending to the table element itself
+    const tableIdMatch = html.match(/<table[^>]*\sid="([^"]+)"/i);
+    if (tableIdMatch) {
+      const commands = [{ action: "append", target: tableIdMatch[1], content: rowHtml }];
+      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+      if (patchRes.ok) return true;
+    }
+
+    console.warn("No tr or table IDs found. Full HTML:", html.substring(0, 800));
   } catch(e) { console.warn("Table append error:", e); }
 
-  // Fallback — no table found, this page needs rebuilding
-  // Instead of appending raw tr, we skip and tell the user to delete and re-sync
-  console.warn("Could not find table on page — page may need to be deleted and re-synced");
-  showToast("Page table not found — delete the OneNote page and sync again", 6000);
-  setSyncStatus("error", "Page needs reset");
+  showToast("Sync failed — delete the page in OneNote and try again", 6000);
+  setSyncStatus("error", "Sync failed");
   return false;
 }
 
