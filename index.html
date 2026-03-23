@@ -659,11 +659,6 @@ function buildPageHtml(pageTitle, firstRowHtml) {
     ? '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>'
     : '<tr>' + th("Date") + th("Entry") + '</tr>';
   return '<!DOCTYPE html><html><head><title>' + pageTitle + '</title></head><body><table border="1" style="border-collapse:collapse;width:100%">' + headerRow + firstRowHtml + '</table></body></html>';
-}</th>`;
-  const headerRow = isEOD
-    ? `<tr>${th("Date")}${th("What I did today")}${th("What\'s next")}${th("What is unclear")}</tr>`
-    : `<tr>${th("Date")}${th("Entry")}</tr>`;
-  return `<!DOCTYPE html><html><head><title>${pageTitle}</title></head><body><table data-id="maintable" border="1" style="border-collapse:collapse;width:100%">${headerRow}${firstRowHtml}</table></body></html>`;
 }
 
 // Get page ID, or create the page with the first row already inside the table
@@ -1032,20 +1027,36 @@ function getBullets(field) {
     .map(el => el.value.trim()).filter(Boolean);
 }
 
-function addBullet(field, value) {
+function addBullet(field, value, skipFocus) {
   value = value || "";
   const container = document.getElementById("bullets-" + field);
   if (!container) return;
   const row = document.createElement("div");
   row.className = "bullet-row";
+  const dot = document.createElement("span");
+  dot.className = "bullet-dot";
+  dot.textContent = "\u2022";
   const input = document.createElement("input");
   input.type = "text";
   input.className = "bullet-input";
   input.placeholder = "Add a point...";
   input.value = value;
-  const dot = document.createElement("span");
-  dot.className = "bullet-dot";
-  dot.textContent = "\u2022";
+  // Enter key creates next bullet
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addBullet(field, "");
+    } else if (e.key === "Backspace" && input.value === "") {
+      // Backspace on empty bullet removes it and focuses previous
+      e.preventDefault();
+      const prev = row.previousElementSibling;
+      row.remove();
+      if (prev) {
+        const prevInput = prev.querySelector(".bullet-input");
+        if (prevInput) prevInput.focus();
+      }
+    }
+  });
   const del = document.createElement("button");
   del.className = "bullet-del";
   del.textContent = "\u00d7";
@@ -1054,14 +1065,14 @@ function addBullet(field, value) {
   row.appendChild(input);
   row.appendChild(del);
   container.appendChild(row);
-  input.focus();
+  if (!skipFocus) input.focus();
 }
 
 function setBullets(field, items) {
   const container = document.getElementById("bullets-" + field);
   if (!container) return;
   container.innerHTML = "";
-  (items || []).forEach(v => addBullet(field, v));
+  (items || []).forEach(v => addBullet(field, v, true));
 }
 
 function bulletsToHtml(items) {
@@ -1094,32 +1105,66 @@ async function saveReflection() {
 function renderReflectionsList() {
   const list = document.getElementById("reflections-list");
   if (!list) return;
-  const keys = Object.keys(reflections).sort().reverse().slice(0, 7);
+  const t = today();
+  // Show past reflections only (not today — today is the editable form above)
+  const keys = Object.keys(reflections).sort().reverse().filter(d => d !== t).slice(0, 14);
   list.innerHTML = "";
   if (!keys.length) {
-    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-style:italic;font-size:13px">No reflections yet</div>`;
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-style:italic;font-size:13px">Past reflections will appear here</div>`;
     return;
   }
   keys.forEach(date => {
     const r = reflections[date];
-    const item = document.createElement("div");
-    item.className = "note-item";
-    item.style.cursor = "pointer";
-    const preview = (v) => {
-      const arr = Array.isArray(v) ? v : (v ? [v] : []);
-      return arr.length ? "• " + arr.slice(0,2).join(" • ") + (arr.length>2?"...":"") : "";
+    const arr = (v) => Array.isArray(v) ? v : (v ? [v] : []);
+    const safe = (s) => s.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const bulletList = (items) => {
+      const a = arr(items);
+      if (!a.length) return '<span style="color:var(--text-dimmer);font-style:italic">—</span>';
+      return a.map(i => '• ' + safe(i)).join('<br/>');
     };
-    item.innerHTML = `
-      <div class="note-meta"><span class="note-date mono" style="font-size:10px;color:var(--text-muted)">${date}</span></div>
-      ${r.did&&r.did.length ? `<div style="margin-bottom:6px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:3px">DID</div><div class="note-text">${preview(r.did)}</div></div>` : ""}
-      ${r.next&&r.next.length ? `<div><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:3px">NEXT</div><div class="note-text">${preview(r.next)}</div></div>` : ""}`;
-    item.onclick = () => {
-      setBullets("did", Array.isArray(r.did) ? r.did : (r.did ? [r.did] : []));
-      setBullets("next", Array.isArray(r.next) ? r.next : (r.next ? [r.next] : []));
-      setBullets("unclear", Array.isArray(r.unclear) ? r.unclear : (r.unclear ? [r.unclear] : []));
-      showToast("Loaded reflection for " + date);
-    };
-    list.appendChild(item);
+
+    const card = document.createElement("div");
+    card.className = "note-item";
+    card.style.cursor = "pointer";
+
+    // Header row — always visible
+    const header = document.createElement("div");
+    header.style.cssText = "display:flex;justify-content:space-between;align-items:center";
+    header.innerHTML = `
+      <span class="mono" style="font-size:10px;color:var(--text-muted)">${date}</span>
+      <span class="expand-chevron" style="font-size:11px;color:var(--text-dimmer);transition:transform 0.2s">▾</span>`;
+    card.appendChild(header);
+
+    // Preview — first bullet of each section
+    const preview = document.createElement("div");
+    preview.style.cssText = "font-size:12px;color:var(--note-text);font-style:italic;margin-top:6px;line-height:1.5";
+    const didArr = arr(r.did);
+    preview.textContent = didArr.length ? "• " + didArr[0] + (didArr.length > 1 ? " ..." : "") : "";
+    card.appendChild(preview);
+
+    // Expanded detail — hidden by default
+    const detail = document.createElement("div");
+    detail.style.cssText = "display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px";
+    const section = (label, items) => `
+      <div style="margin-bottom:10px">
+        <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:5px">${label}</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6">${bulletList(items)}</div>
+      </div>`;
+    detail.innerHTML =
+      section("✦ WHAT I DID", r.did) +
+      section("→ WHAT IS NEXT", r.next) +
+      section("? WHAT IS UNCLEAR", r.unclear);
+    card.appendChild(detail);
+
+    // Toggle expand on tap
+    card.addEventListener("click", () => {
+      const isOpen = detail.style.display !== "none";
+      detail.style.display = isOpen ? "none" : "block";
+      header.querySelector(".expand-chevron").style.transform = isOpen ? "" : "rotate(180deg)";
+      preview.style.display = isOpen ? "" : "none";
+    });
+
+    list.appendChild(card);
   });
 }
 
