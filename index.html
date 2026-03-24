@@ -915,7 +915,7 @@ async function syncSingleRow(pageName, rowHtml, token) {
     }
 
     // 3. Table exists — append new row to it using data-id target
-    const commands = [{ action: "append", target: "maintable", content: rowHtml }];
+    const commands = [{ action: "append", target: "body", content: rowHtml }];
     const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
     if (patchRes.ok) {
       setSyncStatus("connected", "Synced ✓");
