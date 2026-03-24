@@ -420,6 +420,8 @@
       <div id="add-habit-form">
         <div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:8px">HABIT NAME</div>
         <input type="text" id="new-habit-input" placeholder="e.g. Cold shower, Meditate 10 min..." style="margin-bottom:12px" />
+        <div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:8px">NOTE <span style="opacity:0.5;font-size:9px">(optional — short = shown inline, long = ? button)</span></div>
+        <input type="text" id="new-habit-note" placeholder="e.g. 2 min cold at the end" style="margin-bottom:12px" />
         <div class="mono" style="font-size:10px;color:var(--text-muted);margin-bottom:8px">SECTION</div>
         <div id="section-picker" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -445,6 +447,14 @@
         </div>
       </div>
       <div class="prog-track"><div class="prog-fill" id="focus-prog" style="background:#4A90A4"></div></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="openListModal('values')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 12px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:13px">⭐</span><span class="mono" style="font-size:10px;color:var(--text-muted)">My Values</span>
+        </button>
+        <button onclick="openListModal('goals')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 12px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:13px">🎯</span><span class="mono" style="font-size:10px;color:var(--text-muted)">My Goals</span>
+        </button>
+      </div>
     </div>
     <div class="scroll-area">
       <!-- Add task input -->
@@ -475,7 +485,10 @@
             <span class="info-btn-circle">?</span>
           </button>
         </div>
-        <button class="btn-ghost" onclick="toggleNotTodoForm()" style="font-size:10px;padding:5px 12px">+ Add</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn-ghost" onclick="syncAllNotTodos()" style="font-size:10px;padding:5px 12px" title="Sync all to OneNote">↑ Sync</button>
+          <button class="btn-ghost" onclick="toggleNotTodoForm()" style="font-size:10px;padding:5px 12px">+ Add</button>
+        </div>
       </div>
       <div id="nottodo-form" style="display:none;margin-bottom:12px">
         <div style="display:flex;gap:8px">
@@ -532,6 +545,31 @@
     <div style="flex:1;overflow-y:auto;padding:14px 18px">
       <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:2px;margin-bottom:12px">PAST DUMPS</div>
       <div id="braindump-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VALUES / GOALS MODAL -->
+<div class="info-overlay" id="list-modal-overlay" onclick="closeListModal(event)">
+  <div class="info-modal" style="max-width:400px;width:100%;max-height:85vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="list-modal-emoji" style="font-size:18px"></span>
+        <span id="list-modal-title" style="font-weight:600;color:var(--text-heading);font-size:15px"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="syncListModal()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">↑↓ Sync</button>
+        <button onclick="closeListModal()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;line-height:1;padding:0">×</button>
+      </div>
+    </div>
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;gap:8px">
+        <input type="text" id="list-modal-input" placeholder="Add new item..." onkeydown="if(event.key==='Enter')addListItem()" style="flex:1;padding:9px 12px;font-size:13px;font-family:'Inter',sans-serif;background:var(--bg-input);border:1px solid var(--border);border-radius:5px;color:var(--input-text);outline:none" />
+        <button onclick="addListItem()" style="background:#4A90A4;color:#fff;border:none;border-radius:16px;padding:9px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer">Add</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px 18px">
+      <div id="list-modal-items"></div>
     </div>
   </div>
 </div>
@@ -930,7 +968,7 @@ async function syncRowToPage(pageName, rowHtml) {
 
 
 // ===================== DATA =====================
-const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal" };
+const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals" };
 const today = () => new Date().toISOString().split("T")[0];
 const ld = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -981,7 +1019,7 @@ const TAGS = [
 
 let history2 = {}, captures = [], reflections = {}, habits = [];
 let checked = {}, collapsedSections = {}, activeTag = "thought", filterTag = "all", progView = "week", newHabitSection = "MORNING";
-let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {};
+let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {}, myValues = [], myGoals = [];
 
 let tasks = [];
 
@@ -999,6 +1037,8 @@ function loadAll() {
   journalEntries = ld(SK.journal, {});
   brainDumps = ld(SK.dump, []);
   notTodos = ld(SK.nottodo, []);
+  myValues = ld(SK.values, []);
+  myGoals = ld(SK.goals, []);
   // Auto-delete tasks older than 7 days
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
   const cutoffStr = cutoff.toISOString().split("T")[0];
@@ -1180,6 +1220,13 @@ function renderFilterRow() {
   });
 }
 
+function deleteCapture(id) {
+  captures = captures.filter(e => e.id !== id);
+  sv(SK.caps, captures);
+  renderEntriesList();
+  renderFilterRow();
+}
+
 function renderEntriesList() {
   const list = document.getElementById("entries-list");
   const cnt = document.getElementById("entries-count");
@@ -1195,7 +1242,14 @@ function renderEntriesList() {
     const tag = TAGS.find(t => t.key === entry.tag) || TAGS[0];
     const item = document.createElement("div");
     item.className = "note-item";
-    item.innerHTML = `<div class="note-meta"><span class="note-tag" style="background:${tag.color}22;color:${tag.color}">${tag.label}</span><span class="note-date">${entry.date}</span></div><div class="note-text">${entry.text}</div>`;
+    item.style.cssText = "position:relative";
+    item.innerHTML = `
+      <div class="note-meta" style="padding-right:24px">
+        <span class="note-tag" style="background:${tag.color}22;color:${tag.color}">${tag.label}</span>
+        <span class="note-date">${entry.date}</span>
+      </div>
+      <div class="note-text">${entry.text}</div>
+      <button onclick="deleteCapture(${entry.id})" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text-dimmer);font-size:16px;cursor:pointer;line-height:1;padding:2px 4px" title="Delete">×</button>`;
     list.appendChild(item);
   });
 }
@@ -1521,10 +1575,13 @@ function toggleAddHabit() {
 function saveNewHabit() {
   const name = document.getElementById("new-habit-input").value.trim();
   if (!name) { showToast("Enter a habit name"); return; }
+  const note = (document.getElementById("new-habit-note")||{}).value?.trim() || "";
   const sec = SECTION_DEFS.find(s => s.key === newHabitSection);
-  habits.push({ id:"c"+Date.now(), task:name, note:"", color:sec?sec.color:"#C8962A", section:newHabitSection, custom:true });
+  habits.push({ id:"c"+Date.now(), task:name, note, color:sec?sec.color:"#C8962A", section:newHabitSection, custom:true });
   sv(SK.habits, habits);
   document.getElementById("new-habit-input").value = "";
+  const noteEl = document.getElementById("new-habit-note");
+  if (noteEl) noteEl.value = "";
   toggleAddHabit();
   renderHabitsManage();
   renderToday();
@@ -2131,14 +2188,25 @@ function renderNotTodos() {
 }
 
 async function syncNotTodoToOneNote(item) {
-  const token = await getToken();
-  if (!token) return;
+  if (!getAccount()) { showToast("Connect OneNote to sync"); return; }
   const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   const rowHtml = '<tr>' +
     '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">🚫 ' + safe(item.text) + '</td>' +
     '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:11px;color:#888;white-space:nowrap">' + item.addedAt + '</td>' +
     '</tr>';
   await syncRowToPage("Things I don't do", rowHtml);
+}
+
+// Sync ALL not-to-do items (use when items were added while disconnected)
+async function syncAllNotTodos() {
+  if (!getAccount()) { showToast("Connect OneNote first"); return; }
+  if (!notTodos.length) { showToast("No items to sync"); return; }
+  showToast("Syncing all items...", 2000);
+  for (const item of notTodos) {
+    await syncNotTodoToOneNote(item);
+    await new Promise(r => setTimeout(r, 600)); // small delay between rows
+  }
+  showToast(`✓ Synced ${notTodos.length} items to OneNote`);
 }
 
 // ===================== WEEKLY SUMMARY SYNC =====================
@@ -2163,7 +2231,284 @@ async function syncWeeklySummary() {
 
 // ===================== FULL SYNC =====================
 async function runFullSync() {
-  showToast("Full sync not available in single-entry mode. Use Save+Sync on each tab.", 5000);
+  if (!getAccount()) { showToast("Connect OneNote first"); return; }
+  showToast("Pulling from OneNote...", 2000);
+  await pullAllFromOneNote();
+  showToast("✓ Pulled latest data from OneNote", 3000);
+}
+
+// ===================== VALUES & GOALS MODAL =====================
+let currentListType = null; // 'values' or 'goals'
+
+const LIST_CONFIG = {
+  values: { title:"My Values", emoji:"⭐", sk:SK.values||"yd2-values", pageName:"My Values", color:"#C8962A" },
+  goals:  { title:"My Goals",  emoji:"🎯", sk:SK.goals||"yd2-goals",   pageName:"My Goals",  color:"#4A90A4" }
+};
+
+function getListData(type) { return type === "values" ? myValues : myGoals; }
+function setListData(type, data) {
+  if (type === "values") { myValues = data; sv(SK.values, data); }
+  else { myGoals = data; sv(SK.goals, data); }
+}
+
+function openListModal(type) {
+  currentListType = type;
+  const cfg = LIST_CONFIG[type];
+  document.getElementById("list-modal-emoji").textContent = cfg.emoji;
+  document.getElementById("list-modal-title").textContent = cfg.title;
+  document.getElementById("list-modal-overlay").classList.add("open");
+  renderListItems();
+  setTimeout(() => document.getElementById("list-modal-input").focus(), 100);
+  // Auto-pull from OneNote if connected
+  if (getAccount()) pullListFromOneNote(type);
+}
+
+function closeListModal(e) {
+  if (e && e.target !== document.getElementById("list-modal-overlay")) return;
+  document.getElementById("list-modal-overlay").classList.remove("open");
+  currentListType = null;
+}
+
+function addListItem() {
+  if (!currentListType) return;
+  const input = document.getElementById("list-modal-input");
+  const text = input.value.trim();
+  if (!text) return;
+  const items = getListData(currentListType);
+  // Avoid duplicates
+  if (items.find(i => i.text.toLowerCase() === text.toLowerCase())) {
+    showToast("Already in the list"); return;
+  }
+  const item = { id: "li" + Date.now(), text, addedAt: today() };
+  items.push(item);
+  setListData(currentListType, items);
+  input.value = "";
+  renderListItems();
+  showToast("Added ✓");
+  if (getAccount()) pushListToOneNote(currentListType);
+}
+
+function deleteListItem(type, id) {
+  const items = getListData(type).filter(i => i.id !== id);
+  setListData(type, items);
+  renderListItems();
+  if (getAccount()) pushListToOneNote(type);
+}
+
+function renderListItems() {
+  const list = document.getElementById("list-modal-items");
+  if (!list || !currentListType) return;
+  const items = getListData(currentListType);
+  const cfg = LIST_CONFIG[currentListType];
+  list.innerHTML = "";
+  if (!items.length) {
+    list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dimmer);font-style:italic;font-size:13px">Nothing yet — add your first item</div>`;
+    return;
+  }
+  items.forEach(item => {
+    const el = document.createElement("div");
+    el.style.cssText = "display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)";
+    el.innerHTML = `
+      <span style="color:${cfg.color};font-size:13px;flex-shrink:0">•</span>
+      <div style="flex:1;font-size:14px;color:var(--text);line-height:1.4">${item.text}</div>
+      <button onclick="deleteListItem('${currentListType}','${item.id}')" style="background:none;border:none;color:var(--text-dimmer);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>`;
+    list.appendChild(el);
+  });
+}
+
+// ── Push local list to OneNote (full page rebuild as bullet list) ─────────────
+async function pushListToOneNote(type) {
+  try {
+    const token = await getToken();
+    if (!token) return;
+    const cfg = LIST_CONFIG[type];
+    const items = getListData(type);
+    const nbId = await getNotebookId(token);
+    const secId = await getSectionId(nbId, token);
+
+    // Build XHTML with <ul> bullet list
+    const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const bullets = items.map(i => `<li>${safe(i.text)}</li>`).join("");
+    const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${cfg.pageName}</title></head><body><h1 style="font-family:sans-serif">${cfg.pageName}</h1><ul style="font-family:sans-serif;font-size:14px">${bullets}</ul></body></html>`;
+
+    // Find existing page and delete it, then recreate
+    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    if (pagesData.value) {
+      const existing = pagesData.value.find(p => p.title === cfg.pageName);
+      if (existing) {
+        await fetch(`${ON_BASE}/pages/${existing.id}`, {
+          method: "DELETE", headers: { Authorization: `Bearer ${token}` }
+        });
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+
+    const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
+      body: pageHtml
+    });
+    if (res.ok) setSyncStatus("connected", "Synced ✓");
+    else console.warn("Push list failed:", res.status, await res.text().catch(()=>""));
+  } catch(e) { console.warn("pushListToOneNote error:", e); }
+}
+
+// ── Pull list from OneNote and merge with local ───────────────────────────────
+async function pullListFromOneNote(type) {
+  try {
+    const token = await getToken();
+    if (!token) return;
+    const cfg = LIST_CONFIG[type];
+    const nbId = await getNotebookId(token);
+    const secId = await getSectionId(nbId, token);
+
+    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    if (!pagesData.value) return;
+    const pg = pagesData.value.find(p => p.title === cfg.pageName);
+    if (!pg) return;
+
+    const res = await fetch(`${ON_BASE}/pages/${pg.id}/content`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const html = await res.text();
+
+    // Parse <li> elements
+    const liMatches = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
+    const remoteTexts = liMatches
+      .map(m => m[1].replace(/<[^>]+>/g,"").trim())
+      .filter(Boolean);
+
+    if (!remoteTexts.length) return;
+
+    // Merge: keep local items + add any from OneNote not already local
+    const local = getListData(type);
+    const localTexts = new Set(local.map(i => i.text.toLowerCase()));
+    let added = 0;
+    remoteTexts.forEach(text => {
+      if (!localTexts.has(text.toLowerCase())) {
+        local.push({ id: "li" + Date.now() + Math.random().toString(36).slice(2,5), text, addedAt: today() });
+        added++;
+      }
+    });
+
+    if (added > 0) {
+      setListData(type, local);
+      renderListItems();
+      showToast(`↓ Pulled ${added} new item${added>1?"s":""} from OneNote`);
+    }
+  } catch(e) { console.warn("pullListFromOneNote error:", e); }
+}
+
+async function syncListModal() {
+  if (!currentListType) return;
+  if (!getAccount()) { showToast("Connect OneNote first"); return; }
+  showToast("Syncing...", 1500);
+  await pullListFromOneNote(currentListType);
+  await pushListToOneNote(currentListType);
+  showToast("✓ Synced with OneNote");
+}
+
+// ===================== TWO-WAY SYNC ENGINE =====================
+// Pull data from all OneNote pages and merge with local storage
+async function pullAllFromOneNote() {
+  if (!getAccount()) return;
+  try {
+    const token = await getToken();
+    if (!token) return;
+    const nbId = await getNotebookId(token);
+    const secId = await getSectionId(nbId, token);
+    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    if (!pagesData.value) return;
+
+    const safe = (html) => html.replace(/<[^>]+>/g,"").trim();
+
+    for (const pg of pagesData.value) {
+      try {
+        const res = await fetch(`${ON_BASE}/pages/${pg.id}/content`, { headers: { Authorization: `Bearer ${token}` } });
+        const html = await res.text();
+
+        if (["Thoughts","Questions","Ideas"].includes(pg.title)) {
+          // Parse table rows: date | text
+          const tag = pg.title === "Thoughts" ? "thought" : pg.title === "Questions" ? "question" : "idea";
+          const rows = [...html.matchAll(/<tr[\s\S]*?<\/tr>/gi)];
+          let added = 0;
+          for (const row of rows) {
+            const cells = [...row[0].matchAll(/<td[\s\S]*?<\/td>/gi)].map(c => safe(c[0]));
+            if (cells.length >= 2 && cells[0].match(/^\d{4}-\d{2}-\d{2}$/)) {
+              const date = cells[0], text = cells[1];
+              if (text && !captures.find(c => c.tag === tag && c.date === date && c.text === text)) {
+                captures.push({ id: Date.now() + Math.random(), tag, text, date });
+                added++;
+              }
+            }
+          }
+          if (added) { sv(SK.caps, captures); }
+        }
+
+        else if (pg.title === "EOD closure") {
+          const rows = [...html.matchAll(/<tr[\s\S]*?<\/tr>/gi)];
+          let added = 0;
+          for (const row of rows) {
+            const cells = [...row[0].matchAll(/<td[\s\S]*?<\/td>/gi)].map(c => safe(c[0]));
+            if (cells.length >= 4 && cells[0].match(/^\d{4}-\d{2}-\d{2}$/)) {
+              const date = cells[0];
+              if (!reflections[date]) {
+                reflections[date] = { date, did:[cells[1]], next:[cells[2]], unclear:[cells[3]] };
+                added++;
+              }
+            }
+          }
+          if (added) { sv(SK.refs, reflections); }
+        }
+
+        else if (pg.title === "Things I don't do") {
+          const rows = [...html.matchAll(/<tr[\s\S]*?<\/tr>/gi)];
+          let added = 0;
+          for (const row of rows) {
+            const cells = [...row[0].matchAll(/<td[\s\S]*?<\/td>/gi)].map(c => safe(c[0]));
+            if (cells.length >= 1) {
+              const text = cells[0].replace(/^🚫\s*/,"").trim();
+              if (text && !notTodos.find(n => n.text.toLowerCase() === text.toLowerCase())) {
+                notTodos.push({ id:"nt"+Date.now()+Math.random().toString(36).slice(2,4), text, addedAt: cells[1]||today() });
+                added++;
+              }
+            }
+          }
+          if (added) { sv(SK.nottodo, notTodos); }
+        }
+
+        else if (pg.title === "My Values") {
+          const liMatches = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
+          const remoteTexts = liMatches.map(m => safe(m[1])).filter(Boolean);
+          const localTexts = new Set(myValues.map(i => i.text.toLowerCase()));
+          let added = 0;
+          remoteTexts.forEach(text => {
+            if (!localTexts.has(text.toLowerCase())) {
+              myValues.push({ id:"li"+Date.now()+Math.random().toString(36).slice(2,4), text, addedAt: today() });
+              added++;
+            }
+          });
+          if (added) sv(SK.values, myValues);
+        }
+
+        else if (pg.title === "My Goals") {
+          const liMatches = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
+          const remoteTexts = liMatches.map(m => safe(m[1])).filter(Boolean);
+          const localTexts = new Set(myGoals.map(i => i.text.toLowerCase()));
+          let added = 0;
+          remoteTexts.forEach(text => {
+            if (!localTexts.has(text.toLowerCase())) {
+              myGoals.push({ id:"li"+Date.now()+Math.random().toString(36).slice(2,4), text, addedAt: today() });
+              added++;
+            }
+          });
+          if (added) sv(SK.goals, myGoals);
+        }
+
+        await new Promise(r => setTimeout(r, 300)); // rate limit
+      } catch(e) { console.warn("Pull error for page", pg.title, e); }
+    }
+  } catch(e) { console.warn("pullAllFromOneNote error:", e); }
 }
 
 // ===================== NAVIGATION =====================
@@ -2209,6 +2554,8 @@ renderToday();
 
 handleAuthCallback();
 updateLoginUI();
+// Silent background pull from OneNote on load
+if (getAccount()) setTimeout(() => pullAllFromOneNote(), 2000);
 </script>
 </body>
 </html>
