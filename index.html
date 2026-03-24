@@ -920,12 +920,50 @@ async function getOrCreatePage(secId, pageTitle, firstRowHtml, token) {
   return { id: created.id, isNew: true };
 }
 
-// Append a row to the page — sends just the <tr> to body
-// OneNote appends bare <tr> after the last table on the page
+// Append a row inside the table using replace strategy
 async function appendRowToPage(pageId, rowHtml, token) {
-  const commands = [{ action: "append", target: "body", content: rowHtml, position: "after" }];
-  const res = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-  return res.ok;
+  try {
+    // Fetch page with generated IDs
+    const res = await fetch(`${ON_BASE}/pages/${pageId}/content?includeIDs=true`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const html = await res.text();
+
+    // Find table generated ID (format: table:{guid}{n})
+    const tableIdMatch = html.match(/id="(table:[^"]+)"/i);
+    if (!tableIdMatch) {
+      console.warn("No table ID found in page");
+      return false;
+    }
+    const tableGenId = tableIdMatch[1];
+
+    // Extract existing data rows (skip header row — it has background-color style)
+    const allRowBlocks = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+    const dataRows = allRowBlocks
+      .filter(r => !r.includes("background-color:#f0f0f0") &&
+                   !r.includes("background-color:#f5f5f5") &&
+                   !r.includes("background-color:rgb(240") &&
+                   !r.includes("background-color:rgb(245"))
+      .join("");
+
+    // Build replacement table = header + existing data rows + new row
+    const newTableHtml = buildPageHtml_tableOnly(pageId, dataRows + rowHtml, html);
+
+    const commands = [{ action: "replace", target: tableGenId, content: newTableHtml }];
+    const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+    if (patchRes.ok) return true;
+    const err = await patchRes.text().catch(()=>"");
+    console.warn("Table replace failed:", patchRes.status, err.substring(0,200));
+  } catch(e) { console.warn("appendRowToPage error:", e); }
+  return false;
+}
+
+// Build just the <table> HTML for replacement (no full page wrapper)
+function buildPageHtml_tableOnly(pageId, dataRowsHtml, originalHtml) {
+  // Reconstruct header from original HTML — grab the first <tr> with background-color
+  const headerMatch = originalHtml.match(/<tr[^>]*>(?:[\s\S]*?background-color[\s\S]*?)<\/tr>/i);
+  const header = headerMatch ? headerMatch[0] : "";
+  return `<table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">${header}${dataRowsHtml}</table>`;
 }
 
 // Main sync — finds or creates the page, then appends a single row
@@ -2191,8 +2229,8 @@ async function syncNotTodoToOneNote(item) {
   if (!getAccount()) { showToast("Connect OneNote to sync"); return; }
   const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   const rowHtml = '<tr>' +
-    '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">🚫 ' + safe(item.text) + '</td>' +
-    '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:11px;color:#888;white-space:nowrap">' + item.addedAt + '</td>' +
+    '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:20pt">🚫 ' + safe(item.text) + '</td>' +
+    '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:20pt;color:#888;white-space:nowrap">' + item.addedAt + '</td>' +
     '</tr>';
   await syncRowToPage("Things I don't do", rowHtml);
 }
@@ -2337,8 +2375,8 @@ async function pushListToOneNote(type) {
 
     if (!pageId) {
       // Create page fresh with bullet list
-      const bullets = items.map(i => `<li>${safe(i.text)}</li>`).join("");
-      const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${cfg.pageName}</title></head><body><h1 style="font-family:sans-serif;font-size:16pt">${safe(cfg.pageName)}</h1><ul>${bullets}</ul></body></html>`;
+      const bullets = items.map(i => `<li style="font-family:sans-serif;font-size:20pt;margin:4px 0">${safe(i.text)}</li>`).join("");
+      const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${cfg.pageName}</title></head><body><h1 style="font-family:sans-serif;font-size:16pt">${safe(cfg.pageName)}</h1><p style="font-family:sans-serif;font-size:11pt"> </p><ul style="font-family:sans-serif;font-size:20pt">${bullets}</ul></body></html>`;
       const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
@@ -2359,8 +2397,8 @@ async function pushListToOneNote(type) {
     const ulMatch = html.match(/<ul[^>]+id="([^"]+)"/i);
     if (ulMatch) {
       const ulId = ulMatch[1];
-      const bullets = items.map(i => `<li>${safe(i.text)}</li>`).join("");
-      const newUl = `<ul>${bullets}</ul>`;
+      const bullets = items.map(i => `<li style="font-family:sans-serif;font-size:20pt;margin:4px 0">${safe(i.text)}</li>`).join("");
+      const newUl = `<ul style="font-family:sans-serif;font-size:20pt">${bullets}</ul>`;
       const commands = [{ action: "replace", target: ulId, content: newUl }];
       const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
       if (patchRes.ok) { setSyncStatus("connected", "Synced ✓"); return; }
