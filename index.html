@@ -379,6 +379,10 @@
           <div id="wbullets-focus" class="bullet-list" data-symbol="◎" data-color="#C8962A"></div>
           <button class="add-bullet-btn" onclick="addBullet('focus','','weekly')">+ add point</button>
         </div>
+        <div class="reflection-block" style="border-left:2px solid #C8962A;padding-left:14px">
+          <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:10px;letter-spacing:2px">📓 DAILY JOURNAL THIS WEEK</div>
+          <div id="weekly-journal-entries"></div>
+        </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
           <button class="btn-primary" onclick="saveWeeklyReview()">Save Week + Sync</button>
         </div>
@@ -932,14 +936,10 @@ async function syncSingleRow(pageName, rowHtml, token) {
 
     const tableGenId = tableIdMatch[1];
 
-    // Extract existing data rows — skip the first row (always the header)
-    // OneNote converts <th> to <td> so we can't filter by tag, just skip row[0]
-    const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
-    const allRows = tableMatch ? (tableMatch[1].match(/<tr[\s\S]*?<\/tr>/gi) || []) : [];
-    const dataRows = allRows.slice(1).join(""); // row[0] = header, skip it
-
-    // Build new table = one clean header + existing data rows + new row
-    const newTableHtml = buildTableHtml(pageName, dataRows + rowHtml);
+    // Rebuild table from local data — more reliable than parsing OneNote's HTML
+    // Local storage is the source of truth; OneNote is the readable archive
+    const allLocalRows = buildAllRowsForPage(pageName);
+    const newTableHtml = buildTableHtml(pageName, allLocalRows);
 
     const commands = [{ action: "replace", target: tableGenId, content: newTableHtml }];
     const pr = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
@@ -1057,7 +1057,7 @@ function buildAllRowsForPage(pageName) {
 }
 
 // ===================== DATA =====================
-const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo" };
+const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal" };
 const today = () => new Date().toISOString().split("T")[0];
 const ld = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -1108,7 +1108,7 @@ const TAGS = [
 
 let history2 = {}, captures = [], reflections = {}, habits = [];
 let checked = {}, collapsedSections = {}, activeTag = "thought", filterTag = "all", progView = "week", newHabitSection = "MORNING";
-let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [];
+let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {};
 
 let tasks = [];
 
@@ -1123,6 +1123,7 @@ function loadAll() {
   tasks = ld(SK.tasks, []);
   moodData = ld(SK.mood, {});
   weeklyReviews = ld(SK.weekly, {});
+  journalEntries = ld(SK.journal, {});
   brainDumps = ld(SK.dump, []);
   notTodos = ld(SK.nottodo, []);
   // Auto-delete tasks older than 7 days
@@ -1239,6 +1240,21 @@ function renderToday() {
         renderToday();
       });
       itemsInner.appendChild(card);
+
+      // Journal text box for "One journal sentence" habit
+      if (habit.id === "m5") {
+        const t = today();
+        const saved = journalEntries[t] || "";
+        const jWrap = document.createElement("div");
+        jWrap.style.cssText = "margin:4px 0 8px 0;display:flex;gap:8px;align-items:center";
+        jWrap.innerHTML = `
+          <input type="text" id="journal-input-today" value="${saved.replace(/"/g,'&quot;')}"
+            placeholder="How do I feel right now?"
+            style="flex:1;padding:9px 12px;font-size:13px;font-family:'Inter',sans-serif;background:var(--bg-input);border:1px solid var(--border);border-radius:5px;color:var(--input-text);outline:none"
+            onkeydown="if(event.key==='Enter')saveJournalEntry()" />
+          <button onclick="saveJournalEntry()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:6px 12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer;white-space:nowrap">Save</button>`;
+        itemsInner.appendChild(jWrap);
+      }
     });
 
     itemsContainer.appendChild(itemsInner);
@@ -1603,7 +1619,7 @@ function renderHabitsManage() {
         <div style="font-size:14px;color:var(--text);font-family:'Playfair Display',serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${habit.task}</div>
         <div class="mono" style="font-size:9px;color:${col};margin-top:2px">${habit.section}</div>
       </div>
-      ${habit.custom ? `<button onclick="deleteHabit('${habit.id}')" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;padding:4px 6px;line-height:1">×</button>` : ""}`;
+      <button onclick="deleteHabit('${habit.id}')" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;padding:4px 6px;line-height:1;cursor:pointer">×</button>`;
     list.appendChild(item);
   });
 }
@@ -1643,12 +1659,31 @@ function saveNewHabit() {
 }
 
 function deleteHabit(id) {
-  if (!confirm("Remove this habit?")) return;
+  const habit = habits.find(h => h.id === id);
+  if (!habit) return;
+  if (!confirm(`Remove "${habit.task}"?`)) return;
   habits = habits.filter(h => h.id !== id);
   sv(SK.habits, habits);
   renderHabitsManage();
   renderToday();
   showToast("Habit removed");
+}
+
+// ===================== JOURNAL =====================
+function saveJournalEntry() {
+  const input = document.getElementById("journal-input-today");
+  if (!input) return;
+  const text = input.value.trim();
+  const t = today();
+  journalEntries[t] = text;
+  sv(SK.journal, journalEntries);
+  // Mark the habit as done too
+  if (!checked["m5"]) {
+    checked["m5"] = true;
+    saveChecked();
+    renderToday();
+  }
+  showToast("Journal saved ✓");
 }
 
 // ===================== FOCUS =====================
@@ -1963,6 +1998,24 @@ function renderWeeklyPage() {
       "Tasks: <strong>" + stats.taskDone + "/" + stats.taskTotal + "</strong>&nbsp;&nbsp;•&nbsp;&nbsp;" +
       "Avg mood: <strong>" + stats.avgMood + "/5</strong>&nbsp;&nbsp;•&nbsp;&nbsp;" +
       "Avg energy: <strong>" + stats.avgEnergy + "/5</strong>";
+  }
+
+  // Show daily journal entries for this week
+  const journalSection = document.getElementById("weekly-journal-entries");
+  if (journalSection) {
+    const mon = new Date(getWeekKey());
+    let journalHtml = "";
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mon); d.setDate(mon.getDate() + i);
+      const key = d.toISOString().split("T")[0];
+      if (key > today()) continue;
+      const entry = journalEntries[key];
+      if (entry) {
+        const dayLabel = d.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+        journalHtml += `<div style="margin-bottom:8px"><span class="mono" style="font-size:9px;color:var(--text-dimmer)">${dayLabel}</span><div style="font-size:13px;color:var(--text);margin-top:3px;font-style:italic">"${entry}"</div></div>`;
+      }
+    }
+    journalSection.innerHTML = journalHtml || '<div style="color:var(--text-dimmer);font-style:italic;font-size:13px">No journal entries this week yet</div>';
   }
 
   // Load saved weekly review if exists
