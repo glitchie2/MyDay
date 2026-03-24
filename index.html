@@ -932,12 +932,16 @@ async function syncSingleRow(pageName, rowHtml, token) {
 
     const tableGenId = tableIdMatch[1];
 
-    // Extract all existing <tr> blocks from the current table HTML
+    // Extract existing data rows only (skip header rows containing <th>)
     const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
-    const existingRows = tableMatch ? tableMatch[1] : "";
+    const allRows = tableMatch ? tableMatch[1] : "";
+    // Split into individual <tr>...</tr> blocks, filter out header rows
+    const dataRows = (allRows.match(/<tr[\s\S]*?<\/tr>/gi) || [])
+      .filter(row => !/<th[\s>]/i.test(row))
+      .join("");
 
-    // Build new table = header row + all existing data rows + new row
-    const newTableHtml = buildTableHtml(pageName, existingRows + rowHtml);
+    // Build new table = one header row + existing data rows + new row
+    const newTableHtml = buildTableHtml(pageName, dataRows + rowHtml);
 
     const commands = [{ action: "replace", target: tableGenId, content: newTableHtml }];
     const pr = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
