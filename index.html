@@ -909,7 +909,7 @@ async function syncSingleRow(pageName, rowHtml, token) {
 
     const pageId = page.id;
 
-    // 3. Fetch page HTML with real element IDs
+    // 3. Fetch page HTML with real generated element IDs
     const contentRes = await fetchWithRetry(`${ON_BASE}/pages/${pageId}/content?includeIDs=true`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -924,23 +924,26 @@ async function syncSingleRow(pageName, rowHtml, token) {
       throw new Error("Add table failed " + pr.status);
     }
 
-    // 5. Table exists — insertAfter last <tr> using real generated ID
-    const trIdMatches = [...html.matchAll(/<tr[^>]+id="([^"]+)"/gi)];
-    if (trIdMatches.length > 0) {
-      const lastTrId = trIdMatches[trIdMatches.length - 1][1];
-      const commands = [{ action: "insertAfter", target: lastTrId, content: rowHtml }];
-      const pr = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-      if (pr.ok) { setSyncStatus("connected","Synced ✓"); showToast(`✓ Saved to "${pageName}"`); return true; }
-      const err = await pr.text().catch(()=>"");
-      throw new Error("insertAfter failed " + pr.status + ": " + err.substring(0,120));
-    }
+    // 5. Table exists — extract its generated ID and REPLACE the whole table
+    // This is the only supported way per Microsoft docs:
+    // "Replacing tr and td elements is not supported, but you can replace the entire table"
+    const tableIdMatch = html.match(/id="(table:[^"]+)"/i);
+    if (!tableIdMatch) throw new Error("Could not find table generated ID in page");
 
-    // 6. Table has header only (no row IDs yet) — bare <tr> appended to body
-    const commands = [{ action: "append", target: "body", content: rowHtml }];
+    const tableGenId = tableIdMatch[1];
+
+    // Extract all existing <tr> blocks from the current table HTML
+    const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
+    const existingRows = tableMatch ? tableMatch[1] : "";
+
+    // Build new table = header row + all existing data rows + new row
+    const newTableHtml = buildTableHtml(pageName, existingRows + rowHtml);
+
+    const commands = [{ action: "replace", target: tableGenId, content: newTableHtml }];
     const pr = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
     if (pr.ok) { setSyncStatus("connected","Synced ✓"); showToast(`✓ Saved to "${pageName}"`); return true; }
     const err = await pr.text().catch(()=>"");
-    throw new Error("Append failed " + pr.status + ": " + err.substring(0,120));
+    throw new Error("Replace table failed " + pr.status + ": " + err.substring(0,150));
 
   } catch(e) {
     console.error("syncSingleRow error:", e);
@@ -949,6 +952,7 @@ async function syncSingleRow(pageName, rowHtml, token) {
     return false;
   }
 }
+
 
 
 // ── Full sync — rebuilds all data for a page from local storage ───────────────
