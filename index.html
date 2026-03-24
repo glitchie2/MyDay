@@ -932,15 +932,13 @@ async function syncSingleRow(pageName, rowHtml, token) {
 
     const tableGenId = tableIdMatch[1];
 
-    // Extract existing data rows only (skip header rows containing <th>)
+    // Extract existing data rows — skip the first row (always the header)
+    // OneNote converts <th> to <td> so we can't filter by tag, just skip row[0]
     const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
-    const allRows = tableMatch ? tableMatch[1] : "";
-    // Split into individual <tr>...</tr> blocks, filter out header rows
-    const dataRows = (allRows.match(/<tr[\s\S]*?<\/tr>/gi) || [])
-      .filter(row => !/<th[\s>]/i.test(row))
-      .join("");
+    const allRows = tableMatch ? (tableMatch[1].match(/<tr[\s\S]*?<\/tr>/gi) || []) : [];
+    const dataRows = allRows.slice(1).join(""); // row[0] = header, skip it
 
-    // Build new table = one header row + existing data rows + new row
+    // Build new table = one clean header + existing data rows + new row
     const newTableHtml = buildTableHtml(pageName, dataRows + rowHtml);
 
     const commands = [{ action: "replace", target: tableGenId, content: newTableHtml }];
