@@ -841,206 +841,146 @@ async function getSectionId(nbId, token) {
 // Build page HTML with table header + first data row already inside
 function getHeaderRow(pageTitle) {
   const th = (t) => '<th style="padding:8px 12px;border:1px solid #bbb;background:#f2f2f2;font-weight:bold;text-align:left;font-family:sans-serif;font-size:13px">' + t + '</th>';
-  if (pageTitle === "Things I don't do")
-    return '<tr>' + th("Commitment") + th("Added") + '</tr>';
-  if (pageTitle === "EOD closure")
-    return '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>';
-  if (pageTitle === "Weekly Reviews")
-    return '<tr>' + th("Week") + th("Stats") + th("Went well") + th("Drained me") + th("Do differently") + th("Focus next week") + '</tr>';
-  if (pageTitle === "Weekly Summary")
-    return '<tr>' + th("Week") + th("Habits %") + th("Habits done") + th("Tasks done") + th("Avg mood") + th("Avg energy") + '</tr>';
+  if (pageTitle === "Things I don't do") return '<tr>' + th("Commitment") + th("Added") + '</tr>';
+  if (pageTitle === "EOD closure")       return '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>';
+  if (pageTitle === "Weekly Reviews")    return '<tr>' + th("Week") + th("Stats") + th("Went well") + th("Drained me") + th("Do differently") + th("Focus next week") + '</tr>';
+  if (pageTitle === "Weekly Summary")    return '<tr>' + th("Week") + th("Habits %") + th("Habits done") + th("Tasks done") + th("Avg mood") + th("Avg energy") + '</tr>';
   return '<tr>' + th("Date") + th("Entry") + '</tr>';
 }
 
-function buildPageHtml(pageTitle, firstRowHtml) {
-  // Valid XHTML required by OneNote API
+function buildXhtml(pageTitle, bodyContent) {
   return '<?xml version="1.0" encoding="utf-8"?>' +
-    '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' +
-    '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>' + pageTitle + '</title></head><body>' +
-    '<table data-id="maintable" border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">' +
-    getHeaderRow(pageTitle) + firstRowHtml +
-    '</table></body></html>';
+    '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>' + pageTitle + '</title></head>' +
+    '<body>' + bodyContent + '</body></html>';
 }
 
-// Get page ID, or create the page with the first row already inside the table
-async function getOrCreatePage(secId, pageTitle, firstRowHtml, token) {
-  const data = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
-  if (data.value) {
-    const pg = data.value.find(p => p.title === pageTitle);
-    if (pg) return { id: pg.id, isNew: false };
-  }
-  // Create page with header row + first data row already inside the table
-  const pageHtml = buildPageHtml(pageTitle, firstRowHtml);
-  const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
-    body: pageHtml
-  });
-  if (!res.ok) {
-    let errText = "";
-    try { errText = await res.text(); } catch {}
-    console.error("Page create failed:", res.status, errText);
-    throw new Error("Create page " + res.status + ": " + errText.substring(0, 150));
-  }
-  const created = await res.json();
-  return { id: created.id, isNew: true };
+function buildTableHtml(pageTitle, dataRowsHtml) {
+  return '<table data-id="maintable" border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">' +
+    getHeaderRow(pageTitle) + (dataRowsHtml||"") + '</table>';
 }
 
-// Find page ID by title in section
-async function getPageIdByTitle(secId, title, token) {
-  const data = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
-  if (!data.value) return null;
-  const pg = data.value.find(p => p.title === title);
-  return pg ? pg.id : null;
-}
-
-// Append a single row to an existing manually-created table in OneNote
-// Uses insertAfter on the last <tr> found in page content
-async function appendRowToPage(pageId, rowHtml, token) {
-  try {
-    const res = await fetch(`${ON_BASE}/pages/${pageId}/content`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const html = await res.text();
-
-    // Find all <tr...> tags and collect any id= or data-id= values
-    // Manually created OneNote tables expose object IDs on <tr> elements
-    const trMatches = [...html.matchAll(/<tr[^>]*>/gi)];
-    const trIds = [];
-    for (const m of trMatches) {
-      const idMatch = m[0].match(/id="([^"]+)"/i) || m[0].match(/data-id="([^"]+)"/i);
-      if (idMatch) trIds.push(idMatch[1]);
-    }
-
-    if (trIds.length > 0) {
-      const lastId = trIds[trIds.length - 1];
-      const commands = [{ action: "insertAfter", target: lastId, content: rowHtml }];
-      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-      if (patchRes.ok) return true;
-      const errText = await patchRes.text().catch(()=>"");
-      console.warn("insertAfter failed:", patchRes.status, errText.substring(0,200));
-    } else {
-      console.warn("No TR IDs found. Page HTML:", html.substring(0, 600));
-    }
-  } catch(e) { console.warn("appendRowToPage error:", e); }
-  return false;
-}
-
-// Create a fresh page with header-only table, wait, return its ID
-async function createFreshPage(secId, pageName, token) {
-  const pageHtml = buildPageHtml(pageName, ""); // header row only, no data
-  const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
-    body: pageHtml
-  });
-  if (!res.ok) {
-    const err = await res.text().catch(()=>"");
-    throw new Error("Page create failed: " + res.status + " " + err.substring(0,100));
-  }
-  const created = await res.json();
-  return created.id;
-}
-
-// Core sync: append a single row to a named page
-// Auto-creates page with header table if not found
-// Waits for OneNote to process then reads back real TR IDs
+// ── Main entry point for all OneNote syncs ────────────────────────────────────
 async function syncSingleRow(pageName, rowHtml, token) {
   setSyncStatus("syncing", "Syncing...");
   try {
     const nbId = await getNotebookId(token);
     const secId = await getSectionId(nbId, token);
-    let pageId = await getPageIdByTitle(secId, pageName, token);
 
-    if (!pageId) {
-      // Page doesn't exist — create it fresh
-      showToast(`Creating "${pageName}" page...`, 2000);
-      pageId = await createFreshPage(secId, pageName, token);
-      // Wait for OneNote to process the new page
-      await new Promise(r => setTimeout(r, 3000));
-    }
+    // 1. Find or create the page
+    let pageData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    let page = pageData.value && pageData.value.find(p => p.title === pageName);
+    let pageId;
 
-    // Try to append
-    let ok = await appendRowToPage(pageId, rowHtml, token);
-
-    if (!ok) {
-      // appendRowToPage found no TR IDs — page exists but has no readable table
-      // Delete it and recreate fresh, then append
-      showToast("Recreating page table...", 2000);
-      await fetch(`${ON_BASE}/pages/${pageId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+    if (!page) {
+      // Page doesn't exist — create it with table + header + first data row
+      showToast(`Creating "${pageName}"...`, 2000);
+      const xhtml = buildXhtml(pageName, buildTableHtml(pageName, rowHtml));
+      const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
+        body: xhtml
       });
-      await new Promise(r => setTimeout(r, 1500));
-      pageId = await createFreshPage(secId, pageName, token);
-      await new Promise(r => setTimeout(r, 3000));
-      ok = await appendRowToPage(pageId, rowHtml, token);
+      if (!res.ok) {
+        const err = await res.text().catch(()=>"");
+        throw new Error("Page create failed " + res.status + ": " + err.substring(0,100));
+      }
+      const created = await res.json();
+      pageId = created.id;
+      setSyncStatus("connected", "Synced ✓");
+      showToast(`✓ Saved to "${pageName}" (page created)`);
+      return true;
     }
 
-    if (ok) {
+    pageId = page.id;
+
+    // 2. Fetch page HTML to check if table with data-id="maintable" exists
+    const contentRes = await fetch(`${ON_BASE}/pages/${pageId}/content`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const html = await contentRes.text();
+    const hasTable = html.includes('data-id="maintable"');
+
+    if (!hasTable) {
+      // Page exists but no table — add the table via PATCH append to body
+      showToast(`Adding table to "${pageName}"...`, 2000);
+      const tableHtml = buildTableHtml(pageName, rowHtml);
+      const commands = [{ action: "append", target: "body", content: tableHtml }];
+      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+      if (patchRes.ok) {
+        setSyncStatus("connected", "Synced ✓");
+        showToast(`✓ Saved to "${pageName}" (table created)`);
+        return true;
+      }
+      throw new Error("Failed to add table: " + patchRes.status);
+    }
+
+    // 3. Table exists — append new row to it using data-id target
+    const commands = [{ action: "append", target: "maintable", content: rowHtml }];
+    const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+    if (patchRes.ok) {
       setSyncStatus("connected", "Synced ✓");
       showToast(`✓ Saved to "${pageName}"`);
       return true;
     }
-    setSyncStatus("error", "Sync failed");
-    showToast(`Sync failed for "${pageName}"`, 4000);
-    return false;
+
+    const errText = await patchRes.text().catch(()=>"");
+    throw new Error("Append failed " + patchRes.status + ": " + errText.substring(0,150));
+
   } catch(e) {
-    console.error("Sync error:", e);
+    console.error("syncSingleRow error:", e);
     setSyncStatus("error", "Sync error");
-    showToast("Sync error: " + e.message.substring(0,100), 5000);
+    showToast("Sync error: " + e.message.substring(0,120), 6000);
     return false;
   }
 }
 
-// Full page sync — rebuilds entire page from local data (manual trigger)
+// ── Full sync — rebuilds all data for a page from local storage ───────────────
 async function syncFullPage(pageName, token) {
-  setSyncStatus("syncing", "Syncing full page...");
-  try {
-    const nbId = await getNotebookId(token);
-    const secId = await getSectionId(nbId, token);
-    const pageId = await getPageIdByTitle(secId, pageName, token);
-    if (!pageId) {
-      showToast(`Page "${pageName}" not found in OneNote`, 5000);
-      setSyncStatus("error","Page not found");
-      return false;
-    }
-    const allRowsHtml = buildAllRowsForPage(pageName);
-    // Delete all rows except header, then insert all data rows
-    // We do this by getting page content, finding header row ID, deleting everything after it
-    // Then inserting all rows after header
-    const res = await fetch(`${ON_BASE}/pages/${pageId}/content`, { headers: { Authorization: `Bearer ${token}` } });
-    const html = await res.text();
-    const trMatches = [...html.matchAll(/<tr[^>]*>/gi)];
-    const headerTrId = trMatches.length > 0 && (trMatches[0][0].match(/id="([^"]+)"/i)||trMatches[0][0].match(/data-id="([^"]+)"/i))
-      ? (trMatches[0][0].match(/id="([^"]+)"/i)||trMatches[0][0].match(/data-id="([^"]+)"/i))[1]
-      : null;
-
-    if (!headerTrId) {
-      showToast("Cannot find table header — check page has a table", 5000);
-      setSyncStatus("error","No header found");
-      return false;
-    }
-
-    // Insert all rows after header row (this appends after header, existing data rows remain)
-    // Note: for true full rebuild, user should clear data rows manually then use this
-    const commands = [{ action: "insertAfter", target: headerTrId, content: allRowsHtml }];
-    const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-    if (patchRes.ok) {
-      setSyncStatus("connected","Full sync ✓");
-      showToast(`✓ Full sync done for "${pageName}"`);
-      return true;
-    }
-    setSyncStatus("error","Sync failed");
-    showToast("Full sync failed", 4000);
-    return false;
-  } catch(e) {
-    console.error("Full sync error:", e);
-    setSyncStatus("error","Sync error");
-    showToast("Sync error: " + e.message.substring(0,100), 5000);
-    return false;
-  }
+  const allRows = buildAllRowsForPage(pageName);
+  if (!allRows) { showToast("No local data to sync for " + pageName); return false; }
+  return syncSingleRow(pageName, allRows, token);
 }
+
+// ── Build all rows from local data ───────────────────────────────────────────
+function buildAllRowsForPage(pageName) {
+  const cell = (c, extra) => '<td style="padding:8px 12px;border:1px solid #bbb;vertical-align:top;font-size:13px;font-family:sans-serif' + (extra||"") + '">' + c + '</td>';
+  const bold = (s) => '<span style="font-weight:bold">' + s + '</span>';
+  const safe = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const nl   = (s) => safe(s).replace(/\n/g,"<br/>");
+  const bl   = (items, sym) => Array.isArray(items) && items.length ? items.map(i=>sym+" "+safe(i)).join("<br/>") : "<em>—</em>";
+
+  if (["Thoughts","Questions","Ideas"].includes(pageName)) {
+    const tag = pageName === "Thoughts" ? "thought" : pageName === "Questions" ? "question" : "idea";
+    return captures.filter(e=>e.tag===tag).sort((a,b)=>a.date.localeCompare(b.date))
+      .map(e => '<tr>' + cell(bold(e.date),";white-space:nowrap") + cell(nl(e.text)) + '</tr>').join("");
+  }
+  if (pageName === "EOD closure") {
+    return Object.values(reflections).sort((a,b)=>a.date.localeCompare(b.date))
+      .map(r => '<tr>' + cell(bold(r.date),";white-space:nowrap") + cell(bl(r.did,"✦")) + cell(bl(r.next,"→")) + cell(bl(r.unclear,"?")) + '</tr>').join("");
+  }
+  if (pageName === "Things I don't do") {
+    return notTodos.map(n => '<tr>' + cell("🚫 "+safe(n.text)) + cell(n.addedAt,";white-space:nowrap;color:#888;font-size:11px") + '</tr>').join("");
+  }
+  if (pageName === "Weekly Reviews") {
+    return Object.values(weeklyReviews).sort((a,b)=>a.key.localeCompare(b.key))
+      .map(r => {
+        const s = r.stats||{};
+        return '<tr>' + cell(bold(safe(r.label)),";white-space:nowrap") +
+          cell("Habits "+s.habitDone+"/"+s.habitTotal+" ("+s.pct+"%) · Tasks "+s.taskDone+"/"+s.taskTotal+" · Mood "+s.avgMood+"/5 · Energy "+s.avgEnergy+"/5",";font-size:11px;color:#666") +
+          cell(bl(r.well,"✦")) + cell(bl(r.drained,"✕")) + cell(bl(r.differently,"→")) + cell(bl(r.focus,"◎")) + '</tr>';
+      }).join("");
+  }
+  return "";
+}
+
+// ── Legacy alias kept for weekly summary ─────────────────────────────────────
+async function getOrCreatePage(secId, pageTitle, firstRowHtml, token) {
+  // Redirects to new engine
+  const nbId = await getNotebookId(token);
+  return syncSingleRow(pageTitle, firstRowHtml, token);
+}
+
+
 
 // Build complete table rows from local storage for a given page
 function buildAllRowsForPage(pageName) {
