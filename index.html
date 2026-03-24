@@ -838,6 +838,8 @@ async function getSectionId(nbId, token) {
 // Build page HTML with table header + first data row already inside
 function getHeaderRow(pageTitle) {
   const th = (t) => '<th style="padding:8px 12px;border:1px solid #bbb;background:#f2f2f2;font-weight:bold;text-align:left;font-family:sans-serif;font-size:13px">' + t + '</th>';
+  if (pageTitle === "Things I don't do")
+    return '<tr>' + th("Commitment") + th("Added") + '</tr>';
   if (pageTitle === "EOD closure")
     return '<tr>' + th("Date") + th("What I did today") + th("What is next") + th("What is unclear") + '</tr>';
   if (pageTitle === "Weekly Reviews")
@@ -852,7 +854,7 @@ function buildPageHtml(pageTitle, firstRowHtml) {
   return '<?xml version="1.0" encoding="utf-8"?>' +
     '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' +
     '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>' + pageTitle + '</title></head><body>' +
-    '<table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">' +
+    '<table data-id="maintable" border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">' +
     getHeaderRow(pageTitle) + firstRowHtml +
     '</table></body></html>';
 }
@@ -883,63 +885,15 @@ async function getOrCreatePage(secId, pageTitle, firstRowHtml, token) {
 
 // Append a row inside the existing table using PATCH
 async function appendRowToPage(pageId, rowHtml, token) {
+  // OneNote uses data-id="maintable" (set by us on creation) — target it directly
   try {
-    const res = await fetch(`${ON_BASE}/pages/${pageId}/content`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const html = await res.text();
-
-    // Store raw HTML for debug — show first 1000 chars in console
-    console.log("=== PAGE HTML ===");
-    console.log(html.substring(0, 1200));
-    console.log("=== END ===");
-
-    // Extract ALL element IDs from the page
-    const allIds = [];
-    const idRegex = /\sid="([^"]+)"/gi;
-    let m;
-    while ((m = idRegex.exec(html)) !== null) { allIds.push(m[1]); }
-    console.log("All IDs found:", allIds);
-
-    // Find tr IDs specifically
-    const trIds = [];
-    const trRegex = /<tr[^>]*\sid="([^"]+)"/gi;
-    let m2;
-    while ((m2 = trRegex.exec(html)) !== null) { trIds.push(m2[1]); }
-    console.log("TR IDs found:", trIds);
-
-    // Find table ID
-    const tableMatch = /<table[^>]*\sid="([^"]+)"/i.exec(html);
-    console.log("Table ID:", tableMatch ? tableMatch[1] : "none");
-
-    if (trIds.length > 0) {
-      const lastTrId = trIds[trIds.length - 1];
-      console.log("Trying insertAfter last TR:", lastTrId);
-      const commands = [{ action: "insertAfter", target: lastTrId, content: rowHtml }];
-      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-      const patchText = await patchRes.text().catch(() => "");
-      console.log("insertAfter status:", patchRes.status, patchText.substring(0, 200));
-      if (patchRes.ok) return true;
-    }
-
-    if (tableMatch) {
-      console.log("Trying append to table:", tableMatch[1]);
-      const commands = [{ action: "append", target: tableMatch[1], content: rowHtml }];
-      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-      console.log("append to table status:", patchRes.status);
-      if (patchRes.ok) return true;
-    }
-
-    // Last attempt — append to body
-    console.log("Trying append to body...");
-    const commands = [{ action: "append", target: "body", content: "<table border='1' style='border-collapse:collapse;width:100%'>" + rowHtml + "</table>" }];
+    const commands = [{ action: "append", target: "maintable", content: rowHtml }];
     const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-    console.log("body append status:", patchRes.status);
     if (patchRes.ok) return true;
-
+    console.warn("append to maintable failed:", patchRes.status, await patchRes.text().catch(()=>""));
   } catch(e) { console.warn("Table append error:", e); }
 
-  showToast("Sync failed — check browser console for details", 6000);
+  showToast("Sync failed", 4000);
   setSyncStatus("error", "Sync failed");
   return false;
 }
@@ -2098,14 +2052,14 @@ async function saveNotTodo() {
   toggleNotTodoForm();
   renderNotTodos();
   showToast("Added to not-to-do ✓");
-  if (getAccount()) await syncNotTodoToOneNote();
+  if (getAccount()) await syncNotTodoToOneNote(item);
 }
 
 async function deleteNotTodo(id) {
   notTodos = notTodos.filter(n => n.id !== id);
   sv(SK.nottodo, notTodos);
   renderNotTodos();
-  if (getAccount()) await syncNotTodoToOneNote();
+  // Note: deletions are local only — OneNote keeps the history
 }
 
 function renderNotTodos() {
@@ -2127,35 +2081,15 @@ function renderNotTodos() {
   });
 }
 
-async function syncNotTodoToOneNote() {
-  // Sync the full not-to-do list as a single page (overwrite approach via new page)
-  // We write a fresh page each time — OneNote doesn't support true page update via API
-  try {
-    const token = await getToken();
-    if (!token) return;
-    const nbId = await getNotebookId(token);
-    const secId = await getSectionId(nbId, token);
-    const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    const items = notTodos.map(n =>
-      '<tr><td style="padding:8px 12px;border:1px solid #ccc;font-size:14px">🚫 ' + safe(n.text) + '</td><td style="padding:8px 12px;border:1px solid #ccc;font-size:11px;color:#888;white-space:nowrap">' + n.addedAt + '</td></tr>'
-    ).join("");
-    const pageHtml = '<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Things I don&#39;t do</title></head><body>' +
-      '<h1 style="font-family:sans-serif;margin-bottom:8px">Things I don&#39;t do</h1>' +
-      '<p style="font-family:sans-serif;font-size:12px;color:#888;margin-bottom:16px">Last updated: ' + today() + '</p>' +
-      '<table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif">' +
-        '<tr><th style="padding:8px 12px;border:1px solid #ccc;background:#f5f5f5;text-align:left">Commitment</th><th style="padding:8px 12px;border:1px solid #ccc;background:#f5f5f5;text-align:left">Added</th></tr>' +
-        items +
-      '</table></body></html>';
-
-    // Find existing page and create new (API doesn't support full page replace)
-    const res = await fetch(ON_BASE + "/sections/" + secId + "/pages", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token, "Content-Type": "application/xhtml+xml" },
-      body: pageHtml
-    });
-    if (res.ok) { setSyncStatus("connected","Synced ✓"); showToast("✓ Not-to-do synced to OneNote"); }
-    else { showToast("Sync failed", 3000); }
-  } catch(e) { console.error("Not-to-do sync error:", e); }
+async function syncNotTodoToOneNote(item) {
+  // Append a single new row to the "Things I don't do" page
+  const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const rowHtml =
+    '<tr>' +
+      '<td style="padding:8px 12px;border:1px solid #ccc;font-size:14px">🚫 ' + safe(item.text) + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #ccc;font-size:11px;color:#888;white-space:nowrap">' + item.addedAt + '</td>' +
+    '</tr>';
+  await syncRowToPage("Things I don't do", rowHtml);
 }
 
 // ===================== WEEKLY SUMMARY SYNC =====================
