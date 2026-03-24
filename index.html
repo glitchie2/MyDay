@@ -928,18 +928,21 @@ async function syncSingleRow(pageName, rowHtml, token) {
       throw new Error("Add table failed " + pr.status);
     }
 
-    // 5. Table exists — extract its generated ID and REPLACE the whole table
-    // This is the only supported way per Microsoft docs:
-    // "Replacing tr and td elements is not supported, but you can replace the entire table"
+    // 5. Table exists — replace it with existing rows + new row
+    // Extract the table's generated ID (format: table:{guid}{n})
     const tableIdMatch = html.match(/id="(table:[^"]+)"/i);
     if (!tableIdMatch) throw new Error("Could not find table generated ID in page");
-
     const tableGenId = tableIdMatch[1];
 
-    // Rebuild table from local data — more reliable than parsing OneNote's HTML
-    // Local storage is the source of truth; OneNote is the readable archive
-    const allLocalRows = buildAllRowsForPage(pageName);
-    const newTableHtml = buildTableHtml(pageName, allLocalRows);
+    // Extract existing rows from OneNote HTML, skipping the header (first <tr>)
+    // We detect header by background-color style OneNote adds to header cells
+    const rowBlocks = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+    console.log("Total rows in OneNote:", rowBlocks.length, "first row preview:", rowBlocks[0] && rowBlocks[0].substring(0,120));
+    const dataRows = rowBlocks.filter(r => !r.includes("background-color:#f2f2f2") && !r.includes("background-color:#f0f0f0") && !r.includes("background-color:rgb(242")).join("");
+    console.log("Data rows kept:", rowBlocks.length - (rowBlocks.length - dataRows.split("</tr>").length + 1));
+
+    // New table = header + existing data rows + the one new row only
+    const newTableHtml = buildTableHtml(pageName, dataRows + rowHtml);
 
     const commands = [{ action: "replace", target: tableGenId, content: newTableHtml }];
     const pr = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
