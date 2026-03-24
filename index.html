@@ -926,29 +926,64 @@ async function appendRowToPage(pageId, rowHtml, token) {
   return false;
 }
 
+// Create a fresh page with header-only table, wait, return its ID
+async function createFreshPage(secId, pageName, token) {
+  const pageHtml = buildPageHtml(pageName, ""); // header row only, no data
+  const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
+    body: pageHtml
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(()=>"");
+    throw new Error("Page create failed: " + res.status + " " + err.substring(0,100));
+  }
+  const created = await res.json();
+  return created.id;
+}
+
 // Core sync: append a single row to a named page
-// If page not found, shows helpful message
+// Auto-creates page with header table if not found
+// Waits for OneNote to process then reads back real TR IDs
 async function syncSingleRow(pageName, rowHtml, token) {
   setSyncStatus("syncing", "Syncing...");
   try {
     const nbId = await getNotebookId(token);
     const secId = await getSectionId(nbId, token);
-    const pageId = await getPageIdByTitle(secId, pageName, token);
+    let pageId = await getPageIdByTitle(secId, pageName, token);
 
     if (!pageId) {
-      setSyncStatus("error", "Page not found");
-      showToast(`Create "${pageName}" page in OneNote first`, 5000);
-      return false;
+      // Page doesn't exist — create it fresh
+      showToast(`Creating "${pageName}" page...`, 2000);
+      pageId = await createFreshPage(secId, pageName, token);
+      // Wait for OneNote to process the new page
+      await new Promise(r => setTimeout(r, 3000));
     }
 
-    const ok = await appendRowToPage(pageId, rowHtml, token);
+    // Try to append
+    let ok = await appendRowToPage(pageId, rowHtml, token);
+
+    if (!ok) {
+      // appendRowToPage found no TR IDs — page exists but has no readable table
+      // Delete it and recreate fresh, then append
+      showToast("Recreating page table...", 2000);
+      await fetch(`${ON_BASE}/pages/${pageId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await new Promise(r => setTimeout(r, 1500));
+      pageId = await createFreshPage(secId, pageName, token);
+      await new Promise(r => setTimeout(r, 3000));
+      ok = await appendRowToPage(pageId, rowHtml, token);
+    }
+
     if (ok) {
       setSyncStatus("connected", "Synced ✓");
-      showToast(`✓ Row added to "${pageName}"`);
+      showToast(`✓ Saved to "${pageName}"`);
       return true;
     }
     setSyncStatus("error", "Sync failed");
-    showToast(`Could not write to "${pageName}" — check table exists`, 5000);
+    showToast(`Sync failed for "${pageName}"`, 4000);
     return false;
   } catch(e) {
     console.error("Sync error:", e);
