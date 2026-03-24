@@ -898,8 +898,19 @@ async function appendRowToPage(pageId, rowHtml, token) {
   return false;
 }
 
-// Main sync — finds or creates the page, then appends a row inside the table
-async function syncRowToPage(pageName, rowHtml) {
+// Delete a page by ID
+async function deletePage(pageId, token) {
+  try {
+    await fetch(`${ON_BASE}/pages/${pageId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  } catch(e) { console.warn("Delete page error:", e); }
+}
+
+// Sync a page by rebuilding it entirely from all rows
+// allRowsHtml = complete set of <tr> rows to put in the table
+async function syncFullPage(pageName, allRowsHtml) {
   setSyncStatus("syncing", "Syncing...");
   try {
     const token = await getToken();
@@ -907,32 +918,100 @@ async function syncRowToPage(pageName, rowHtml) {
 
     const nbId = await getNotebookId(token);
     const secId = await getSectionId(nbId, token);
-    const { id: pageId, isNew } = await getOrCreatePage(secId, pageName, rowHtml, token);
 
-    if (isNew) {
-      // First row was already baked into the page on creation — done
-      setSyncStatus("connected", "Synced ✓");
-      showToast(`✓ Saved to "${pageName}" (page created)`);
-      return true;
+    // Find and delete existing page
+    const data = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    if (data.value) {
+      const existing = data.value.find(p => p.title === pageName);
+      if (existing) await deletePage(existing.id, token);
     }
 
-    // Page exists — append the row inside the table
-    const ok = await appendRowToPage(pageId, rowHtml, token);
-    if (ok) {
+    // Wait briefly for deletion to propagate
+    await new Promise(r => setTimeout(r, 800));
+
+    // Recreate page with all rows
+    const pageHtml = buildPageHtml(pageName, allRowsHtml);
+    const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
+      body: pageHtml
+    });
+
+    if (res.ok) {
       setSyncStatus("connected", "Synced ✓");
       showToast(`✓ Saved to "${pageName}"`);
       return true;
     } else {
-      setSyncStatus("error", "Append failed");
-      showToast(`Failed to write to "${pageName}"`, 4000);
+      const err = await res.text().catch(() => "");
+      console.error("Page create failed:", res.status, err);
+      setSyncStatus("error", "Sync failed");
+      showToast("Sync failed: " + res.status, 4000);
       return false;
     }
   } catch(e) {
     console.error("OneNote sync error:", e);
     setSyncStatus("error", "Sync error");
-    showToast("Sync error: " + e.message.substring(0, 120), 8000);
+    showToast("Sync error: " + e.message.substring(0, 100), 6000);
     return false;
   }
+}
+
+// Legacy single-row helper — rebuilds full page from stored data
+async function syncRowToPage(pageName, rowHtml) {
+  // Build all rows from local data for this page
+  const allRows = buildAllRowsForPage(pageName);
+  return syncFullPage(pageName, allRows);
+}
+
+// Build complete table rows from local storage for a given page
+function buildAllRowsForPage(pageName) {
+  const td = (content, extra) => `<td style="padding:8px 12px;border:1px solid #bbb;vertical-align:top;font-size:13px;font-family:sans-serif${extra||""}">${content}</td>`;
+  const bold = (s) => `<span style="font-weight:bold">${s}</span>`;
+  const safe = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const nl = (s) => safe(s).replace(/\n/g,"<br/>");
+
+  if (pageName === "Thoughts" || pageName === "Questions" || pageName === "Ideas") {
+    const tag = pageName === "Thoughts" ? "thought" : pageName === "Questions" ? "question" : "idea";
+    return captures
+      .filter(e => e.tag === tag)
+      .sort((a,b) => a.date.localeCompare(b.date))
+      .map(e => `<tr>${td(bold(e.date),";white-space:nowrap")}${td(nl(e.text))}</tr>`)
+      .join("");
+  }
+
+  if (pageName === "EOD closure") {
+    return Object.values(reflections)
+      .sort((a,b) => a.date.localeCompare(b.date))
+      .map(r => {
+        const bl = (items, sym) => Array.isArray(items) && items.length
+          ? items.map(i => sym + " " + safe(i)).join("<br/>")
+          : "<em style='color:#999'>—</em>";
+        return `<tr>${td(bold(r.date),";white-space:nowrap")}${td(bl(r.did,"✦"))}${td(bl(r.next,"→"))}${td(bl(r.unclear,"?"))}</tr>`;
+      }).join("");
+  }
+
+  if (pageName === "Things I don't do") {
+    return notTodos
+      .map(n => `<tr>${td("🚫 " + safe(n.text))}${td(n.addedAt,";white-space:nowrap;color:#888;font-size:11px")}</tr>`)
+      .join("");
+  }
+
+  if (pageName === "Weekly Reviews") {
+    return Object.values(weeklyReviews)
+      .sort((a,b) => a.key.localeCompare(b.key))
+      .map(r => {
+        const s = r.stats || {};
+        const bl = (items, sym) => Array.isArray(items) && items.length ? items.map(i=>sym+" "+safe(i)).join("<br/>") : "—";
+        return `<tr>${td(bold(safe(r.label)),";white-space:nowrap")}${td("Habits "+s.habitDone+"/"+s.habitTotal+" ("+s.pct+"%) · Tasks "+s.taskDone+"/"+s.taskTotal+" · Mood "+s.avgMood+"/5 · Energy "+s.avgEnergy+"/5",";font-size:11px;color:#666")}${td(bl(r.well,"✦"))}${td(bl(r.drained,"✕"))}${td(bl(r.differently,"→"))}${td(bl(r.focus,"◎"))}</tr>`;
+      }).join("");
+  }
+
+  if (pageName === "Weekly Summary") {
+    // Built externally — return empty, caller handles it
+    return "";
+  }
+
+  return "";
 }
 
 // ===================== DATA =====================
@@ -1202,12 +1281,7 @@ async function saveCapture() {
   showToast("Saved locally ✓");
   if (getAccount()) {
     const pageMap = { thought:"Thoughts", question:"Questions", idea:"Ideas" };
-    const pageName = pageMap[entry.tag] || "Thoughts";
-    const safeText = entry.text
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/\n/g,"<br/>");
-    const rowHtml = `<tr><td style="min-width:110px;padding:6px 10px;border:1px solid #ddd;white-space:nowrap;font-weight:bold">${entry.date}</td><td style="padding:6px 10px;border:1px solid #ddd">${safeText}</td></tr>`;
-    await syncRowToPage(pageName, rowHtml);
+    await syncRowToPage(pageMap[entry.tag] || "Thoughts", "");
   }
 }
 
@@ -1307,9 +1381,7 @@ async function saveReflection() {
   renderReflectionsList();
   showToast("Reflection saved ✓");
   if (getAccount()) {
-    const td = (c) => '<td style="padding:8px 12px;border:1px solid #ccc;vertical-align:top;line-height:1.6">' + c + '</td>';
-    const rowHtml = '<tr><td style="min-width:100px;padding:8px 12px;border:1px solid #ccc;font-weight:bold;vertical-align:top;white-space:nowrap">' + r.date + '</td>' + td(bulletsToHtml(r.did,"✦")) + td(bulletsToHtml(r.next,"→")) + td(bulletsToHtml(r.unclear,"?")) + '</tr>';
-    await syncRowToPage("EOD closure", rowHtml);
+    await syncRowToPage("EOD closure", "");
   } else {
     setSyncStatus("idle", "Saved locally");
   }
@@ -1875,26 +1947,7 @@ async function saveWeeklyReview() {
   renderWeeklyPastList();
 
   if (getAccount()) {
-    const s = review.stats;
-    const safe = (str) => (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    const bulletCell = (items, sym) =>
-      items && items.length ? items.map(i => sym + " " + safe(i)).join("<br/>") : '<em style="color:#999">—</em>';
-    const td = (c) => '<td style="padding:8px 12px;border:1px solid #ccc;vertical-align:top;line-height:1.7">' + c + '</td>';
-
-    // One row per week appended to a single "Weekly Reviews" page
-    const rowHtml =
-      '<tr>' +
-        '<td style="padding:8px 12px;border:1px solid #ccc;font-weight:bold;white-space:nowrap;vertical-align:top">' + safe(review.label) + '</td>' +
-        '<td style="padding:8px 12px;border:1px solid #ccc;vertical-align:top;font-size:12px;color:#666">' +
-          'Habits ' + s.habitDone + '/' + s.habitTotal + ' (' + s.pct + '%) · Tasks ' + s.taskDone + '/' + s.taskTotal + ' · Mood ' + s.avgMood + '/5 · Energy ' + s.avgEnergy + '/5' +
-        '</td>' +
-        td(bulletCell(review.well,"✦")) +
-        td(bulletCell(review.drained,"✕")) +
-        td(bulletCell(review.differently,"→")) +
-        td(bulletCell(review.focus,"◎")) +
-      '</tr>';
-
-    await syncRowToPage("Weekly Reviews", rowHtml);
+    await syncRowToPage("Weekly Reviews", "");
   }
 }
 
@@ -2052,7 +2105,7 @@ async function saveNotTodo() {
   toggleNotTodoForm();
   renderNotTodos();
   showToast("Added to not-to-do ✓");
-  if (getAccount()) await syncNotTodoToOneNote(item);
+  if (getAccount()) await syncNotTodoToOneNote();
 }
 
 async function deleteNotTodo(id) {
@@ -2081,15 +2134,8 @@ function renderNotTodos() {
   });
 }
 
-async function syncNotTodoToOneNote(item) {
-  // Append a single new row to the "Things I don't do" page
-  const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  const rowHtml =
-    '<tr>' +
-      '<td style="padding:8px 12px;border:1px solid #ccc;font-size:14px">🚫 ' + safe(item.text) + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #ccc;font-size:11px;color:#888;white-space:nowrap">' + item.addedAt + '</td>' +
-    '</tr>';
-  await syncRowToPage("Things I don't do", rowHtml);
+async function syncNotTodoToOneNote() {
+  await syncRowToPage("Things I don't do", "");
 }
 
 // ===================== WEEKLY SUMMARY SYNC =====================
@@ -2100,15 +2146,16 @@ async function syncWeeklySummary() {
   const safe = (s) => String(s).replace(/&/g,"&amp;");
   const rowHtml =
     '<tr>' +
-      '<td style="padding:8px 12px;border:1px solid #ccc;font-weight:bold;white-space:nowrap">' + safe(label) + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #ccc">' + stats.pct + '%</td>' +
-      '<td style="padding:8px 12px;border:1px solid #ccc">' + stats.habitDone + '/' + stats.habitTotal + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #ccc">' + stats.taskDone + '/' + stats.taskTotal + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #ccc">' + safe(stats.avgMood) + '/5</td>' +
-      '<td style="padding:8px 12px;border:1px solid #ccc">' + safe(stats.avgEnergy) + '/5</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:sans-serif;font-size:13px">' + safe(label) + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + stats.pct + '%</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + stats.habitDone + '/' + stats.habitTotal + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + stats.taskDone + '/' + stats.taskTotal + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + safe(stats.avgMood) + '/5</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + safe(stats.avgEnergy) + '/5</td>' +
     '</tr>';
   showToast("Syncing weekly summary...", 2000);
-  await syncRowToPage("Weekly Summary", rowHtml);
+  // Weekly Summary appends (not full rebuild) since we don't store historical stats locally
+  await syncFullPage("Weekly Summary", rowHtml);
 }
 
 // ===================== NAVIGATION =====================
