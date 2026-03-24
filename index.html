@@ -65,10 +65,10 @@
       display: flex; justify-content: space-around; z-index: 100;
       transition: background 0.3s, border-color 0.3s;
     }
-    .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 12px; }
+    .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 6px; flex:1; }
     .nav-btn:active { transform: scale(0.9); }
     .nav-icon { font-size: 20px; opacity: 0.3; transition: opacity 0.2s; }
-    .nav-label { font-size: 9px; font-family: 'DM Mono', monospace; letter-spacing: 1px; color: var(--text-muted); opacity: 0.4; transition: opacity 0.2s; }
+    .nav-label { font-size: 8px; font-family: 'DM Mono', monospace; letter-spacing: 0.5px; color: var(--text-muted); opacity: 0.4; transition: opacity 0.2s; }
     .nav-btn.active .nav-icon { opacity: 1; }
     .nav-btn.active .nav-label { opacity: 1; color: var(--text); }
 
@@ -517,7 +517,149 @@
     <button class="nav-btn" onclick="showPage('progress')" id="nav-progress">
       <span class="nav-icon">📈</span><span class="nav-label">PROGRESS</span>
     </button>
+    <button class="nav-btn" onclick="showPage('projects')" id="nav-projects">
+      <span class="nav-icon">🚀</span><span class="nav-label">PROJECTS</span>
+    </button>
+
+  <!-- ===== PROJECTS PAGE ===== -->
+  <div class="page" id="page-projects">
+    <div class="topbar">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <div>
+          <div class="mono" style="font-size:9px;letter-spacing:2px;color:var(--text-dimmer);margin-bottom:3px">EXECUTION SYSTEM</div>
+          <h2 class="serif" style="font-size:20px;font-weight:500;color:var(--text-heading)">Projects</h2>
+        </div>
+        <button onclick="openProjectForm()" style="background:#4A90A4;color:#fff;border:none;border-radius:20px;padding:8px 16px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer">+ New</button>
+      </div>
+      <!-- Session panel: active tasks -->
+      <div id="proj-session-panel" style="display:none;margin-top:12px;padding:10px 14px;background:#4A90A422;border:1px solid #4A90A444;border-radius:5px">
+        <div class="mono" style="font-size:9px;color:#4A90A4;margin-bottom:8px;letter-spacing:1px">⚡ ACTIVE THIS SESSION</div>
+        <div id="proj-session-tasks"></div>
+      </div>
+    </div>
+    <div class="scroll-area" id="proj-list-view">
+      <div id="projects-list"></div>
+    </div>
+  </div>
+
   </nav>
+</div>
+
+
+<!-- PROJECT DETAIL VIEW (full screen overlay) -->
+<div class="info-overlay" id="proj-detail-overlay">
+  <div style="background:var(--bg);width:100%;max-width:600px;height:90vh;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border)">
+    <!-- Detail header -->
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div style="flex:1;min-width:0;margin-right:12px">
+          <div class="mono" id="proj-detail-status-badge" style="font-size:9px;letter-spacing:1px;margin-bottom:4px"></div>
+          <div class="serif" id="proj-detail-name" style="font-size:18px;font-weight:500;color:var(--text-heading);line-height:1.2"></div>
+        </div>
+        <button onclick="closeProjectDetail()" style="background:none;border:none;color:var(--text-dimmer);font-size:22px;cursor:pointer;flex-shrink:0;padding:0;line-height:1">×</button>
+      </div>
+      <!-- Outcome — always visible -->
+      <div style="background:var(--bg-card);border-left:3px solid #3D8A5E;border-radius:0 4px 4px 0;padding:10px 12px;margin-bottom:10px">
+        <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:3px">✦ OUTCOME</div>
+        <div id="proj-detail-outcome" style="font-size:13px;color:var(--text);line-height:1.5"></div>
+      </div>
+      <!-- Progress bar -->
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="prog-track" style="flex:1"><div class="prog-fill" id="proj-detail-prog" style="background:#3D8A5E"></div></div>
+        <span class="mono" id="proj-detail-pct" style="font-size:11px;color:#3D8A5E;flex-shrink:0"></span>
+      </div>
+    </div>
+    <!-- Scope pills -->
+    <div id="proj-scope-row" style="padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span class="mono" style="font-size:9px;color:var(--text-dimmer)">SCOPE IN:</span>
+      <div id="proj-scope-in-pills"></div>
+      <span class="mono" style="font-size:9px;color:var(--text-dimmer);margin-left:8px">OUT:</span>
+      <div id="proj-scope-out-pills"></div>
+    </div>
+    <!-- Sections + tasks -->
+    <div style="flex:1;overflow-y:auto;padding:14px 18px" id="proj-sections-area"></div>
+    <!-- Add section / task buttons -->
+    <div style="padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="openAddSection()" class="btn-ghost" style="font-size:11px;padding:7px 14px">+ Section</button>
+      <button onclick="markProjectDone()" class="btn-ghost" style="font-size:11px;padding:7px 14px;border-color:#3D8A5E;color:#3D8A5E">Mark Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT CREATION FORM -->
+<div class="info-overlay" id="proj-form-overlay" onclick="closeProjForm(event)">
+  <div class="info-modal" style="max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <span style="font-weight:600;color:var(--text-heading);font-size:15px">New Project</span>
+      <button onclick="closeProjForm()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0">×</button>
+    </div>
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">PROJECT NAME</div>
+    <input type="text" id="pf-name" placeholder="What are you building?" style="margin-bottom:14px" />
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:4px">OUTCOME <span style="opacity:0.6">— What does done look like? Be specific.</span></div>
+    <textarea id="pf-outcome" rows="3" placeholder="When this project is complete, I will have..." style="margin-bottom:14px;resize:none"></textarea>
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">SCOPE IN <span style="opacity:0.6">— comma separated</span></div>
+    <input type="text" id="pf-scope-in" placeholder="e.g. MVP feature, API integration" style="margin-bottom:14px" />
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">SCOPE OUT <span style="opacity:0.6">— what this project explicitly excludes</span></div>
+    <input type="text" id="pf-scope-out" placeholder="e.g. Mobile version, analytics" style="margin-bottom:20px" />
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeProjForm()" class="btn-ghost">Cancel</button>
+      <button onclick="saveProject()" class="btn-primary">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK CREATION FORM -->
+<div class="info-overlay" id="task-form-overlay" onclick="closeTaskForm(event)">
+  <div class="info-modal" style="max-width:420px;width:100%;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <span style="font-weight:600;color:var(--text-heading);font-size:15px">Add Task</span>
+      <button onclick="closeTaskForm()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0">×</button>
+    </div>
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">TASK NAME</div>
+    <input type="text" id="tf-name" placeholder="What needs to happen?" style="margin-bottom:14px" />
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:4px">DONE DEFINITION <span style="opacity:0.6">— required</span></div>
+    <textarea id="tf-done" rows="2" placeholder="This task is done when..." style="margin-bottom:14px;resize:none"></textarea>
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">ESTIMATED TIME <span style="opacity:0.6">— max 90 min. Split if larger.</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <input type="number" id="tf-mins" min="5" max="90" placeholder="45" style="width:80px" />
+      <span style="font-size:13px;color:var(--text-muted)">minutes</span>
+    </div>
+    <div id="tf-time-warning" style="display:none;font-size:11px;color:#B05C5C;margin-bottom:10px"></div>
+    <div style="height:14px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeTaskForm()" class="btn-ghost">Cancel</button>
+      <button onclick="saveTask()" class="btn-primary">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- STUCK RECOVERY MODAL -->
+<div class="info-overlay" id="stuck-overlay" onclick="closeStuck(event)">
+  <div class="info-modal" style="max-width:400px;width:100%;padding:20px">
+    <div style="font-size:18px;margin-bottom:8px">🧱 Stuck?</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">That's data, not failure. Let's get you moving.</div>
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">WHAT'S BLOCKING YOU?</div>
+    <textarea id="stuck-blocker" rows="2" placeholder="I'm stuck because..." style="margin-bottom:12px;resize:none"></textarea>
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">SMALLEST POSSIBLE NEXT STEP</div>
+    <textarea id="stuck-next" rows="2" placeholder="The one tiny thing I could do right now..." style="margin-bottom:16px;resize:none"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeStuck()" class="btn-ghost">Cancel</button>
+      <button onclick="saveStuck()" class="btn-primary" style="background:#C8962A">Save + Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION FORM -->
+<div class="info-overlay" id="section-form-overlay" onclick="closeSectionForm(event)">
+  <div class="info-modal" style="max-width:380px;width:100%;padding:20px">
+    <div style="font-weight:600;color:var(--text-heading);font-size:15px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">Add Section</div>
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">SECTION NAME</div>
+    <input type="text" id="sf-name" placeholder="e.g. Research, Design, Implementation" style="margin-bottom:16px" onkeydown="if(event.key==='Enter')saveSection()" />
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeSectionForm()" class="btn-ghost">Cancel</button>
+      <button onclick="saveSection()" class="btn-primary">Add</button>
+    </div>
+  </div>
 </div>
 
 <!-- BRAIN DUMP MODAL -->
@@ -1009,7 +1151,7 @@ async function syncRowToPage(pageName, rowHtml) {
 
 
 // ===================== DATA =====================
-const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals" };
+const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals", projects:"yd2-projects" };
 const today = () => new Date().toISOString().split("T")[0];
 const ld = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -1060,7 +1202,7 @@ const TAGS = [
 
 let history2 = {}, captures = [], reflections = {}, habits = [];
 let checked = {}, collapsedSections = {}, activeTag = "thought", filterTag = "all", progView = "week", newHabitSection = "MORNING";
-let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {}, myValues = [], myGoals = [];
+let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {}, myValues = [], myGoals = [], projects = [];
 
 let tasks = [];
 
@@ -1080,6 +1222,7 @@ function loadAll() {
   notTodos = ld(SK.nottodo, []);
   myValues = ld(SK.values, []);
   myGoals = ld(SK.goals, []);
+  projects = ld(SK.projects, []);
   // Auto-delete tasks older than 7 days
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
   const cutoffStr = cutoff.toISOString().split("T")[0];
@@ -2580,6 +2723,418 @@ async function pullAllFromOneNote() {
   } catch(e) { console.warn("pullAllFromOneNote error:", e); }
 }
 
+
+// ===================== PROJECTS =====================
+let currentProjectId = null;
+let currentSectionId = null; // for task form
+let currentStuckTaskId = null;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function getProject(id) { return projects.find(p => p.id === id); }
+function saveProjects() { sv(SK.projects, projects); }
+
+function projectProgress(proj) {
+  const tasks = proj.sections.flatMap(s => s.tasks);
+  if (!tasks.length) return { done: 0, total: 0, pct: 0 };
+  const done = tasks.filter(t => t.status === "done").length;
+  return { done, total: tasks.length, pct: Math.round(done / tasks.length * 100) };
+}
+
+function activeSessionTasks() {
+  return projects.flatMap(p =>
+    p.sections.flatMap(s =>
+      s.tasks.filter(t => t.status === "active").map(t => ({ task: t, project: p }))
+    )
+  );
+}
+
+// ── Projects list ─────────────────────────────────────────────────────────────
+function renderProjectsList() {
+  const list = document.getElementById("projects-list");
+  if (!list) return;
+
+  // Session panel
+  const active = activeSessionTasks();
+  const panel = document.getElementById("proj-session-panel");
+  const panelTasks = document.getElementById("proj-session-tasks");
+  if (active.length > 0) {
+    panel.style.display = "block";
+    panelTasks.innerHTML = active.map(({ task, project }) =>
+      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="width:6px;height:6px;border-radius:50%;background:#4A90A4;flex-shrink:0"></div>
+        <span style="font-size:12px;color:var(--text);flex:1">${task.name}</span>
+        <span class="mono" style="font-size:9px;color:var(--text-dimmer)">${project.name}</span>
+        <button onclick="quickDoneTask('${project.id}','${task.id}')" style="background:#3D8A5E;color:#fff;border:none;border-radius:10px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace">Done</button>
+      </div>`
+    ).join("");
+  } else {
+    panel.style.display = "none";
+  }
+
+  const active_projs = projects.filter(p => p.status !== "done");
+  const done_projs = projects.filter(p => p.status === "done");
+
+  list.innerHTML = "";
+  if (!projects.length) {
+    list.innerHTML = `<div style="text-align:center;padding:60px 20px">
+      <div style="font-size:32px;margin-bottom:12px">🚀</div>
+      <div class="serif" style="font-size:16px;color:var(--text-heading);margin-bottom:8px">No projects yet</div>
+      <div style="font-size:13px;color:var(--text-dimmer);line-height:1.6">A project is a defined outcome with structured tasks.<br/>Not a list — an execution plan.</div>
+    </div>`;
+    return;
+  }
+
+  const render = (proj) => {
+    const prog = projectProgress(proj);
+    const statusColor = { active:"#4A90A4", paused:"#C8962A", done:"#3D8A5E" }[proj.status] || "#4A90A4";
+    const card = document.createElement("div");
+    card.style.cssText = `background:var(--bg-card);border:1px solid var(--border);border-left:3px solid ${statusColor};border-radius:5px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s`;
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div class="serif" style="font-size:15px;color:var(--text-heading);font-weight:500;flex:1;margin-right:8px">${proj.name}</div>
+        <span class="mono" style="font-size:9px;color:${statusColor};flex-shrink:0">${proj.status.toUpperCase()}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.4">${proj.outcome.substring(0,100)}${proj.outcome.length>100?"...":""}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="prog-track" style="flex:1"><div class="prog-fill" style="width:${prog.pct}%;background:${statusColor}"></div></div>
+        <span class="mono" style="font-size:9px;color:${statusColor}">${prog.pct}% · ${prog.done}/${prog.total} tasks</span>
+      </div>`;
+    card.onclick = () => openProjectDetail(proj.id);
+    list.appendChild(card);
+  };
+
+  if (active_projs.length) {
+    const lbl = document.createElement("div");
+    lbl.className = "section-label";
+    lbl.style.marginTop = "4px";
+    lbl.textContent = "ACTIVE";
+    list.appendChild(lbl);
+    active_projs.forEach(render);
+  }
+  if (done_projs.length) {
+    const lbl = document.createElement("div");
+    lbl.className = "section-label";
+    lbl.style.marginTop = "16px";
+    lbl.textContent = "COMPLETED";
+    list.appendChild(lbl);
+    done_projs.forEach(render);
+  }
+}
+
+// ── Project detail ────────────────────────────────────────────────────────────
+function openProjectDetail(id) {
+  currentProjectId = id;
+  const proj = getProject(id);
+  if (!proj) return;
+  document.getElementById("proj-detail-overlay").classList.add("open");
+  renderProjectDetail();
+}
+
+function closeProjectDetail() {
+  document.getElementById("proj-detail-overlay").classList.remove("open");
+  currentProjectId = null;
+  renderProjectsList();
+}
+
+function renderProjectDetail() {
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  const prog = projectProgress(proj);
+  const statusColor = { active:"#4A90A4", paused:"#C8962A", done:"#3D8A5E" }[proj.status];
+
+  document.getElementById("proj-detail-name").textContent = proj.name;
+  document.getElementById("proj-detail-outcome").textContent = proj.outcome;
+  document.getElementById("proj-detail-prog").style.width = prog.pct + "%";
+  document.getElementById("proj-detail-pct").textContent = prog.pct + "% · " + prog.done + "/" + prog.total;
+  document.getElementById("proj-detail-status-badge").textContent = proj.status.toUpperCase();
+  document.getElementById("proj-detail-status-badge").style.color = statusColor;
+
+  // Scope pills
+  const inEl = document.getElementById("proj-scope-in-pills");
+  const outEl = document.getElementById("proj-scope-out-pills");
+  const pill = (t, color) => `<span style="display:inline-block;padding:2px 8px;border-radius:10px;border:1px solid ${color};color:${color};font-size:10px;font-family:'DM Mono',monospace;margin:2px">${t}</span>`;
+  inEl.innerHTML = (proj.scopeIn||[]).map(t => pill(t,"#3D8A5E")).join("") || '<span style="font-size:11px;color:var(--text-dimmer)">—</span>';
+  outEl.innerHTML = (proj.scopeOut||[]).map(t => pill(t,"#B05C5C")).join("") || '<span style="font-size:11px;color:var(--text-dimmer)">—</span>';
+
+  // Sections + tasks
+  const area = document.getElementById("proj-sections-area");
+  area.innerHTML = "";
+  if (!proj.sections.length) {
+    area.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dimmer);font-size:13px;font-style:italic">No sections yet. Add one to start breaking down work.</div>`;
+    return;
+  }
+
+  proj.sections.forEach(sec => {
+    const secDiv = document.createElement("div");
+    secDiv.style.marginBottom = "20px";
+
+    const secTasks = sec.tasks || [];
+    const done = secTasks.filter(t => t.status === "done").length;
+    const pct = secTasks.length ? Math.round(done/secTasks.length*100) : 0;
+
+    secDiv.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="mono" style="font-size:10px;color:var(--text-muted);letter-spacing:1px">${sec.name.toUpperCase()}</span>
+          <span class="mono" style="font-size:9px;color:var(--text-dimmer)">${done}/${secTasks.length}</span>
+        </div>
+        <button onclick="openAddTask('${sec.id}')" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;color:var(--text-muted);cursor:pointer">+ Task</button>
+      </div>`;
+
+    if (!secTasks.length) {
+      const empty = document.createElement("div");
+      empty.style.cssText = "font-size:12px;color:var(--text-dimmer);font-style:italic;padding:8px 0";
+      empty.textContent = "No tasks yet";
+      secDiv.appendChild(empty);
+    }
+
+    secTasks.forEach(task => {
+      const taskEl = document.createElement("div");
+      const statusStyles = {
+        todo:   { border:"var(--border)",   bg:"var(--bg-card)",      color:"var(--text-muted)", label:"START" },
+        active: { border:"#4A90A4",         bg:"#4A90A411",           color:"#4A90A4",           label:"PAUSE" },
+        stuck:  { border:"#B05C5C",         bg:"#B05C5C11",           color:"#B05C5C",           label:"STUCK" },
+        done:   { border:"#3D8A5E44",       bg:"var(--bg-card)",      color:"#3D8A5E",           label:"✓" }
+      };
+      const st = statusStyles[task.status] || statusStyles.todo;
+
+      taskEl.style.cssText = `border:1px solid ${st.border};background:${st.bg};border-radius:5px;padding:12px 14px;margin-bottom:8px;transition:all 0.2s`;
+
+      const estLabel = task.estimatedMins ? `<span class="mono" style="font-size:9px;color:var(--text-dimmer)">${task.estimatedMins}min</span>` : "";
+      const doneOpacity = task.status === "done" ? "opacity:0.45;" : "";
+      const stuckNote = task.stuckNote ? `<div style="font-size:11px;color:#B05C5C;margin-top:6px;padding:6px 8px;background:#B05C5C11;border-radius:4px">🧱 ${task.stuckNote}</div>` : "";
+
+      taskEl.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:10px;${doneOpacity}">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;color:var(--text);font-weight:500;margin-bottom:3px;${task.status==="done"?"text-decoration:line-through;color:var(--text-muted)":""}">${task.name}</div>
+            <div style="font-size:11px;color:var(--text-dimmer);line-height:1.4">Done when: ${task.doneDefinition}</div>
+            ${stuckNote}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
+            ${estLabel}
+            ${task.status !== "done" ? `
+              <button onclick="cycleTaskStatus('${sec.id}','${task.id}')" style="background:${st.color};color:#fff;border:none;border-radius:10px;padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;white-space:nowrap">${st.label}</button>
+              ${task.status === "active" || task.status === "todo" ? `<button onclick="openStuck('${task.id}')" style="background:none;border:1px solid #B05C5C;border-radius:10px;padding:3px 8px;font-size:9px;font-family:'DM Mono',monospace;color:#B05C5C;cursor:pointer">stuck</button>` : ""}
+            ` : `<span class="mono" style="font-size:10px;color:#3D8A5E">✓ done</span>`}
+          </div>
+        </div>`;
+      secDiv.appendChild(taskEl);
+    });
+
+    area.appendChild(secDiv);
+  });
+}
+
+// ── Task status cycling ───────────────────────────────────────────────────────
+function cycleTaskStatus(secId, taskId) {
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  const sec = proj.sections.find(s => s.id === secId);
+  if (!sec) return;
+  const task = sec.tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  if (task.status === "todo") {
+    // Check session limit
+    const activeTasks = activeSessionTasks();
+    if (activeTasks.length >= 3) {
+      showToast("Max 3 active tasks per session. Complete one first.", 4000);
+      return;
+    }
+    task.status = "active";
+  } else if (task.status === "active") {
+    task.status = "todo"; // pause
+  } else if (task.status === "stuck") {
+    task.status = "active";
+  }
+
+  saveProjects();
+  renderProjectDetail();
+  renderProjectsList();
+}
+
+function quickDoneTask(projId, taskId) {
+  const proj = getProject(projId);
+  if (!proj) return;
+  for (const sec of proj.sections) {
+    const task = sec.tasks.find(t => t.id === taskId);
+    if (task) { task.status = "done"; break; }
+  }
+  saveProjects();
+  renderProjectsList();
+  if (currentProjectId === projId) renderProjectDetail();
+}
+
+// ── Stuck recovery ────────────────────────────────────────────────────────────
+function openStuck(taskId) {
+  currentStuckTaskId = taskId;
+  document.getElementById("stuck-blocker").value = "";
+  document.getElementById("stuck-next").value = "";
+  document.getElementById("stuck-overlay").classList.add("open");
+}
+
+function closeStuck(e) {
+  if (e && e.target !== document.getElementById("stuck-overlay")) return;
+  document.getElementById("stuck-overlay").classList.remove("open");
+}
+
+function saveStuck() {
+  const blocker = document.getElementById("stuck-blocker").value.trim();
+  const next = document.getElementById("stuck-next").value.trim();
+  if (!blocker) { showToast("Describe what's blocking you"); return; }
+
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  for (const sec of proj.sections) {
+    const task = sec.tasks.find(t => t.id === currentStuckTaskId);
+    if (task) {
+      task.status = "stuck";
+      task.stuckNote = blocker + (next ? " → " + next : "");
+      break;
+    }
+  }
+  saveProjects();
+  document.getElementById("stuck-overlay").classList.remove("open");
+  renderProjectDetail();
+  showToast("Logged. Small steps forward. 🙏");
+}
+
+// ── Forms ─────────────────────────────────────────────────────────────────────
+function openProjectForm() {
+  ["pf-name","pf-outcome","pf-scope-in","pf-scope-out"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  document.getElementById("proj-form-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("pf-name").focus(), 100);
+}
+
+function closeProjForm(e) {
+  if (e && e.target !== document.getElementById("proj-form-overlay")) return;
+  document.getElementById("proj-form-overlay").classList.remove("open");
+}
+
+function saveProject() {
+  const name = document.getElementById("pf-name").value.trim();
+  const outcome = document.getElementById("pf-outcome").value.trim();
+  if (!name) { showToast("Give your project a name"); return; }
+  if (!outcome) { showToast("Define the outcome — what does done look like?"); return; }
+
+  const scopeIn = document.getElementById("pf-scope-in").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const scopeOut = document.getElementById("pf-scope-out").value.split(",").map(s=>s.trim()).filter(Boolean);
+
+  const proj = {
+    id: "p" + Date.now(),
+    name, outcome, scopeIn, scopeOut,
+    status: "active",
+    sections: [],
+    createdAt: today()
+  };
+  projects.unshift(proj);
+  saveProjects();
+  closeProjForm();
+  renderProjectsList();
+  showToast("Project created ✓");
+  openProjectDetail(proj.id);
+}
+
+function markProjectDone() {
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  if (!confirm("Mark this project as done?")) return;
+  proj.status = "done";
+  saveProjects();
+  renderProjectDetail();
+  showToast("Project completed ✦");
+}
+
+function openAddSection() {
+  document.getElementById("sf-name").value = "";
+  document.getElementById("section-form-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("sf-name").focus(), 100);
+}
+
+function closeSectionForm(e) {
+  if (e && e.target !== document.getElementById("section-form-overlay")) return;
+  document.getElementById("section-form-overlay").classList.remove("open");
+}
+
+function saveSection() {
+  const name = document.getElementById("sf-name").value.trim();
+  if (!name) { showToast("Name the section"); return; }
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  proj.sections.push({ id: "s" + Date.now(), name, tasks: [] });
+  saveProjects();
+  closeSectionForm();
+  renderProjectDetail();
+}
+
+function openAddTask(secId) {
+  currentSectionId = secId;
+  ["tf-name","tf-done"].forEach(id => { const el = document.getElementById(id); if(el) el.value=""; });
+  document.getElementById("tf-mins").value = "";
+  document.getElementById("tf-time-warning").style.display = "none";
+  document.getElementById("task-form-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("tf-name").focus(), 100);
+}
+
+function closeTaskForm(e) {
+  if (e && e.target !== document.getElementById("task-form-overlay")) return;
+  document.getElementById("task-form-overlay").classList.remove("open");
+}
+
+function saveTask() {
+  const name = document.getElementById("tf-name").value.trim();
+  const doneDefinition = document.getElementById("tf-done").value.trim();
+  const mins = parseInt(document.getElementById("tf-mins").value) || 0;
+  const warn = document.getElementById("tf-time-warning");
+
+  if (!name) { showToast("Name the task"); return; }
+  if (!doneDefinition) { showToast("Define when this task is done — required"); return; }
+
+  if (mins > 90) {
+    warn.textContent = "Tasks over 90 min are too large. Break it into smaller pieces.";
+    warn.style.display = "block";
+    return;
+  }
+
+  warn.style.display = "none";
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  const sec = proj.sections.find(s => s.id === currentSectionId);
+  if (!sec) return;
+
+  sec.tasks.push({
+    id: "t" + Date.now(),
+    name,
+    doneDefinition,
+    estimatedMins: mins || null,
+    status: "todo",
+    stuckNote: null
+  });
+
+  saveProjects();
+  closeTaskForm();
+  renderProjectDetail();
+  showToast("Task added ✓");
+}
+
+// Time warning on input
+document.addEventListener("input", (e) => {
+  if (e.target.id === "tf-mins") {
+    const val = parseInt(e.target.value);
+    const warn = document.getElementById("tf-time-warning");
+    if (val > 90) {
+      warn.textContent = "Over 90 min — break this into smaller tasks.";
+      warn.style.display = "block";
+    } else {
+      warn.style.display = "none";
+    }
+  }
+});
+
 // ===================== NAVIGATION =====================
 function showPage(name) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -2588,6 +3143,7 @@ function showPage(name) {
   document.getElementById("nav-" + name).classList.add("active");
   if (name === "focus") { renderFocus(); renderNotTodos(); }
   if (name === "progress") { renderProgress(); renderHabitsManage(); }
+  if (name === "projects") { renderProjectsList(); }
   if (name === "capture") { renderTagRow(); renderFilterRow(); renderEntriesList(); renderBrainDumps(); updateLoginUI(); }
   if (name === "reflect") {
     document.getElementById("reflect-date").textContent =
