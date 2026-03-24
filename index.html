@@ -860,87 +860,87 @@ function buildTableHtml(pageTitle, dataRowsHtml) {
 }
 
 // ── Main entry point for all OneNote syncs ────────────────────────────────────
+// Retry fetch on 5xx gateway errors
+async function fetchWithRetry(url, options, maxRetries=3) {
+  for (let i = 0; i < maxRetries; i++) {
+    const res = await fetch(url, options);
+    if (res.ok || res.status < 500) return res;
+    console.warn(`Retry ${i+1}/${maxRetries} — status ${res.status}`);
+    await new Promise(r => setTimeout(r, 1500 * (i + 1)));
+  }
+  return fetch(url, options);
+}
+
+// ── Main entry point for all OneNote syncs ──────────────────────────────────
 async function syncSingleRow(pageName, rowHtml, token) {
   setSyncStatus("syncing", "Syncing...");
   try {
     const nbId = await getNotebookId(token);
     const secId = await getSectionId(nbId, token);
 
-    // 1. Find or create the page
-    let pageData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
-    let page = pageData.value && pageData.value.find(p => p.title === pageName);
-    let pageId;
+    // 1. Find page (retry on timeout)
+    let pageData, attempts = 0;
+    while (true) {
+      try {
+        pageData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+        break;
+      } catch(e) {
+        if (++attempts >= 3) throw e;
+        await new Promise(r => setTimeout(r, 2000 * attempts));
+      }
+    }
 
+    const page = pageData.value && pageData.value.find(p => p.title === pageName);
+
+    // 2. Page doesn't exist — create with table + header + first row baked in
     if (!page) {
-      // Page doesn't exist — create it with table + header + first data row
       showToast(`Creating "${pageName}"...`, 2000);
       const xhtml = buildXhtml(pageName, buildTableHtml(pageName, rowHtml));
-      const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+      const res = await fetchWithRetry(`${ON_BASE}/sections/${secId}/pages`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
         body: xhtml
       });
-      if (!res.ok) {
-        const err = await res.text().catch(()=>"");
-        throw new Error("Page create failed " + res.status + ": " + err.substring(0,100));
-      }
-      const created = await res.json();
-      pageId = created.id;
+      if (!res.ok) throw new Error("Page create failed " + res.status);
       setSyncStatus("connected", "Synced ✓");
       showToast(`✓ Saved to "${pageName}" (page created)`);
       return true;
     }
 
-    pageId = page.id;
+    const pageId = page.id;
 
-    // 2. Fetch page HTML WITH generated IDs — critical for targeting table rows
-    const contentRes = await fetch(`${ON_BASE}/pages/${pageId}/content?includeIDs=true`, {
+    // 3. Fetch page HTML with real element IDs
+    const contentRes = await fetchWithRetry(`${ON_BASE}/pages/${pageId}/content?includeIDs=true`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    if (!contentRes.ok) throw new Error("Content fetch failed " + contentRes.status);
     const html = await contentRes.text();
-    const hasTable = html.includes("<table");
 
-    if (!hasTable) {
-      // No table on page — create full table with header + data row
-      showToast(`Adding table to "${pageName}"...`, 2000);
-      const tableHtml = buildTableHtml(pageName, rowHtml);
-      const commands = [{ action: "append", target: "body", content: tableHtml }];
-      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-      if (patchRes.ok) {
-        setSyncStatus("connected", "Synced ✓");
-        showToast(`✓ Saved to "${pageName}" (table created)`);
-        return true;
-      }
-      throw new Error("Failed to add table: " + patchRes.status);
+    // 4. No table yet — append full table to page body
+    if (!html.includes("<table")) {
+      const commands = [{ action: "append", target: "body", content: buildTableHtml(pageName, rowHtml) }];
+      const pr = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+      if (pr.ok) { setSyncStatus("connected","Synced ✓"); showToast(`✓ Saved to "${pageName}"`); return true; }
+      throw new Error("Add table failed " + pr.status);
     }
 
-    // 3. Table exists — find last <tr> generated ID and insertAfter it
-    // ?includeIDs=true causes OneNote to return id="..." on every element
+    // 5. Table exists — insertAfter last <tr> using real generated ID
     const trIdMatches = [...html.matchAll(/<tr[^>]+id="([^"]+)"/gi)];
     if (trIdMatches.length > 0) {
       const lastTrId = trIdMatches[trIdMatches.length - 1][1];
       const commands = [{ action: "insertAfter", target: lastTrId, content: rowHtml }];
-      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-      if (patchRes.ok) {
-        setSyncStatus("connected", "Synced ✓");
-        showToast(`✓ Saved to "${pageName}"`);
-        return true;
-      }
-      const errText = await patchRes.text().catch(()=>"");
-      throw new Error("insertAfter failed " + patchRes.status + ": " + errText.substring(0,150));
+      const pr = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+      if (pr.ok) { setSyncStatus("connected","Synced ✓"); showToast(`✓ Saved to "${pageName}"`); return true; }
+      const err = await pr.text().catch(()=>"");
+      throw new Error("insertAfter failed " + pr.status + ": " + err.substring(0,120));
     }
 
-    // No TR IDs found even with includeIDs=true — table may be empty (header only)
-    // Fall back to appending bare <tr> to body (OneNote merges into last table)
+    // 6. Table has header only (no row IDs yet) — bare <tr> appended to body
     const commands = [{ action: "append", target: "body", content: rowHtml }];
-    const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-    if (patchRes.ok) {
-      setSyncStatus("connected", "Synced ✓");
-      showToast(`✓ Saved to "${pageName}"`);
-      return true;
-    }
-    const errText = await patchRes.text().catch(()=>"");
-    throw new Error("Append failed " + patchRes.status + ": " + errText.substring(0,150));
+    const pr = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+    if (pr.ok) { setSyncStatus("connected","Synced ✓"); showToast(`✓ Saved to "${pageName}"`); return true; }
+    const err = await pr.text().catch(()=>"");
+    throw new Error("Append failed " + pr.status + ": " + err.substring(0,120));
 
   } catch(e) {
     console.error("syncSingleRow error:", e);
@@ -949,6 +949,7 @@ async function syncSingleRow(pageName, rowHtml, token) {
     return false;
   }
 }
+
 
 // ── Full sync — rebuilds all data for a page from local storage ───────────────
 async function syncFullPage(pageName, token) {
