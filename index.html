@@ -2325,31 +2325,59 @@ async function pushListToOneNote(type) {
     const items = getListData(type);
     const nbId = await getNotebookId(token);
     const secId = await getSectionId(nbId, token);
-
-    // Build XHTML with <ul> bullet list
     const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    const bullets = items.map(i => `<li>${safe(i.text)}</li>`).join("");
-    const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${cfg.pageName}</title></head><body><h1 style="font-family:sans-serif">${cfg.pageName}</h1><ul style="font-family:sans-serif;font-size:14px">${bullets}</ul></body></html>`;
 
-    // Find existing page and delete it, then recreate
+    // Find or create the page
     const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    let pageId = null;
     if (pagesData.value) {
       const existing = pagesData.value.find(p => p.title === cfg.pageName);
-      if (existing) {
-        await fetch(`${ON_BASE}/pages/${existing.id}`, {
-          method: "DELETE", headers: { Authorization: `Bearer ${token}` }
-        });
-        await new Promise(r => setTimeout(r, 800));
-      }
+      if (existing) pageId = existing.id;
     }
 
-    const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
-      body: pageHtml
+    if (!pageId) {
+      // Create page fresh with bullet list
+      const bullets = items.map(i => `<li>${safe(i.text)}</li>`).join("");
+      const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${cfg.pageName}</title></head><body><h1 style="font-family:sans-serif;font-size:16pt">${safe(cfg.pageName)}</h1><ul>${bullets}</ul></body></html>`;
+      const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
+        body: pageHtml
+      });
+      if (res.ok) setSyncStatus("connected", "Synced ✓");
+      else console.warn("Create list page failed:", res.status);
+      return;
+    }
+
+    // Page exists — fetch with IDs, find the <ul> generated ID, replace its content
+    const contentRes = await fetch(`${ON_BASE}/pages/${pageId}/content?includeIDs=true`, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-    if (res.ok) setSyncStatus("connected", "Synced ✓");
-    else console.warn("Push list failed:", res.status, await res.text().catch(()=>""));
+    const html = await contentRes.text();
+
+    // Find <ul id="..."> generated ID
+    const ulMatch = html.match(/<ul[^>]+id="([^"]+)"/i);
+    if (ulMatch) {
+      const ulId = ulMatch[1];
+      const bullets = items.map(i => `<li>${safe(i.text)}</li>`).join("");
+      const newUl = `<ul>${bullets}</ul>`;
+      const commands = [{ action: "replace", target: ulId, content: newUl }];
+      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+      if (patchRes.ok) { setSyncStatus("connected", "Synced ✓"); return; }
+      console.warn("UL replace failed:", patchRes.status, await patchRes.text().catch(()=>""));
+    }
+
+    // Fallback: append new items only (items not already in OneNote)
+    // Parse existing li items from html (without includeIDs)
+    const existingLi = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+      .map(m => m[1].replace(/<[^>]+>/g,"").trim().toLowerCase());
+    const newItems = items.filter(i => !existingLi.includes(i.text.toLowerCase()));
+    if (newItems.length) {
+      const newLiHtml = newItems.map(i => `<li>${safe(i.text)}</li>`).join("");
+      const commands = [{ action: "append", target: "body", content: `<ul>${newLiHtml}</ul>` }];
+      await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+    }
+    setSyncStatus("connected", "Synced ✓");
   } catch(e) { console.warn("pushListToOneNote error:", e); }
 }
 
