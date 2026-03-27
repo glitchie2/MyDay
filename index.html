@@ -2586,83 +2586,73 @@ async function refreshNotTodoModal() {
   const linkEl = document.getElementById("nottodo-onenote-link");
   list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dimmer);font-size:12px">Loading...</div>`;
 
-  // Always show local items first
-  renderNotTodoModalItems(notTodos, null);
-
-  // If connected, fetch from OneNote and merge
-  if (!getAccount()) return;
+  if (!getAccount()) { renderNotTodoModalItems(notTodos); return; }
 
   try {
     const token = await getToken();
-    if (!token) return;
+    if (!token) { renderNotTodoModalItems(notTodos); return; }
     const nbId = await getNotebookId(token);
     const secId = await getSectionId(nbId, token);
 
-    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title,links&$top=100`, token);
-    if (!pagesData.value) return;
+    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    if (!pagesData.value) { renderNotTodoModalItems(notTodos); return; }
 
     const pg = pagesData.value.find(p => p.title === "Things I don't do");
-    if (!pg) { renderNotTodoModalItems(notTodos, null); return; }
+    if (!pg) {
+      // Page doesn't exist in OneNote yet — show local
+      renderNotTodoModalItems(notTodos);
+      return;
+    }
 
-    // Get OneNote web URL for the link icon
-    // Fetch page links — oneNoteClientUrl opens native app on all platforms
+    // Get native app link
     try {
-      const pageDetail = await graphGet(`${ON_BASE}/pages/${pg.id}?$select=id,title,links`, token);
-      const clientUrl = pageDetail?.links?.oneNoteClientUrl?.href || null;
-      const webUrl = pageDetail?.links?.oneNoteWebUrl?.href || null;
-      const url = clientUrl || webUrl;
+      const pageDetail = await graphGet(`${ON_BASE}/pages/${pg.id}?$select=links`, token);
+      const url = pageDetail?.links?.oneNoteClientUrl?.href
+                || pageDetail?.links?.oneNoteWebUrl?.href || null;
       if (url) {
         linkEl.href = url;
         linkEl.onclick = (e) => { e.preventDefault(); openOneNoteUrl(url); };
-        linkEl.style.color = "var(--text-heading)";
       }
-    } catch(e) { console.warn("Could not get page link:", e); }
+    } catch(e) {}
 
-    // Fetch page content and parse items
+    // Fetch page content — OneNote is source of truth
     const res = await fetch(`${ON_BASE}/pages/${pg.id}/content`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const html = await res.text();
 
-    // Parse rows — same as pullAllFromOneNote
-    const rows = [...html.matchAll(/<tr[\s\S]*?<\/tr>/gi)];
+    // Parse table rows
     const remoteItems = [];
+    const rows = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
     for (const row of rows) {
-      const cells = [...row[0].matchAll(/<td[\s\S]*?<\/td>/gi)]
-        .map(c => c[0].replace(/<[^>]+>/g,"").trim());
+      const cells = (row.match(/<td[\s\S]*?<\/td>/gi) || [])
+        .map(c => c.replace(/<[^>]+>/g,"").trim());
       if (cells.length >= 1) {
         const text = cells[0].replace(/^🚫\s*/,"").trim();
         if (text && text.length > 1) remoteItems.push({ text, addedAt: cells[1] || "" });
       }
     }
 
-    // Merge remote into local (don't duplicate)
-    const localTexts = new Set(notTodos.map(n => n.text.toLowerCase()));
-    let added = 0;
-    remoteItems.forEach(item => {
-      if (!localTexts.has(item.text.toLowerCase())) {
-        notTodos.push({ id:"nt"+Date.now()+Math.random().toString(36).slice(2,4), text:item.text, addedAt:item.addedAt||today() });
-        added++;
-      }
-    });
-    if (added) sv(SK.nottodo, notTodos);
+    if (remoteItems.length) {
+      // OneNote is source of truth — replace local with OneNote data
+      notTodos = remoteItems.map(item => ({
+        id: notTodos.find(n => n.text.toLowerCase() === item.text.toLowerCase())?.id
+            || "nt" + Date.now() + Math.random().toString(36).slice(2,4),
+        text: item.text,
+        addedAt: item.addedAt || today()
+      }));
+      sv(SK.nottodo, notTodos);
+    }
 
-    // Show merged list (remote items that aren't local shown with cloud indicator)
-    const allItems = notTodos.map(n => ({ ...n, source:"local" }));
-    remoteItems.forEach(r => {
-      if (!notTodos.find(n => n.text.toLowerCase() === r.text.toLowerCase())) {
-        allItems.push({ text:r.text, addedAt:r.addedAt, source:"remote" });
-      }
-    });
-
-    renderNotTodoModalItems(notTodos, webUrl);
+    renderNotTodoModalItems(notTodos);
   } catch(e) {
     console.warn("NotTodo modal fetch error:", e);
-    renderNotTodoModalItems(notTodos, null);
+    renderNotTodoModalItems(notTodos);
   }
 }
 
-function renderNotTodoModalItems(items, webUrl) {
+
+function renderNotTodoModalItems(items) {
   const list = document.getElementById("nottodo-modal-list");
   if (!items.length) {
     list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dimmer);font-size:13px;font-style:italic">No commitments yet</div>`;
@@ -2980,37 +2970,32 @@ async function pullListFromOneNote(type) {
     const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
     if (!pagesData.value) return;
     const pg = pagesData.value.find(p => p.title === cfg.pageName);
-    if (!pg) return;
+    if (!pg) return; // page doesn't exist yet, nothing to pull
 
     const res = await fetch(`${ON_BASE}/pages/${pg.id}/content`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const html = await res.text();
 
-    // Parse <li> elements
+    // Parse <li> elements — strip emoji prefix (⭐/🎯)
     const liMatches = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
     const remoteTexts = liMatches
-      .map(m => m[1].replace(/<[^>]+>/g,"").trim())
+      .map(m => m[1].replace(/<[^>]+>/g,"").replace(/^[⭐🎯]\s*/u,"").trim())
       .filter(Boolean);
 
     if (!remoteTexts.length) return;
 
-    // Merge: keep local items + add any from OneNote not already local
-    const local = getListData(type);
-    const localTexts = new Set(local.map(i => i.text.toLowerCase()));
-    let added = 0;
-    remoteTexts.forEach(text => {
-      if (!localTexts.has(text.toLowerCase())) {
-        local.push({ id: "li" + Date.now() + Math.random().toString(36).slice(2,5), text, addedAt: today() });
-        added++;
-      }
-    });
+    // OneNote is source of truth — replace local with OneNote data
+    const existing = getListData(type);
+    const newData = remoteTexts.map(text => ({
+      id: existing.find(i => i.text.toLowerCase() === text.toLowerCase())?.id
+          || "li" + Date.now() + Math.random().toString(36).slice(2,5),
+      text,
+      addedAt: existing.find(i => i.text.toLowerCase() === text.toLowerCase())?.addedAt || today()
+    }));
 
-    if (added > 0) {
-      setListData(type, local);
-      renderListItems();
-      showToast(`↓ Pulled ${added} new item${added>1?"s":""} from OneNote`);
-    }
+    setListData(type, newData);
+    renderListItems();
   } catch(e) { console.warn("pullListFromOneNote error:", e); }
 }
 
