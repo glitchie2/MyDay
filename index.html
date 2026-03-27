@@ -615,7 +615,7 @@
 </div>
 
 <!-- PROJ REVIEW PANEL (floating list over the form) -->
-<div id="proj-review-panel" style="display:none;position:fixed;z-index:1100;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:340px;max-height:70vh;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4);display:flex;flex-direction:column">
+<div id="proj-review-panel" style="display:none;position:fixed;z-index:1100;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:340px;max-height:70vh;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4);flex-direction:column">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
     <span id="proj-review-panel-title" class="mono" style="font-size:11px;letter-spacing:1px;color:var(--text-muted)"></span>
     <button onclick="closeProjReviewPanel()" style="background:none;border:none;color:var(--text-dimmer);font-size:18px;cursor:pointer;padding:0;line-height:1">×</button>
@@ -832,7 +832,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">🚫</span>
-        <a id="nottodo-onenote-link" href="#" target="_blank" style="font-weight:700;color:var(--text-heading);font-size:14px;text-decoration:underline;cursor:pointer">Things I Don't Do</a>
+        <a id="nottodo-onenote-link" href="javascript:void(0)" target="_blank" style="font-weight:700;color:var(--text-heading);font-size:14px;text-decoration:underline;cursor:pointer">Things I Don't Do</a>
         <button class="info-btn" onclick="openInfoModal('nottodo')" style="flex-shrink:0">
           <span class="info-btn-circle">?</span>
         </button>
@@ -892,7 +892,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
         <span id="list-modal-emoji" style="font-size:18px"></span>
-        <a id="list-modal-title-link" href="#" target="_blank" style="font-weight:700;font-size:15px;text-decoration:underline;cursor:pointer;background:none;border:none;padding:0" id="list-modal-title-link">
+        <a id="list-modal-title-link" href="javascript:void(0)" target="_blank" style="font-weight:700;font-size:15px;text-decoration:underline;cursor:pointer;background:none;border:none;padding:0" id="list-modal-title-link">
           <span id="list-modal-title"></span>
         </a>
       </div>
@@ -2608,12 +2608,12 @@ async function refreshNotTodoModal() {
     // Fetch page links — oneNoteClientUrl opens native app on all platforms
     try {
       const pageDetail = await graphGet(`${ON_BASE}/pages/${pg.id}?$select=id,title,links`, token);
-      // Prefer client URL (opens native app) over web URL
       const clientUrl = pageDetail?.links?.oneNoteClientUrl?.href || null;
       const webUrl = pageDetail?.links?.oneNoteWebUrl?.href || null;
       const url = clientUrl || webUrl;
       if (url) {
         linkEl.href = url;
+        linkEl.onclick = (e) => { e.preventDefault(); openOneNoteUrl(url); };
         linkEl.style.color = "var(--text-heading)";
       }
     } catch(e) { console.warn("Could not get page link:", e); }
@@ -2840,7 +2840,10 @@ async function fetchListPageLink(type) {
               || pageDetail?.links?.oneNoteWebUrl?.href || null;
     if (url) {
       const titleLink = document.getElementById("list-modal-title-link");
-      if (titleLink) titleLink.href = url;
+      if (titleLink) {
+        titleLink.href = url;
+        titleLink.onclick = (e) => { e.preventDefault(); openOneNoteUrl(url); };
+      }
     }
   } catch(e) { console.warn("fetchListPageLink error:", e); }
 }
@@ -3959,7 +3962,7 @@ function openProjReviewPanel(type) {
       </div>`).join("");
   }
 
-  panel.style.display = "flex";
+  panel.style.display = "flex"; panel.style.flexDirection = "column";
 }
 
 function closeProjReviewPanel() {
@@ -4091,6 +4094,16 @@ document.addEventListener("input", (e) => {
   }
 });
 
+
+
+// Open OneNote natively on all platforms
+// oneNoteClientUrl uses onenote: scheme which triggers the native app
+function openOneNoteUrl(url) {
+  if (!url || url === "javascript:void(0)") return;
+  // The clientUrl already uses onenote:https:// scheme
+  // On mobile this opens the app directly; on desktop same
+  window.open(url, "_blank");
+}
 
 // ===================== PROJECTS ONENOTE SYNC =====================
 
