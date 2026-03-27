@@ -451,14 +451,14 @@
       </div>
       <div class="prog-track"><div class="prog-fill" id="focus-prog" style="background:#4A90A4"></div></div>
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button onclick="openListModal('values')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 12px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:13px">⭐</span><span class="mono" style="font-size:10px;color:var(--text-muted)">My Values</span>
+        <button onclick="openListModal('values')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:12px">⭐</span><span class="mono" style="font-size:9px;color:#C8962A;font-weight:700;text-decoration:underline">My Values</span>
         </button>
-        <button onclick="openListModal('goals')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 12px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:13px">🎯</span><span class="mono" style="font-size:10px;color:var(--text-muted)">My Goals</span>
+        <button onclick="openListModal('goals')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:12px">🎯</span><span class="mono" style="font-size:9px;color:#4A90A4;font-weight:700;text-decoration:underline">My Goals</span>
         </button>
-        <button onclick="openNotTodoModal()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 12px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:13px">🚫</span><span class="mono" style="font-size:10px;color:var(--text-muted)">Don't Do</span>
+        <button onclick="openNotTodoModal()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:12px">🚫</span><span class="mono" style="font-size:9px;color:#B05C5C;font-weight:700;text-decoration:underline">Don't Do</span>
         </button>
       </div>
     </div>
@@ -573,24 +573,54 @@
 
 <!-- PROJECT CREATION FORM -->
 <div class="info-overlay" id="proj-form-overlay" onclick="closeProjForm(event)">
-  <div class="info-modal" style="max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:20px">
+  <div class="info-modal" style="max-width:480px;width:100%;max-height:92vh;overflow-y:auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
       <span style="font-weight:600;color:var(--text-heading);font-size:15px">New Project</span>
       <button onclick="closeProjForm()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0">×</button>
     </div>
+
     <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">PROJECT NAME</div>
     <input type="text" id="pf-name" placeholder="What are you building?" style="margin-bottom:14px" />
+
     <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:4px">OUTCOME <span style="opacity:0.6">— What does done look like? Be specific.</span></div>
     <textarea id="pf-outcome" rows="3" placeholder="When this project is complete, I will have..." style="margin-bottom:14px;resize:none"></textarea>
+
+    <!-- Values alignment -->
+    <div style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">
+      <button onclick="openProjReviewPanel('values')" style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;color:#C8962A;padding:0;text-decoration:underline;letter-spacing:1px">⭐ VALUES ALIGNMENT</button>
+      <span style="opacity:0.6"> — how does this serve your values?</span>
+    </div>
+    <textarea id="pf-values-alignment" rows="2" placeholder="This project aligns with my values because..." style="margin-bottom:14px;resize:none"></textarea>
+
+    <!-- Goals alignment -->
+    <div style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">
+      <button onclick="openProjReviewPanel('goals')" style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;color:#4A90A4;padding:0;text-decoration:underline;letter-spacing:1px">🎯 GOALS ALIGNMENT</button>
+      <span style="opacity:0.6"> — which goals does this move forward?</span>
+    </div>
+    <textarea id="pf-goals-alignment" rows="2" placeholder="This project moves forward my goal of..." style="margin-bottom:14px;resize:none"></textarea>
+
+    <div style="height:1px;background:var(--border);margin-bottom:14px"></div>
+
     <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">SCOPE IN <span style="opacity:0.6">— comma separated</span></div>
     <input type="text" id="pf-scope-in" placeholder="e.g. MVP feature, API integration" style="margin-bottom:14px" />
+
     <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">SCOPE OUT <span style="opacity:0.6">— what this project explicitly excludes</span></div>
     <input type="text" id="pf-scope-out" placeholder="e.g. Mobile version, analytics" style="margin-bottom:20px" />
+
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button onclick="closeProjForm()" class="btn-ghost">Cancel</button>
       <button onclick="saveProject()" class="btn-primary">Create Project</button>
     </div>
   </div>
+</div>
+
+<!-- PROJ REVIEW PANEL (floating list over the form) -->
+<div id="proj-review-panel" style="display:none;position:fixed;z-index:1100;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:340px;max-height:70vh;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4);display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <span id="proj-review-panel-title" class="mono" style="font-size:11px;letter-spacing:1px;color:var(--text-muted)"></span>
+    <button onclick="closeProjReviewPanel()" style="background:none;border:none;color:var(--text-dimmer);font-size:18px;cursor:pointer;padding:0;line-height:1">×</button>
+  </div>
+  <div id="proj-review-panel-list" style="overflow-y:auto;padding:10px 16px;flex:1"></div>
 </div>
 
 <!-- TASK CREATION FORM -->
@@ -802,13 +832,12 @@
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">🚫</span>
-        <span style="font-weight:600;color:var(--text-heading);font-size:14px">Things I Don't Do</span>
+        <a id="nottodo-onenote-link" href="#" target="_blank" style="font-weight:700;color:var(--text-heading);font-size:14px;text-decoration:underline;cursor:pointer">Things I Don't Do</a>
         <button class="info-btn" onclick="openInfoModal('nottodo')" style="flex-shrink:0">
           <span class="info-btn-circle">?</span>
         </button>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
-        <a id="nottodo-onenote-link" href="#" target="_blank" style="display:none;font-size:18px;text-decoration:none;line-height:1" title="Open in OneNote">🔗</a>
         <button onclick="refreshNotTodoModal()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">↓ Refresh</button>
         <button onclick="closeNotTodoModal()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
       </div>
@@ -863,7 +892,9 @@
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
         <span id="list-modal-emoji" style="font-size:18px"></span>
-        <span id="list-modal-title" style="font-weight:600;color:var(--text-heading);font-size:15px"></span>
+        <a id="list-modal-title-link" href="#" target="_blank" style="font-weight:700;font-size:15px;text-decoration:underline;cursor:pointer;background:none;border:none;padding:0" id="list-modal-title-link">
+          <span id="list-modal-title"></span>
+        </a>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <button onclick="syncListModal()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">↑↓ Sync</button>
@@ -2574,20 +2605,16 @@ async function refreshNotTodoModal() {
     if (!pg) { renderNotTodoModalItems(notTodos, null); return; }
 
     // Get OneNote web URL for the link icon
-    // Fetch page links — oneNoteWebUrl gives the web URL to open in browser/app
+    // Fetch page links — oneNoteClientUrl opens native app on all platforms
     try {
       const pageDetail = await graphGet(`${ON_BASE}/pages/${pg.id}?$select=id,title,links`, token);
-      const webUrl = pageDetail?.links?.oneNoteWebUrl?.href
-        || pageDetail?.links?.oneNoteClientUrl?.href
-        || null;
-      if (webUrl) {
-        linkEl.href = webUrl;
-        linkEl.style.display = "inline";
-        linkEl.style.opacity = "1";
-      } else {
-        // Fallback: construct a web URL from the page ID
-        linkEl.href = `https://onedrive.live.com/edit.aspx?${pg.id}`;
-        linkEl.style.display = "inline";
+      // Prefer client URL (opens native app) over web URL
+      const clientUrl = pageDetail?.links?.oneNoteClientUrl?.href || null;
+      const webUrl = pageDetail?.links?.oneNoteWebUrl?.href || null;
+      const url = clientUrl || webUrl;
+      if (url) {
+        linkEl.href = url;
+        linkEl.style.color = "var(--text-heading)";
       }
     } catch(e) { console.warn("Could not get page link:", e); }
 
@@ -2786,11 +2813,36 @@ function openListModal(type) {
   const cfg = LIST_CONFIG[type];
   document.getElementById("list-modal-emoji").textContent = cfg.emoji;
   document.getElementById("list-modal-title").textContent = cfg.title;
+  const titleLink = document.getElementById("list-modal-title-link");
+  if (titleLink) { titleLink.style.color = cfg.color; titleLink.href = "#"; }
   document.getElementById("list-modal-overlay").classList.add("open");
   renderListItems();
   setTimeout(() => document.getElementById("list-modal-input").focus(), 100);
-  // Auto-pull from OneNote if connected
-  if (getAccount()) pullListFromOneNote(type);
+  if (getAccount()) {
+    pullListFromOneNote(type);
+    fetchListPageLink(type);
+  }
+}
+
+async function fetchListPageLink(type) {
+  try {
+    const token = await getToken();
+    if (!token) return;
+    const cfg = LIST_CONFIG[type];
+    const nbId = await getNotebookId(token);
+    const secId = await getSectionId(nbId, token);
+    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    if (!pagesData.value) return;
+    const pg = pagesData.value.find(p => p.title === cfg.pageName);
+    if (!pg) return;
+    const pageDetail = await graphGet(`${ON_BASE}/pages/${pg.id}?$select=links`, token);
+    const url = pageDetail?.links?.oneNoteClientUrl?.href
+              || pageDetail?.links?.oneNoteWebUrl?.href || null;
+    if (url) {
+      const titleLink = document.getElementById("list-modal-title-link");
+      if (titleLink) titleLink.href = url;
+    }
+  } catch(e) { console.warn("fetchListPageLink error:", e); }
 }
 
 function closeListModal(e) {
@@ -3867,10 +3919,11 @@ function saveStuck() {
 
 // ── Forms ─────────────────────────────────────────────────────────────────────
 function openProjectForm() {
-  ["pf-name","pf-outcome","pf-scope-in","pf-scope-out"].forEach(id => {
+  ["pf-name","pf-outcome","pf-scope-in","pf-scope-out","pf-values-alignment","pf-goals-alignment"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
+  closeProjReviewPanel();
   document.getElementById("proj-form-overlay").classList.add("open");
   setTimeout(() => document.getElementById("pf-name").focus(), 100);
 }
@@ -3878,6 +3931,40 @@ function openProjectForm() {
 function closeProjForm(e) {
   if (e && e.target !== document.getElementById("proj-form-overlay")) return;
   document.getElementById("proj-form-overlay").classList.remove("open");
+  closeProjReviewPanel();
+}
+
+
+// ── Project form review panel ────────────────────────────────────────────────
+function openProjReviewPanel(type) {
+  const panel = document.getElementById("proj-review-panel");
+  const title = document.getElementById("proj-review-panel-title");
+  const list = document.getElementById("proj-review-panel-list");
+
+  const items = type === "values" ? myValues : myGoals;
+  const cfg = type === "values"
+    ? { label:"⭐ MY VALUES", color:"#C8962A", empty:"No values saved yet — add them in Focus tab." }
+    : { label:"🎯 MY GOALS",  color:"#4A90A4", empty:"No goals saved yet — add them in Focus tab." };
+
+  title.textContent = cfg.label;
+  title.style.color = cfg.color;
+
+  if (!items.length) {
+    list.innerHTML = `<div style="font-size:12px;color:var(--text-dimmer);font-style:italic;padding:10px 0">${cfg.empty}</div>`;
+  } else {
+    list.innerHTML = items.map(item => `
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="color:${cfg.color};flex-shrink:0;font-size:12px;margin-top:2px">•</span>
+        <span style="font-size:13px;color:var(--text);line-height:1.4">${item.text}</span>
+      </div>`).join("");
+  }
+
+  panel.style.display = "flex";
+}
+
+function closeProjReviewPanel() {
+  const panel = document.getElementById("proj-review-panel");
+  if (panel) panel.style.display = "none";
 }
 
 function saveProject() {
@@ -3888,10 +3975,13 @@ function saveProject() {
 
   const scopeIn = document.getElementById("pf-scope-in").value.split(",").map(s=>s.trim()).filter(Boolean);
   const scopeOut = document.getElementById("pf-scope-out").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const valuesAlignment = document.getElementById("pf-values-alignment").value.trim();
+  const goalsAlignment = document.getElementById("pf-goals-alignment").value.trim();
 
   const proj = {
     id: "p" + Date.now(),
     name, outcome, scopeIn, scopeOut,
+    valuesAlignment, goalsAlignment,
     status: "active",
     sections: [],
     createdAt: today()
@@ -3899,6 +3989,7 @@ function saveProject() {
   projects.unshift(proj);
   saveProjects();
   closeProjForm();
+  closeProjReviewPanel();
   renderProjectsList();
   showToast("Project created ✓");
   openProjectDetail(proj.id);
@@ -4018,6 +4109,16 @@ function buildProjectPageHtml(proj) {
   // Outcome
   html += `<h2 style="font-family:Calibri,sans-serif;font-size:13pt;color:#3D8A5E">✦ Outcome</h2>`;
   html += `<p style="font-family:Calibri,sans-serif;font-size:12pt">${safe(proj.outcome)}</p>`;
+
+  // Alignment
+  if (proj.valuesAlignment) {
+    html += `<h2 style="font-family:Calibri,sans-serif;font-size:13pt;color:#C8962A">⭐ Values Alignment</h2>`;
+    html += `<p style="font-family:Calibri,sans-serif;font-size:12pt">${safe(proj.valuesAlignment)}</p>`;
+  }
+  if (proj.goalsAlignment) {
+    html += `<h2 style="font-family:Calibri,sans-serif;font-size:13pt;color:#4A90A4">🎯 Goals Alignment</h2>`;
+    html += `<p style="font-family:Calibri,sans-serif;font-size:12pt">${safe(proj.goalsAlignment)}</p>`;
+  }
 
   // Scope
   if ((proj.scopeIn||[]).length || (proj.scopeOut||[]).length) {
