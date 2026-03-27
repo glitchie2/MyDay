@@ -452,13 +452,13 @@
       <div class="prog-track"><div class="prog-fill" id="focus-prog" style="background:#4A90A4"></div></div>
       <div style="display:flex;gap:8px;margin-top:12px">
         <button onclick="openListModal('values')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:12px">⭐</span><span class="mono" style="font-size:9px;color:#C8962A;font-weight:700;text-decoration:underline">My Values</span>
+          <span style="font-size:12px">⭐</span><span class="mono" style="font-size:9px;color:var(--text-muted)">My Values</span>
         </button>
         <button onclick="openListModal('goals')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:12px">🎯</span><span class="mono" style="font-size:9px;color:#4A90A4;font-weight:700;text-decoration:underline">My Goals</span>
+          <span style="font-size:12px">🎯</span><span class="mono" style="font-size:9px;color:var(--text-muted)">My Goals</span>
         </button>
         <button onclick="openNotTodoModal()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:12px">🚫</span><span class="mono" style="font-size:9px;color:#B05C5C;font-weight:700;text-decoration:underline">Don't Do</span>
+          <span style="font-size:12px">🚫</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Don't Do</span>
         </button>
       </div>
     </div>
@@ -832,7 +832,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">🚫</span>
-        <a id="nottodo-onenote-link" href="javascript:void(0)" target="_blank" style="font-weight:700;color:var(--text-heading);font-size:14px;text-decoration:underline;cursor:pointer">Things I Don't Do</a>
+        <span id="nottodo-onenote-link" style="font-weight:600;color:var(--text-heading);font-size:14px;cursor:default">Things I Don't Do</span>
         <button class="info-btn" onclick="openInfoModal('nottodo')" style="flex-shrink:0">
           <span class="info-btn-circle">?</span>
         </button>
@@ -892,9 +892,9 @@
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
         <span id="list-modal-emoji" style="font-size:18px"></span>
-        <a id="list-modal-title-link" href="javascript:void(0)" target="_blank" style="font-weight:700;font-size:15px;text-decoration:underline;cursor:pointer;background:none;border:none;padding:0" id="list-modal-title-link">
+        <span id="list-modal-title-link" style="font-weight:700;font-size:15px;cursor:default">
           <span id="list-modal-title"></span>
-        </a>
+        </span>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <button onclick="syncListModal()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">↑↓ Sync</button>
@@ -2610,8 +2610,9 @@ async function refreshNotTodoModal() {
       const url = pageDetail?.links?.oneNoteClientUrl?.href
                 || pageDetail?.links?.oneNoteWebUrl?.href || null;
       if (url) {
-        linkEl.href = url;
-        linkEl.onclick = (e) => { e.preventDefault(); openOneNoteUrl(url); };
+        linkEl.style.textDecoration = "underline";
+        linkEl.style.cursor = "pointer";
+        linkEl.onclick = () => openOneNoteUrl(url);
       }
     } catch(e) {}
 
@@ -2831,8 +2832,9 @@ async function fetchListPageLink(type) {
     if (url) {
       const titleLink = document.getElementById("list-modal-title-link");
       if (titleLink) {
-        titleLink.href = url;
-        titleLink.onclick = (e) => { e.preventDefault(); openOneNoteUrl(url); };
+        titleLink.style.textDecoration = "underline";
+        titleLink.style.cursor = "pointer";
+        titleLink.onclick = () => openOneNoteUrl(url);
       }
     }
   } catch(e) { console.warn("fetchListPageLink error:", e); }
