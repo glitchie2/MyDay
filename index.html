@@ -457,7 +457,7 @@
         <button onclick="openListModal('goals')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
           <span style="font-size:12px">🎯</span><span class="mono" style="font-size:9px;color:var(--text-muted)">My Goals</span>
         </button>
-        <button onclick="openNotTodoModal()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+        <button onclick="openListModal('nottodo')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
           <span style="font-size:12px">🚫</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Don't Do</span>
         </button>
       </div>
@@ -824,39 +824,6 @@
   </div>
 </div>
 
-<!-- NOT-TO-DO MODAL -->
-<div class="info-overlay" id="nottodo-modal-overlay" onclick="closeNotTodoModal(event)">
-  <div class="info-modal" style="max-width:400px;width:100%;max-height:85vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
-
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:16px">🚫</span>
-        <span id="nottodo-onenote-link" style="font-weight:600;color:var(--text-heading);font-size:14px;cursor:default">Things I Don't Do</span>
-        <button class="info-btn" onclick="openInfoModal('nottodo')" style="flex-shrink:0">
-          <span class="info-btn-circle">?</span>
-        </button>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <button onclick="refreshNotTodoModal()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">↓ Refresh</button>
-        <button onclick="closeNotTodoModal()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
-      </div>
-    </div>
-
-    <!-- List -->
-    <div style="flex:1;overflow-y:auto;padding:14px 18px" id="nottodo-modal-list">
-      <div style="text-align:center;padding:30px;color:var(--text-dimmer);font-size:12px">Loading...</div>
-    </div>
-
-    <!-- Add new at bottom -->
-    <div style="padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">
-      <input type="text" id="nottodo-modal-input" placeholder="Something I commit not to do..." onkeydown="if(event.key==='Enter')saveNotTodoFromModal()" style="flex:1;padding:8px 12px;font-size:13px" />
-      <button onclick="saveNotTodoFromModal()" style="background:#B05C5C;color:#fff;border:none;border-radius:14px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;flex-shrink:0">+ Add</button>
-    </div>
-
-  </div>
-</div>
-
 <!-- BRAIN DUMP MODAL -->
 <div class="info-overlay" id="braindump-overlay" onclick="closeBrainDumpModal(event)">
   <div class="info-modal" style="max-width:400px;width:100%;max-height:85vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
@@ -895,6 +862,9 @@
         <span id="list-modal-title-link" style="font-weight:700;font-size:15px;cursor:default">
           <span id="list-modal-title"></span>
         </span>
+        <button id="list-modal-info-btn" class="info-btn" style="display:none;flex-shrink:0">
+          <span class="info-btn-circle">?</span>
+        </button>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <button onclick="syncListModal()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">↑↓ Sync</button>
@@ -2568,121 +2538,6 @@ function toggleDumpExpand(btn, id) {
 }
 
 
-// ===================== NOT-TO-DO MODAL =====================
-let notTodoPageUrl = null;
-
-async function openNotTodoModal() {
-  document.getElementById("nottodo-modal-overlay").classList.add("open");
-  await refreshNotTodoModal();
-}
-
-function closeNotTodoModal(e) {
-  if (e && e.target !== document.getElementById("nottodo-modal-overlay")) return;
-  document.getElementById("nottodo-modal-overlay").classList.remove("open");
-}
-
-async function refreshNotTodoModal() {
-  const list = document.getElementById("nottodo-modal-list");
-  const linkEl = document.getElementById("nottodo-onenote-link");
-  list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dimmer);font-size:12px">Loading...</div>`;
-
-  if (!getAccount()) { renderNotTodoModalItems(notTodos); return; }
-
-  try {
-    const token = await getToken();
-    if (!token) { renderNotTodoModalItems(notTodos); return; }
-    const nbId = await getNotebookId(token);
-    const secId = await getSectionId(nbId, token);
-
-    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
-    if (!pagesData.value) { renderNotTodoModalItems(notTodos); return; }
-
-    const pg = pagesData.value.find(p => p.title === "Things I don't do");
-    if (!pg) {
-      // Page doesn't exist in OneNote yet — show local
-      renderNotTodoModalItems(notTodos);
-      return;
-    }
-
-    // Get native app link
-    try {
-      const pageDetail = await graphGet(`${ON_BASE}/pages/${pg.id}?$select=links`, token);
-      const url = pageDetail?.links?.oneNoteClientUrl?.href
-                || pageDetail?.links?.oneNoteWebUrl?.href || null;
-      if (url) {
-        linkEl.style.textDecoration = "underline";
-        linkEl.style.cursor = "pointer";
-        linkEl.onclick = () => openOneNoteUrl(url);
-      }
-    } catch(e) {}
-
-    // Fetch page content — OneNote is source of truth
-    const res = await fetch(`${ON_BASE}/pages/${pg.id}/content`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const html = await res.text();
-
-    // Parse table rows
-    const remoteItems = [];
-    const rows = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
-    for (const row of rows) {
-      const cells = (row.match(/<td[\s\S]*?<\/td>/gi) || [])
-        .map(c => c.replace(/<[^>]+>/g,"").trim());
-      if (cells.length >= 1) {
-        const text = cells[0].replace(/^🚫\s*/,"").trim();
-        if (text && text.length > 1) remoteItems.push({ text, addedAt: cells[1] || "" });
-      }
-    }
-
-    if (remoteItems.length) {
-      // OneNote is source of truth — replace local with OneNote data
-      notTodos = remoteItems.map(item => ({
-        id: notTodos.find(n => n.text.toLowerCase() === item.text.toLowerCase())?.id
-            || "nt" + Date.now() + Math.random().toString(36).slice(2,4),
-        text: item.text,
-        addedAt: item.addedAt || today()
-      }));
-      sv(SK.nottodo, notTodos);
-    }
-
-    renderNotTodoModalItems(notTodos);
-  } catch(e) {
-    console.warn("NotTodo modal fetch error:", e);
-    renderNotTodoModalItems(notTodos);
-  }
-}
-
-
-function renderNotTodoModalItems(items) {
-  const list = document.getElementById("nottodo-modal-list");
-  if (!items.length) {
-    list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dimmer);font-size:13px;font-style:italic">No commitments yet</div>`;
-    return;
-  }
-  list.innerHTML = items.map(item => `
-    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:14px;flex-shrink:0;margin-top:1px">🚫</span>
-      <div style="flex:1">
-        <div style="font-size:14px;color:var(--text);line-height:1.4">${item.text}</div>
-        ${item.addedAt ? `<div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-top:2px">${item.addedAt}</div>` : ""}
-      </div>
-    </div>`).join("");
-}
-
-async function saveNotTodoFromModal() {
-  const input = document.getElementById("nottodo-modal-input");
-  const text = input.value.trim();
-  if (!text) return;
-  const item = { id:"nt"+Date.now(), text, addedAt: today() };
-  notTodos.push(item);
-  sv(SK.nottodo, notTodos);
-  input.value = "";
-  renderNotTodoModalItems(notTodos, notTodoPageUrl);
-  renderNotTodos(); // update inline list too
-  showToast("Added ✓");
-  if (getAccount()) await syncNotTodoToOneNote(item);
-}
-
 // ===================== NOT-TO-DO =====================
 let notTodoFormOpen = false;
 
@@ -2736,13 +2591,8 @@ function renderNotTodos() {
 }
 
 async function syncNotTodoToOneNote(item) {
-  if (!getAccount()) { showToast("Connect OneNote to sync"); return; }
-  const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  const rowHtml = '<tr>' +
-    '<td style="padding:8px 12px;border:1px solid #bbb"><span style="font-family:Calibri,sans-serif;font-size:20pt">🚫 ' + safe(item.text) + '</span></td>' +
-    '<td style="padding:8px 12px;border:1px solid #bbb;white-space:nowrap"><span style="font-family:Calibri,sans-serif;font-size:20pt;color:#888">' + item.addedAt + '</span></td>' +
-    '</tr>';
-  await syncRowToPage("Things I don't do", rowHtml);
+  // Now uses unified pushListToOneNote
+  if (getAccount()) await pushListToOneNote('nottodo');
 }
 
 // Sync ALL not-to-do items (use when items were added while disconnected)
@@ -2789,14 +2639,21 @@ async function runFullSync() {
 let currentListType = null; // 'values' or 'goals'
 
 const LIST_CONFIG = {
-  values: { title:"My Values", emoji:"⭐", sk:SK.values||"yd2-values", pageName:"My Values", color:"#C8962A" },
-  goals:  { title:"My Goals",  emoji:"🎯", sk:SK.goals||"yd2-goals",   pageName:"My Goals",  color:"#4A90A4" }
+  values:  { title:"My Values",        emoji:"⭐", pageName:"My Values",        color:"#C8962A", infoKey:null    },
+  goals:   { title:"My Goals",         emoji:"🎯", pageName:"My Goals",         color:"#4A90A4", infoKey:null    },
+  nottodo: { title:"Things I Don't Do",emoji:"🚫", pageName:"Things I don't do",color:"#B05C5C", infoKey:"nottodo" }
 };
 
-function getListData(type) { return type === "values" ? myValues : myGoals; }
+function getListData(type) {
+  if (type === "values")  return myValues;
+  if (type === "goals")   return myGoals;
+  if (type === "nottodo") return notTodos;
+  return [];
+}
 function setListData(type, data) {
-  if (type === "values") { myValues = data; sv(SK.values, data); }
-  else { myGoals = data; sv(SK.goals, data); }
+  if (type === "values")  { myValues = data;  sv(SK.values,  data); }
+  if (type === "goals")   { myGoals  = data;  sv(SK.goals,   data); }
+  if (type === "nottodo") { notTodos = data;  sv(SK.nottodo, data); }
 }
 
 function openListModal(type) {
@@ -2804,9 +2661,20 @@ function openListModal(type) {
   const cfg = LIST_CONFIG[type];
   document.getElementById("list-modal-emoji").textContent = cfg.emoji;
   document.getElementById("list-modal-title").textContent = cfg.title;
+  // Reset title link
   const titleLink = document.getElementById("list-modal-title-link");
-  if (titleLink) { titleLink.style.color = cfg.color; titleLink.href = "#"; }
+  if (titleLink) {
+    titleLink.style.color = cfg.color;
+    titleLink.style.textDecoration = "none";
+    titleLink.style.cursor = "default";
+    titleLink.onclick = null;
+  }
+  // Show/hide ? info button
+  const infoBtn = document.getElementById("list-modal-info-btn");
+  if (infoBtn) infoBtn.style.display = cfg.infoKey ? "inline-flex" : "none";
+  if (infoBtn && cfg.infoKey) infoBtn.onclick = () => openInfoModal(cfg.infoKey);
   document.getElementById("list-modal-overlay").classList.add("open");
+  // Show local immediately, then fetch from OneNote
   renderListItems();
   setTimeout(() => document.getElementById("list-modal-input").focus(), 100);
   if (getAccount()) {
@@ -2824,7 +2692,7 @@ async function fetchListPageLink(type) {
     const secId = await getSectionId(nbId, token);
     const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
     if (!pagesData.value) return;
-    const pg = pagesData.value.find(p => p.title === cfg.pageName);
+    const pg = pagesData.value.find(p => p.title.toLowerCase() === cfg.pageName.toLowerCase());
     if (!pg) return;
     const pageDetail = await graphGet(`${ON_BASE}/pages/${pg.id}?$select=links`, token);
     const url = pageDetail?.links?.oneNoteClientUrl?.href
@@ -2893,7 +2761,7 @@ function renderListItems() {
   });
 }
 
-// ── Push local list to OneNote (full page rebuild as bullet list) ─────────────
+// ── Push list to OneNote — unified for values, goals, nottodo ───────────────
 async function pushListToOneNote(type) {
   try {
     const token = await getToken();
@@ -2902,65 +2770,62 @@ async function pushListToOneNote(type) {
     const items = getListData(type);
     const nbId = await getNotebookId(token);
     const secId = await getSectionId(nbId, token);
-    const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const safe = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
-    // Find or create the page
     const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
     let pageId = null;
     if (pagesData.value) {
-      const existing = pagesData.value.find(p => p.title === cfg.pageName);
+      const existing = pagesData.value.find(p => p.title.toLowerCase() === cfg.pageName.toLowerCase());
       if (existing) pageId = existing.id;
     }
 
+    const bullets = items.map(i =>
+      `<li><span style="font-family:Calibri,sans-serif;font-size:20pt">${safe(i.text)}</span></li>`
+    ).join("");
+
     if (!pageId) {
-      // Create page fresh with bullet list
-      const listEmoji = type === 'values' ? '⭐' : '🎯';
-      const bullets = items.map(i => `<li><span style="font-family:Calibri,sans-serif;font-size:20pt">${listEmoji} ${safe(i.text)}</span></li>`).join("");
-      const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${cfg.pageName}</title></head><body><h1 style="font-family:Calibri,sans-serif;font-size:16pt">${safe(cfg.pageName)}</h1><p><span style="font-family:Calibri,sans-serif;font-size:20pt"> </span></p><ul>${bullets}</ul></body></html>`;
+      const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml">` +
+        `<head><title>${safe(cfg.pageName)}</title></head>` +
+        `<body><h1 style="font-family:Calibri,sans-serif;font-size:16pt">${cfg.emoji} ${safe(cfg.title)}</h1>` +
+        `<p><span style="font-family:Calibri,sans-serif;font-size:20pt"> </span></p>` +
+        `<ul>${bullets}</ul></body></html>`;
       const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
         body: pageHtml
       });
-      if (res.ok) setSyncStatus("connected", "Synced ✓");
+      if (res.ok) setSyncStatus("connected", "Synced \u2713");
       else console.warn("Create list page failed:", res.status);
       return;
     }
 
-    // Page exists — fetch with IDs, find the <ul> generated ID, replace its content
     const contentRes = await fetch(`${ON_BASE}/pages/${pageId}/content?includeIDs=true`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const html = await contentRes.text();
-
-    // Find <ul id="..."> generated ID
-    const ulMatch = html.match(/<ul[^>]+id="([^"]+)"/i);
+    const ulMatch = html.match(/<ul[^>]+id="([^"]+)"/i);
     if (ulMatch) {
-      const ulId = ulMatch[1];
-      const listEmoji = type === 'values' ? '⭐' : '🎯';
-      const bullets = items.map(i => `<li><span style="font-family:Calibri,sans-serif;font-size:20pt">${listEmoji} ${safe(i.text)}</span></li>`).join("");
-      const newUl = `<ul>${bullets}</ul>`;
-      const commands = [{ action: "replace", target: ulId, content: newUl }];
-      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
-      if (patchRes.ok) { setSyncStatus("connected", "Synced ✓"); return; }
-      console.warn("UL replace failed:", patchRes.status, await patchRes.text().catch(()=>""));
+      const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`,
+        [{ action: "replace", target: ulMatch[1], content: `<ul>${bullets}</ul>` }], token);
+      if (patchRes.ok) { setSyncStatus("connected", "Synced \u2713"); return; }
     }
 
-    // Fallback: append new items only (items not already in OneNote)
-    // Parse existing li items from html (without includeIDs)
-    const existingLi = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
-      .map(m => m[1].replace(/<[^>]+>/g,"").trim().toLowerCase());
-    const newItems = items.filter(i => !existingLi.includes(i.text.toLowerCase()));
+    // Fallback — append only new items
+    const existingTexts = (html.match(/<li[^>]*>[\s\S]*?<\/li>/gi) || [])
+      .map(m => m.replace(/<[^>]+>/g,"").trim().toLowerCase());
+    const newItems = items.filter(i => !existingTexts.includes(i.text.toLowerCase()));
     if (newItems.length) {
-      const newLiHtml = newItems.map(i => `<li>${safe(i.text)}</li>`).join("");
-      const commands = [{ action: "append", target: "body", content: `<ul>${newLiHtml}</ul>` }];
-      await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+      const nb = newItems.map(i =>
+        `<li><span style="font-family:Calibri,sans-serif;font-size:20pt">${safe(i.text)}</span></li>`
+      ).join("");
+      await graphPatch(`${ON_BASE}/pages/${pageId}/content`,
+        [{ action:"append", target:"body", content:`<ul>${nb}</ul>` }], token);
     }
-    setSyncStatus("connected", "Synced ✓");
+    setSyncStatus("connected", "Synced \u2713");
   } catch(e) { console.warn("pushListToOneNote error:", e); }
 }
 
-// ── Pull list from OneNote and merge with local ───────────────────────────────
+// ── Pull list from OneNote — unified, OneNote is source of truth ─────────────
 async function pullListFromOneNote(type) {
   try {
     const token = await getToken();
@@ -2971,23 +2836,23 @@ async function pullListFromOneNote(type) {
 
     const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
     if (!pagesData.value) return;
-    const pg = pagesData.value.find(p => p.title === cfg.pageName);
-    if (!pg) return; // page doesn't exist yet, nothing to pull
+    const pg = pagesData.value.find(p => p.title.toLowerCase() === cfg.pageName.toLowerCase());
+    if (!pg) return;
 
     const res = await fetch(`${ON_BASE}/pages/${pg.id}/content`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const html = await res.text();
 
-    // Parse <li> elements — strip emoji prefix (⭐/🎯)
-    const liMatches = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
-    const remoteTexts = liMatches
-      .map(m => m[1].replace(/<[^>]+>/g,"").replace(/^[⭐🎯]\s*/u,"").trim())
-      .filter(Boolean);
+    // Parse <li> items — strip ALL leading emojis/whitespace
+    const liBlocks = html.match(/<li[^>]*>[\s\S]*?<\/li>/gi) || [];
+    const remoteTexts = liBlocks
+      .map(m => m.replace(/<[^>]+>/g, "").trim())
+      .map(t => t.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s\u2B50\uD83C-\uDFFF]*/gu, "").trim())
+      .filter(t => t.length > 0);
 
     if (!remoteTexts.length) return;
 
-    // OneNote is source of truth — replace local with OneNote data
     const existing = getListData(type);
     const newData = remoteTexts.map(text => ({
       id: existing.find(i => i.text.toLowerCase() === text.toLowerCase())?.id
@@ -2995,9 +2860,8 @@ async function pullListFromOneNote(type) {
       text,
       addedAt: existing.find(i => i.text.toLowerCase() === text.toLowerCase())?.addedAt || today()
     }));
-
     setListData(type, newData);
-    renderListItems();
+    if (currentListType === type) renderListItems();
   } catch(e) { console.warn("pullListFromOneNote error:", e); }
 }
 
@@ -3063,20 +2927,9 @@ async function pullAllFromOneNote() {
           if (added) { sv(SK.refs, reflections); }
         }
 
-        else if (pg.title === "Things I don't do") {
-          const rows = [...html.matchAll(/<tr[\s\S]*?<\/tr>/gi)];
-          let added = 0;
-          for (const row of rows) {
-            const cells = [...row[0].matchAll(/<td[\s\S]*?<\/td>/gi)].map(c => safe(c[0]));
-            if (cells.length >= 1) {
-              const text = cells[0].replace(/^🚫\s*/,"").trim();
-              if (text && !notTodos.find(n => n.text.toLowerCase() === text.toLowerCase())) {
-                notTodos.push({ id:"nt"+Date.now()+Math.random().toString(36).slice(2,4), text, addedAt: cells[1]||today() });
-                added++;
-              }
-            }
-          }
-          if (added) { sv(SK.nottodo, notTodos); }
+        else if (pg.title.toLowerCase() === "things i don't do") {
+          // Handled by pullListFromOneNote unified engine
+          await pullListFromOneNote('nottodo');
         }
 
         else if (pg.title === "Shopping") {
@@ -3100,32 +2953,12 @@ async function pullAllFromOneNote() {
           if (added) { sv(SK.caps, captures); }
         }
 
-        else if (pg.title === "My Values") {
-          const liMatches = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
-          const remoteTexts = liMatches.map(m => safe(m[1])).filter(Boolean);
-          const localTexts = new Set(myValues.map(i => i.text.toLowerCase()));
-          let added = 0;
-          remoteTexts.forEach(text => {
-            if (!localTexts.has(text.toLowerCase())) {
-              myValues.push({ id:"li"+Date.now()+Math.random().toString(36).slice(2,4), text, addedAt: today() });
-              added++;
-            }
-          });
-          if (added) sv(SK.values, myValues);
+        else if (pg.title.toLowerCase() === "my values") {
+          await pullListFromOneNote('values');
         }
 
-        else if (pg.title === "My Goals") {
-          const liMatches = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
-          const remoteTexts = liMatches.map(m => safe(m[1])).filter(Boolean);
-          const localTexts = new Set(myGoals.map(i => i.text.toLowerCase()));
-          let added = 0;
-          remoteTexts.forEach(text => {
-            if (!localTexts.has(text.toLowerCase())) {
-              myGoals.push({ id:"li"+Date.now()+Math.random().toString(36).slice(2,4), text, addedAt: today() });
-              added++;
-            }
-          });
-          if (added) sv(SK.goals, myGoals);
+        else if (pg.title.toLowerCase() === "my goals") {
+          await pullListFromOneNote('goals');
         }
 
         await new Promise(r => setTimeout(r, 300)); // rate limit
