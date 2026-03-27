@@ -4081,13 +4081,12 @@ document.addEventListener("input", (e) => {
 
 
 
-// Open OneNote natively on all platforms
-// oneNoteClientUrl uses onenote: scheme which triggers the native app
+// Open OneNote natively — forces onenote: scheme to open the app, not the browser
 function openOneNoteUrl(url) {
-  if (!url || url === "javascript:void(0)") return;
-  // The clientUrl already uses onenote:https:// scheme
-  // On mobile this opens the app directly; on desktop same
-  window.open(url, "_blank");
+  if (!url || url === "javascript:void(0)" || url === "#") return;
+  // Convert https:// web URL to onenote: scheme which opens native app on all platforms
+  const nativeUrl = url.startsWith("https://") ? "onenote:" + url : url;
+  window.open(nativeUrl, "_blank");
 }
 
 // ===================== PROJECTS ONENOTE SYNC =====================
