@@ -573,11 +573,12 @@
       </div>
     </div>
     <!-- Scope pills -->
-    <div id="proj-scope-row" style="padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <span class="mono" style="font-size:9px;color:var(--text-dimmer)">SCOPE IN:</span>
+    <div id="proj-scope-row" style="padding:8px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <span class="mono" style="font-size:9px;color:var(--text-dimmer)">IN:</span>
       <div id="proj-scope-in-pills"></div>
-      <span class="mono" style="font-size:9px;color:var(--text-dimmer);margin-left:8px">OUT:</span>
+      <span class="mono" style="font-size:9px;color:var(--text-dimmer);margin-left:4px">OUT:</span>
       <div id="proj-scope-out-pills"></div>
+      <button onclick="openScopeEditor()" style="margin-left:auto;background:none;border:none;color:var(--text-dimmer);font-size:13px;cursor:pointer;padding:2px 4px" title="Edit scope">✏️</button>
     </div>
     <!-- Sections + tasks -->
     <div style="flex:1;overflow-y:auto;padding:14px 18px" id="proj-sections-area"></div>
@@ -776,6 +777,39 @@
       <div style="padding:4px 16px 12px;font-size:10px;color:var(--text-dimmer)">v1.0 · local storage</div>
 
     </div>
+  </div>
+</div>
+
+<!-- SCOPE EDITOR MODAL -->
+<div class="info-overlay" id="scope-editor-overlay" onclick="closeScopeEditor(event)">
+  <div class="info-modal" style="max-width:420px;width:100%;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+      <span style="font-weight:600;color:var(--text-heading);font-size:14px">Edit Scope</span>
+      <button onclick="closeScopeEditor()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0">×</button>
+    </div>
+    <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:6px">✓ SCOPE IN <span style="opacity:0.5;font-weight:normal">— comma separated</span></div>
+    <input type="text" id="scope-in-input" placeholder="e.g. MVP, API, Auth" style="margin-bottom:14px" />
+    <div class="mono" style="font-size:9px;color:#B05C5C;margin-bottom:6px">✗ SCOPE OUT <span style="opacity:0.5;font-weight:normal">— what this excludes</span></div>
+    <input type="text" id="scope-out-input" placeholder="e.g. Mobile, Analytics" style="margin-bottom:18px" />
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeScopeEditor()" class="btn-ghost">Cancel</button>
+      <button onclick="saveScopeEdit()" class="btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER OVERLAY -->
+<div id="timer-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;flex-direction:column">
+  <div style="text-align:center;padding:40px 30px;max-width:340px;width:100%">
+    <div id="timer-task-name" style="font-size:13px;color:var(--text-muted);margin-bottom:6px;font-family:'DM Mono',monospace;letter-spacing:1px"></div>
+    <div id="timer-display" style="font-size:72px;font-weight:800;color:#fff;font-family:'DM Mono',monospace;letter-spacing:-2px;line-height:1;margin-bottom:8px">00:00</div>
+    <div id="timer-done-def" style="font-size:11px;color:#555;margin-bottom:32px;line-height:1.5;font-style:italic"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button id="timer-pause-btn" onclick="toggleTimerPause()" style="padding:10px 22px;border-radius:20px;border:1px solid #ffffff30;background:none;color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Pause</button>
+      <button onclick="stopTimer()" style="padding:10px 22px;border-radius:20px;border:1px solid #B05C5C44;background:none;color:#B05C5C;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Stop</button>
+      <button onclick="finishFromTimer()" style="padding:10px 22px;border-radius:20px;border:none;background:#3D8A5E;color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">✓ Done</button>
+    </div>
+    <div id="timer-alarm-msg" style="display:none;margin-top:24px;font-size:14px;color:#C8962A;font-family:'DM Mono',monospace;letter-spacing:1px">⏰ TIME'S UP — ARE YOU DONE?</div>
   </div>
 </div>
 
@@ -1301,6 +1335,11 @@ const DEFAULT_HABITS = [
   { id:"e3", task:"One thing purely for pleasure", note:"Not earned — deserved.", color:"#3D8A5E", section:"EVENING" },
   { id:"e4", task:"Wind-down routine", note:"30–45 min before sleep. No work, dim lights.", color:"#3D8A5E", section:"EVENING" },
   { id:"e5", task:"Same sleep time", note:"Nervous system needs a runway, not a crash.", color:"#3D8A5E", section:"EVENING" },
+  // HEALTH
+  { id:"h1", task:"Drink 2L water", note:"Hydration affects focus, energy and mood.", color:"#2A9D8F", section:"HEALTH" },
+  { id:"h2", task:"Take supplements / meds", note:"Consistency is what makes them work.", color:"#2A9D8F", section:"HEALTH" },
+  { id:"h3", task:"Move your body", note:"Walk, stretch, gym — anything counts.", color:"#2A9D8F", section:"HEALTH" },
+  { id:"h4", task:"No alcohol or junk", note:"One clean day at a time.", color:"#2A9D8F", section:"HEALTH" },
 ];
 
 const SECTION_DEFS = [
@@ -1309,12 +1348,14 @@ const SECTION_DEFS = [
   { key:"MIDDAY",     emoji:"☀️", time:"30–45 min",     color:"#B05C5C", purpose:"Don't let this become a black hole" },
   { key:"AFTERNOON",  emoji:"🌤", time:"2–3 hours",     color:"#7A5FA8", purpose:"Work with your energy, not against it" },
   { key:"EVENING",    emoji:"🌙", time:"Until sleep",   color:"#3D8A5E", purpose:"Bridge back to yourself" },
+  { key:"HEALTH",     emoji:"💊", time:"Daily",          color:"#2A9D8F", purpose:"Body maintenance — non-negotiable" },
 ];
 
 const TAGS = [
   { key:"thought",  label:"#thought",  color:"#4A90A4" },
   { key:"question", label:"#question", color:"#C8962A" },
   { key:"idea",     label:"#idea",     color:"#3D8A5E" },
+  { key:"shopping", label:"#shopping", color:"#9B59B6" },
 ];
 
 let history2 = {}, captures = [], reflections = {}, habits = [];
@@ -1565,16 +1606,69 @@ async function saveCapture() {
   input.value = "";
   renderEntriesList();
   if (getAccount()) {
-    const pageMap = { thought:"Thoughts", question:"Questions", idea:"Ideas" };
-    const pageName = pageMap[entry.tag] || "Thoughts";
-    const safeText = entry.text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br/>");
-    const rowHtml = '<tr>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb"><span style="font-family:Calibri,sans-serif;font-size:13pt;font-weight:bold">' + entry.date + '</span></td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb"><span style="font-family:Calibri,sans-serif;font-size:13pt">' + safeText + '</span></td>' +
-      '</tr>';
-    await syncRowToPage(pageName, rowHtml);
+    if (entry.tag === "shopping") {
+      await syncShoppingItem(entry);
+    } else {
+      const pageMap = { thought:"Thoughts", question:"Questions", idea:"Ideas" };
+      const pageName = pageMap[entry.tag] || "Thoughts";
+      const safeText = entry.text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br/>");
+      const emojiMap = { thought:"💭", question:"❓", idea:"💡" };
+      const emoji = emojiMap[entry.tag] || "💭";
+      const rowHtml = '<tr>' +
+        '<td style="padding:8px 12px;border:1px solid #bbb"><span style="font-family:Calibri,sans-serif;font-size:13pt;font-weight:bold">' + entry.date + '</span></td>' +
+        '<td style="padding:8px 12px;border:1px solid #bbb"><span style="font-family:Calibri,sans-serif;font-size:13pt">' + emoji + ' ' + safeText + '</span></td>' +
+        '</tr>';
+      await syncRowToPage(pageName, rowHtml);
+    }
   } else {
     showToast("Saved locally ✓");
+  }
+}
+
+// ===================== SHOPPING SYNC =====================
+async function syncShoppingItem(entry) {
+  setSyncStatus("syncing", "Syncing...");
+  try {
+    const token = await getToken();
+    if (!token) { setSyncStatus("idle", "Not signed in"); return; }
+    const nbId = await getNotebookId(token);
+    const secId = await getSectionId(nbId, token);
+    const safe = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+    // Find or create Shopping page
+    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    let pageId = null;
+    if (pagesData.value) {
+      const pg = pagesData.value.find(p => p.title === "Shopping");
+      if (pg) pageId = pg.id;
+    }
+
+    if (!pageId) {
+      // Create fresh Shopping page with first checkbox item
+      const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Shopping</title></head><body>` +
+        `<h1 style="font-family:Calibri,sans-serif;font-size:16pt">🛒 Shopping</h1>` +
+        `<p style="font-family:Calibri,sans-serif;font-size:14pt"><input type="checkbox"/> ${safe(entry.text)}</p>` +
+        `</body></html>`;
+      const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
+        body: pageHtml
+      });
+      if (res.ok) { setSyncStatus("connected", "Synced ✓"); showToast("✓ Added to Shopping list"); }
+      else { setSyncStatus("error", "Sync failed"); showToast("Sync failed"); }
+      return;
+    }
+
+    // Page exists — append a new checkbox paragraph
+    const itemHtml = `<p style="font-family:Calibri,sans-serif;font-size:14pt"><input type="checkbox"/> ${safe(entry.text)}</p>`;
+    const commands = [{ action: "append", target: "body", content: itemHtml, position: "after" }];
+    const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+    if (patchRes.ok) { setSyncStatus("connected", "Synced ✓"); showToast("✓ Added to Shopping list"); }
+    else { setSyncStatus("error", "Sync failed"); showToast("Sync failed"); }
+  } catch(e) {
+    console.error("Shopping sync error:", e);
+    setSyncStatus("error", "Sync error");
+    showToast("Sync error: " + e.message.substring(0,80), 5000);
   }
 }
 
@@ -1614,26 +1708,17 @@ function addBullet(field, value, mode) {
   dot.className = "bullet-dot";
   dot.textContent = symbol;
   dot.style.color = color;
-  const input = document.createElement("input");
-  input.type = "text";
+  const input = document.createElement("textarea");
   input.className = "bullet-input";
   input.placeholder = "Add a point...";
   input.value = value;
-  // Enter key creates next bullet
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addBullet(field, "", mode);
-    } else if (e.key === "Backspace" && input.value === "") {
-      // Backspace on empty bullet removes it and focuses previous
-      e.preventDefault();
-      const prev = row.previousElementSibling;
-      row.remove();
-      if (prev) {
-        const prevInput = prev.querySelector(".bullet-input");
-        if (prevInput) prevInput.focus();
-      }
-    }
+  input.rows = 1;
+  input.style.resize = "none";
+  input.style.overflow = "hidden";
+  // Auto-grow height as user types
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + "px";
   });
   const del = document.createElement("button");
   del.className = "bullet-del";
@@ -1677,10 +1762,10 @@ async function saveReflection() {
     const safe = (s) => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     const bl = (items, sym) => Array.isArray(items) && items.length ? items.map(i=>sym+" "+safe(i)).join("<br/>") : "<em style='color:#999'>—</em>";
     const rowHtml = '<tr>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:sans-serif;font-size:13px">' + r.date + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.did,"✦") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.next,"→") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.unclear,"?") + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:sans-serif;font-size:13px">📅 ' + r.date + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.did,"✅") + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.next,"➡️") + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.unclear,"❓") + '</td>' +
       '</tr>';
     const token = await getToken();
     await syncRowToPage("EOD closure", rowHtml);
@@ -2293,12 +2378,12 @@ async function saveWeeklyReview() {
     const safe2 = (str) => (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     const bl2 = (items, sym) => Array.isArray(items) && items.length ? items.map(i=>sym+" "+safe2(i)).join("<br/>") : "—";
     const rowHtml2 = '<tr>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:sans-serif;font-size:13px">' + safe2(review.label) + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:11px;color:#666">Habits ' + s2.habitDone + '/' + s2.habitTotal + ' (' + s2.pct + '%) · Tasks ' + s2.taskDone + '/' + s2.taskTotal + ' · Mood ' + s2.avgMood + '/5 · Energy ' + s2.avgEnergy + '/5</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl2(review.well,"✦") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl2(review.drained,"✕") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl2(review.differently,"→") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl2(review.focus,"◎") + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:Calibri,sans-serif;font-size:13pt">📅 ' + safe2(review.label) + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:11pt;color:#888">🏃 Habits ' + s2.habitDone + '/' + s2.habitTotal + ' (' + s2.pct + '%) · ✅ Tasks ' + s2.taskDone + '/' + s2.taskTotal + ' · 😊 Mood ' + s2.avgMood + '/5 · ⚡ Energy ' + s2.avgEnergy + '/5</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + bl2(review.well,"✅") + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + bl2(review.drained,"😓") + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + bl2(review.differently,"🔄") + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + bl2(review.focus,"🎯") + '</td>' +
       '</tr>';
     const token2 = await getToken();
     await syncRowToPage("Weekly Reviews", rowHtml2);
@@ -2518,12 +2603,12 @@ async function syncWeeklySummary() {
   const safe = (s) => String(s).replace(/&/g,"&amp;");
   const rowHtml =
     '<tr>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:sans-serif;font-size:13px">' + safe(label) + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + stats.pct + '%</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + stats.habitDone + '/' + stats.habitTotal + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + stats.taskDone + '/' + stats.taskTotal + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + safe(stats.avgMood) + '/5</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px">' + safe(stats.avgEnergy) + '/5</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:Calibri,sans-serif;font-size:13pt">📊 ' + safe(label) + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt">🏃 ' + stats.pct + '%</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt">✅ ' + stats.habitDone + '/' + stats.habitTotal + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt">📋 ' + stats.taskDone + '/' + stats.taskTotal + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt">😊 ' + safe(stats.avgMood) + '/5</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt">⚡ ' + safe(stats.avgEnergy) + '/5</td>' +
     '</tr>';
   showToast("Syncing weekly summary...", 2000);
   const wsToken = await getToken();
@@ -2638,7 +2723,8 @@ async function pushListToOneNote(type) {
 
     if (!pageId) {
       // Create page fresh with bullet list
-      const bullets = items.map(i => `<li><span style="font-family:Calibri,sans-serif;font-size:20pt">${safe(i.text)}</span></li>`).join("");
+      const listEmoji = type === 'values' ? '⭐' : '🎯';
+      const bullets = items.map(i => `<li><span style="font-family:Calibri,sans-serif;font-size:20pt">${listEmoji} ${safe(i.text)}</span></li>`).join("");
       const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${cfg.pageName}</title></head><body><h1 style="font-family:Calibri,sans-serif;font-size:16pt">${safe(cfg.pageName)}</h1><p><span style="font-family:Calibri,sans-serif;font-size:20pt"> </span></p><ul>${bullets}</ul></body></html>`;
       const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
         method: "POST",
@@ -2660,7 +2746,8 @@ async function pushListToOneNote(type) {
     const ulMatch = html.match(/<ul[^>]+id="([^"]+)"/i);
     if (ulMatch) {
       const ulId = ulMatch[1];
-      const bullets = items.map(i => `<li><span style="font-family:Calibri,sans-serif;font-size:20pt">${safe(i.text)}</span></li>`).join("");
+      const listEmoji = type === 'values' ? '⭐' : '🎯';
+      const bullets = items.map(i => `<li><span style="font-family:Calibri,sans-serif;font-size:20pt">${listEmoji} ${safe(i.text)}</span></li>`).join("");
       const newUl = `<ul>${bullets}</ul>`;
       const commands = [{ action: "replace", target: ulId, content: newUl }];
       const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
@@ -3150,6 +3237,182 @@ function exportAllData() {
   showToast("✓ Data exported");
 }
 
+
+// ===================== SCOPE EDITOR =====================
+function openScopeEditor() {
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  document.getElementById("scope-in-input").value = (proj.scopeIn||[]).join(", ");
+  document.getElementById("scope-out-input").value = (proj.scopeOut||[]).join(", ");
+  document.getElementById("scope-editor-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("scope-in-input").focus(), 100);
+}
+
+function closeScopeEditor(e) {
+  if (e && e.target !== document.getElementById("scope-editor-overlay")) return;
+  document.getElementById("scope-editor-overlay").classList.remove("open");
+}
+
+function saveScopeEdit() {
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  proj.scopeIn = document.getElementById("scope-in-input").value.split(",").map(s=>s.trim()).filter(Boolean);
+  proj.scopeOut = document.getElementById("scope-out-input").value.split(",").map(s=>s.trim()).filter(Boolean);
+  saveProjects();
+  closeScopeEditor();
+  renderProjectDetail();
+  showToast("Scope updated ✓");
+}
+
+// ===================== TASK TIMER =====================
+let timerInterval = null;
+let timerSecondsLeft = 0;
+let timerPaused = false;
+let timerTaskId = null;
+let timerSecId = null;
+let timerAlarmCtx = null;
+
+function startTimer(taskId, secId) {
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  let task = null;
+  for (const s of proj.sections) {
+    const t = s.tasks.find(t => t.id === taskId);
+    if (t) { task = t; break; }
+  }
+  if (!task || !task.estimatedMins) return;
+
+  // Stop any existing timer
+  if (timerInterval) clearInterval(timerInterval);
+
+  timerTaskId = taskId;
+  timerSecId = secId;
+  timerSecondsLeft = task.estimatedMins * 60;
+  timerPaused = false;
+
+  // Show overlay
+  const overlay = document.getElementById("timer-overlay");
+  overlay.style.display = "flex";
+  document.getElementById("timer-task-name").textContent = task.name.toUpperCase();
+  document.getElementById("timer-done-def").textContent = "Done when: " + task.doneDefinition;
+  document.getElementById("timer-alarm-msg").style.display = "none";
+  document.getElementById("timer-pause-btn").textContent = "Pause";
+  updateTimerDisplay();
+
+  timerInterval = setInterval(() => {
+    if (timerPaused) return;
+    timerSecondsLeft--;
+    updateTimerDisplay();
+    if (timerSecondsLeft <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerDone();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const mins = Math.floor(Math.abs(timerSecondsLeft) / 60);
+  const secs = Math.abs(timerSecondsLeft) % 60;
+  const sign = timerSecondsLeft < 0 ? "-" : "";
+  const display = document.getElementById("timer-display");
+  display.textContent = sign + String(mins).padStart(2,"0") + ":" + String(secs).padStart(2,"0");
+
+  // Color shifts as time runs out
+  const proj = getProject(currentProjectId);
+  let totalSecs = 0;
+  if (proj) {
+    for (const s of proj.sections) {
+      const t = s.tasks.find(t => t.id === timerTaskId);
+      if (t) { totalSecs = (t.estimatedMins||1) * 60; break; }
+    }
+  }
+  const ratio = totalSecs ? timerSecondsLeft / totalSecs : 1;
+  if (timerSecondsLeft <= 0) display.style.color = "#B05C5C";
+  else if (ratio < 0.2) display.style.color = "#C8962A";
+  else display.style.color = "#ffffff";
+}
+
+function toggleTimerPause() {
+  timerPaused = !timerPaused;
+  document.getElementById("timer-pause-btn").textContent = timerPaused ? "Resume" : "Pause";
+}
+
+function timerDone() {
+  document.getElementById("timer-alarm-msg").style.display = "block";
+  document.getElementById("timer-display").style.color = "#B05C5C";
+  playAlarm();
+  // Keep counting up (overtime)
+  timerInterval = setInterval(() => {
+    if (timerPaused) return;
+    timerSecondsLeft--;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  stopAlarm();
+  document.getElementById("timer-overlay").style.display = "none";
+  timerTaskId = null;
+}
+
+function finishFromTimer() {
+  stopTimer();
+  if (timerTaskId && timerSecId) {
+    quickDoneTask(currentProjectId, timerTaskId);
+    showToast("✓ Task marked done");
+  }
+}
+
+// ── Alarm sound (Web Audio API — no file needed) ──────────────────────────────
+let alarmOscillators = [];
+
+function playAlarm() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    timerAlarmCtx = ctx;
+
+    const playBeep = (startTime, freq, dur) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+      osc.start(startTime);
+      osc.stop(startTime + dur);
+      alarmOscillators.push(osc);
+    };
+
+    // Three rising beeps, repeat every 3 seconds
+    const beepPattern = () => {
+      const now = ctx.currentTime;
+      playBeep(now + 0.0, 880, 0.15);
+      playBeep(now + 0.2, 1046, 0.15);
+      playBeep(now + 0.4, 1318, 0.3);
+    };
+
+    beepPattern();
+    // Repeat alarm every 3s until stopped
+    timerAlarmCtx._alarmLoop = setInterval(beepPattern, 3000);
+  } catch(e) { console.warn("Audio not available:", e); }
+}
+
+function stopAlarm() {
+  try {
+    if (timerAlarmCtx) {
+      if (timerAlarmCtx._alarmLoop) clearInterval(timerAlarmCtx._alarmLoop);
+      timerAlarmCtx.close();
+      timerAlarmCtx = null;
+    }
+    alarmOscillators = [];
+  } catch(e) {}
+}
+
 // ===================== PROJECTS =====================
 let currentProjectId = null;
 let currentSectionId = null; // for task form
@@ -3341,6 +3604,7 @@ function renderProjectDetail() {
             ${estLabel}
             ${task.status !== "done" ? `
               <button onclick="cycleTaskStatus('${sec.id}','${task.id}')" style="background:${st.color};color:#fff;border:none;border-radius:10px;padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;white-space:nowrap">${st.label}</button>
+              ${task.status === "active" && task.estimatedMins ? `<button onclick="startTimer('${task.id}','${sec.id}')" style="background:none;border:1px solid #C8962A;border-radius:10px;padding:3px 8px;font-size:9px;font-family:'DM Mono',monospace;color:#C8962A;cursor:pointer">⏱ ${task.estimatedMins}m</button>` : ""}
               ${task.status === "active" || task.status === "todo" ? `<button onclick="openStuck('${task.id}')" style="background:none;border:1px solid #B05C5C;border-radius:10px;padding:3px 8px;font-size:9px;font-family:'DM Mono',monospace;color:#B05C5C;cursor:pointer">stuck</button>` : ""}
             ` : `<span class="mono" style="font-size:10px;color:#3D8A5E">✓ done</span>`}
           </div>
