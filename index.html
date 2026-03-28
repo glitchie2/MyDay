@@ -29,11 +29,11 @@
     :root {
       --bg:#0a0a0c; --bg-card:#111113; --bg-input:#0f0f11;
       --border:#1e1e1e; --border-strong:#2a2a2e;
-      --text:#d8d4cc; --text-heading:#f0ebe0; --text-muted:#555;
-      --text-dimmer:#3a3a3a; --text-done:#444; --note-text:#3e3e3e;
-      --tab-inactive:#555; --tab-border:#222;
+      --text:#d8d4cc; --text-heading:#f0ebe0; --text-muted:#888888;
+      --text-dimmer:#666666; --text-done:#666666; --note-text:#808080;
+      --tab-inactive:#888; --tab-border:#222;
       --nav-bg:#0a0a0c; --nav-border:#1a1a1a;
-      --input-text:#d8d4cc; --placeholder:#333;
+      --input-text:#d8d4cc; --placeholder:#555555;
     }
     /* Light mode handled by applyTheme() JS */
     html, body {
@@ -58,7 +58,7 @@
     .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 6px; flex:1; }
     .nav-btn:active { transform: scale(0.9); }
     .nav-icon { font-size: 20px; opacity: 0.3; transition: opacity 0.2s; }
-    .nav-label { font-size: 8px; font-family: 'DM Mono', monospace; letter-spacing: 0.5px; color: var(--text-muted); opacity: 0.4; transition: opacity 0.2s; }
+    .nav-label { font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.5px; color: var(--text-muted); opacity: 0.5; transition: opacity 0.2s; }
     .nav-btn.active .nav-icon { opacity: 1; }
     .nav-btn.active .nav-label { opacity: 1; color: var(--text); }
 
@@ -116,7 +116,7 @@
       transition: opacity 0.2s, transform 0.15s, border-color 0.2s, background 0.3s;
     }
     .item-card:active { transform: scale(0.98); }
-    .item-card.done { opacity: 0.38; }
+    .item-card.done { opacity: 0.55; }
     .check-circle {
       width: 24px; height: 24px; border-radius: 50%;
       border: 1.5px solid var(--border-strong); background: transparent;
@@ -178,9 +178,9 @@
     .bullet-del:hover { color: #B05C5C; }
     .add-bullet-btn:active { opacity: 0.7; }
     /* Tooltip / info bubble */
-    .info-btn { background:none;border:none;cursor:pointer;padding:0 0 0 6px;line-height:1;display:inline-flex;align-items:center; }
-    .info-btn-circle { width:14px;height:14px;border-radius:50%;border:1px solid var(--text-dimmer);color:var(--text-dimmer);font-size:8px;font-family:'DM Mono',monospace;display:inline-flex;align-items:center;justify-content:center;font-weight:600;transition:all 0.15s;flex-shrink:0; }
-    .info-btn:hover .info-btn-circle { border-color:var(--text-muted);color:var(--text-muted); }
+    .info-btn { background:none;border:none;cursor:pointer;padding:6px 4px 6px 8px;line-height:1;display:inline-flex;align-items:center;min-width:28px;min-height:28px;justify-content:center; }
+    .info-btn-circle { width:16px;height:16px;border-radius:50%;border:1px solid var(--text-dimmer);color:var(--text-dimmer);font-size:9px;font-family:'DM Mono',monospace;display:inline-flex;align-items:center;justify-content:center;font-weight:600;transition:all 0.2s;flex-shrink:0; }
+    .info-btn:hover .info-btn-circle, .info-btn:active .info-btn-circle { border-color:var(--text);color:var(--text);background:var(--border); }
     /* Full-screen modal overlay for info bubbles */
     .info-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;padding:24px; }
     .info-overlay.open { display:flex; }
@@ -219,6 +219,7 @@
       transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 200; white-space: nowrap;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @keyframes bdPulse { 0%,100% { transform:scale(1); opacity:0.3; } 50% { transform:scale(1.15); opacity:0.08; } }
   </style>
 </head>
 <body>
@@ -313,20 +314,45 @@
           <div id="energy-picker" style="display:flex;gap:6px"></div>
         </div>
       </div>
+      <!-- DOPAMINE LOG -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:14px 16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:4px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:2px">⚡ DOPAMINE LOG</div><button class="info-btn" onclick="openInfoModal('dopamine')"><span class="info-btn-circle">?</span></button></div>
+          <button onclick="openDopaminePatterns()" style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:#7A5FA8;padding:0;text-decoration:underline">patterns ↗</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button onclick="openDopamineEntry('boost')" style="flex:1;padding:8px;border-radius:8px;border:1px solid #3D8A5E44;background:#3D8A5E11;font-family:'DM Mono',monospace;font-size:10px;color:#3D8A5E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+            <span>⚡</span> Gave me energy
+          </button>
+          <button onclick="openDopamineEntry('drain')" style="flex:1;padding:8px;border-radius:8px;border:1px solid #B05C5C44;background:#B05C5C11;font-family:'DM Mono',monospace;font-size:10px;color:#B05C5C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+            <span>🪫</span> Drained me
+          </button>
+        </div>
+        <div id="dopamine-today-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+
       <div class="reflection-block">
-        <div class="reflection-label" style="color:#3D8A5E">✦ WHAT I DID TODAY</div>
+        <div class="reflection-label" style="color:#3D8A5E;font-size:11px">✦ What did I do today?</div>
         <div id="bullets-did" class="bullet-list" data-symbol="✦" data-color="#3D8A5E"></div>
         <button class="add-bullet-btn" onclick="addBullet('did')">+ add point</button>
       </div>
       <div class="reflection-block">
-        <div class="reflection-label" style="color:#4A90A4">→ WHAT IS NEXT</div>
+        <div class="reflection-label" style="color:#4A90A4;font-size:11px">→ What is next?</div>
         <div id="bullets-next" class="bullet-list" data-symbol="→" data-color="#4A90A4"></div>
         <button class="add-bullet-btn" onclick="addBullet('next')">+ add point</button>
       </div>
       <div class="reflection-block">
-        <div class="reflection-label" style="color:#C8962A">? WHAT IS UNCLEAR</div>
+        <div class="reflection-label" style="color:#C8962A;font-size:11px">? What is still unclear?</div>
         <div id="bullets-unclear" class="bullet-list" data-symbol="?" data-color="#C8962A"></div>
         <button class="add-bullet-btn" onclick="addBullet('unclear')">+ add point</button>
+      </div>
+      <div class="reflection-block">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="reflection-label" style="color:#7A5FA8">🧠 WHAT THOUGHT MADE TODAY HARDER?</div>
+          <button class="info-btn" onclick="openInfoModal('thought')" style="margin-bottom:2px"><span class="info-btn-circle">?</span></button>
+        </div>
+        <div id="bullets-thought" class="bullet-list" data-symbol="🧠" data-color="#7A5FA8"></div>
+        <button class="add-bullet-btn" onclick="addBullet('thought')">+ add point</button>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
         <button class="btn-ghost" onclick="loadTodayReflection()">Load Today</button>
@@ -373,6 +399,46 @@
           <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:10px;letter-spacing:2px">📓 DAILY JOURNAL THIS WEEK</div>
           <div id="weekly-journal-entries"></div>
         </div>
+        <!-- NOT-TO-DO WEEKLY REVIEW -->
+        <div class="reflection-block" style="border-left:2px solid #B05C5C;padding-left:14px;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            <div class="mono" style="font-size:9px;color:#B05C5C;letter-spacing:2px">🚫 YOUR NOT-TO-DO LIST THIS WEEK</div>
+            <button class="info-btn" onclick="openInfoModal('nottodo_review')"><span class="info-btn-circle">?</span></button>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+            Not to judge — to learn. Where did your boundaries hold? Where did they need support?
+          </div>
+          <div id="nottodo-review-list" style="margin-bottom:12px"></div>
+          <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:8px;letter-spacing:1px">DID YOU BREAK ANY OF THESE THIS WEEK?</div>
+          <div style="display:flex;gap:8px">
+            <button id="nottodo-none-btn" onclick="setNottodoBreak('none')"
+              style="flex:1;padding:8px 6px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer;transition:all 0.15s">
+              ✓ None held
+            </button>
+            <button id="nottodo-few-btn" onclick="setNottodoBreak('few')"
+              style="flex:1;padding:8px 6px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer;transition:all 0.15s">
+              ~ One or two slipped
+            </button>
+            <button id="nottodo-several-btn" onclick="setNottodoBreak('several')"
+              style="flex:1;padding:8px 6px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer;transition:all 0.15s">
+              ✗ Several broke
+            </button>
+          </div>
+        </div>
+
+        <!-- WINS INVENTORY / CBT counter-evidence field -->
+        <div class="reflection-block" style="border-left:3px solid #7A5FA8;padding-left:14px;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <div class="mono" style="font-size:9px;color:#7A5FA8;letter-spacing:2px">✦ EVIDENCE LOG</div>
+            <button class="info-btn" onclick="openInfoModal('wins_inventory')"><span class="info-btn-circle">?</span></button>
+          </div>
+          <div id="wins-auto-suggestion" style="display:none;font-size:11px;color:#7A5FA8;background:#7A5FA811;border-radius:5px;padding:7px 10px;margin-bottom:8px;line-height:1.5;cursor:pointer" onclick="useWinsSuggestion()" title="Tap to use this"></div>
+          <div style="font-size:13px;color:var(--text);font-weight:500;margin-bottom:8px;line-height:1.4">Name one thing you did this week that a broken or lazy person wouldn't have done.</div>
+          <textarea id="wins-inventory-input" rows="2"
+            style="resize:none;border-left:none;font-size:13px;font-style:italic;color:var(--text)"
+            placeholder="Be specific — not 'I was okay' but 'I sent the email I'd avoided for 3 days.'"></textarea>
+        </div>
+
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
           <button class="btn-primary" onclick="saveWeeklyReview()">Save Week + Sync</button>
         </div>
@@ -403,6 +469,29 @@
           <span>🔄</span><span class="mono" style="font-size:11px;color:#C8962A">Pull all data from OneNote</span>
         </button>
       </div>
+      <!-- CONTEXT SWITCH SECTION -->
+      <div id="context-switch-section" style="margin-bottom:20px"></div>
+
+      <!-- FRICTION PATTERNS -->
+      <div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="section-label" style="margin:0">🤔 SKIP PATTERNS</div>
+          <button id="friction-patterns-btn" onclick="openFrictionPatterns()" style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:#7A5FA8;padding:0;text-decoration:underline">view patterns ↗</button>
+        </div>
+        <div style="font-size:12px;color:var(--text-dimmer);font-style:italic;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:5px">Tap "view patterns" to see why you skip habits and tasks.</div>
+      </div>
+
+      <!-- TIME SENSE SECTION -->
+      <div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="section-label" style="margin:0">⏱ TIME SENSE</div>
+          <button onclick="renderTimeSenseInProgress()" style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);padding:0">↻ refresh</button>
+        </div>
+        <div id="time-sense-section" style="background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:14px">
+          <div style="font-size:12px;color:var(--text-dimmer);font-style:italic">Complete timed tasks to see your patterns.</div>
+        </div>
+      </div>
+
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0;margin-bottom:12px">
         <div class="section-label" style="margin:0" id="manage-habits-section">MANAGE HABITS</div>
         <button class="btn-ghost" onclick="toggleAddHabit()" style="font-size:10px;padding:5px 12px">+ Add</button>
@@ -448,6 +537,10 @@
           <span style="font-size:12px">🚫</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Don't Do</span>
         </button>
       </div>
+      <button onclick="openBodyDouble()" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid #7A5FA8;border-radius:16px;padding:8px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#7A5FA811'" onmouseout="this.style.background='none'">
+        <span style="font-size:13px">🫂</span>
+        <span class="mono" style="font-size:9px;color:#7A5FA8;letter-spacing:1px">WORK WITH ME</span>
+      </button>
     </div>
     <div class="scroll-area">
       <!-- Add task input -->
@@ -639,15 +732,48 @@
 <!-- STUCK RECOVERY MODAL -->
 <div class="info-overlay" id="stuck-overlay" onclick="closeStuck(event)">
   <div class="info-modal" style="max-width:400px;width:100%;padding:20px">
-    <div style="font-size:18px;margin-bottom:8px">🧱 Stuck?</div>
-    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">That's data, not failure. Let's get you moving.</div>
-    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">WHAT'S BLOCKING YOU?</div>
-    <textarea id="stuck-blocker" rows="2" placeholder="I'm stuck because..." style="margin-bottom:12px;resize:none"></textarea>
-    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">SMALLEST POSSIBLE NEXT STEP</div>
-    <textarea id="stuck-next" rows="2" placeholder="The one tiny thing I could do right now..." style="margin-bottom:16px;resize:none"></textarea>
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:20px">🧱</span>
+      <span style="font-weight:600;color:var(--text-heading);font-size:15px">You're stuck.</span>
+      <button class="info-btn" onclick="openInfoModal('stuck')"><span class="info-btn-circle">?</span></button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;line-height:1.5">Being stuck is information. Let's work with it — not against it.</div>
+
+    <!-- Step 1: The thought -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      <span class="mono" style="font-size:9px;color:#C8962A;letter-spacing:1px">STEP 1</span>
+      <button class="info-btn" onclick="openInfoModal('stuck_thought')"><span class="info-btn-circle">?</span></button>
+    </div>
+    <div style="font-size:13px;color:var(--text);font-weight:500;margin-bottom:8px;line-height:1.4">What are you telling yourself about this task?</div>
+    <textarea id="stuck-thought" rows="2" style="margin-bottom:6px;resize:none"
+      placeholder="e.g. I have to do this perfectly or it doesn't count..."></textarea>
+    <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:16px;font-style:italic">Write it exactly as it sounds in your head.</div>
+
+    <!-- Step 2: Is it helping? -->
+    <div class="mono" style="font-size:9px;color:#7A5FA8;letter-spacing:1px;margin-bottom:8px">STEP 2 — IS THAT THOUGHT HELPING YOU MOVE FORWARD?</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button id="stuck-helpful-yes" onclick="setStuckHelpful(true)"
+        style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);cursor:pointer;transition:all 0.15s">
+        ✓ Yes, it's valid
+      </button>
+      <button id="stuck-helpful-no" onclick="setStuckHelpful(false)"
+        style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);cursor:pointer;transition:all 0.15s">
+        ✗ No, it's not helping
+      </button>
+    </div>
+
+    <!-- Step 3: Next action -->
+    <div class="mono" style="font-size:9px;color:#4A90A4;letter-spacing:1px;margin-bottom:4px">STEP 3</div>
+    <div style="font-size:13px;color:var(--text);font-weight:500;margin-bottom:8px;line-height:1.4">What is the smallest possible next action?</div>
+    <textarea id="stuck-next" rows="2" style="margin-bottom:6px;resize:none"
+      placeholder="Not 'finish the report' — 'open the document and write one sentence'..."></textarea>
+    <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:18px;font-style:italic">Small enough that your brain can't argue with starting.</div>
+
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button onclick="closeStuck()" class="btn-ghost">Cancel</button>
-      <button onclick="saveStuck()" class="btn-primary" style="background:#C8962A">Save + Continue</button>
+      <button onclick="saveStuck()" style="background:#C8962A;color:#fff;border:none;border-radius:20px;padding:10px 20px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Save + Continue</button>
     </div>
   </div>
 </div>
@@ -750,6 +876,34 @@
             style="flex:1;padding:7px 4px;border-radius:5px;border:1px solid var(--border);background:#f5f2ec;font-family:'DM Mono',monospace;font-size:10px;color:#555;cursor:pointer;transition:border-color 0.2s">
             Light
           </button>
+        </div>
+      </div>
+
+      <!-- Shutdown time -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="mono" style="font-size:9px;letter-spacing:2px;color:var(--text-dimmer);margin-bottom:2px">SHUTDOWN TIME</div>
+            <div style="font-size:11px;color:var(--text-muted)">When your shutdown ritual appears</div>
+          </div>
+          <input type="time" id="settings-shutdown-time" value="18:00"
+            onchange="saveShutdownTime(this.value)"
+            style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--input-text);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:90px" />
+        </div>
+      </div>
+
+      <!-- Reframe cards toggle -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-size:12px;color:var(--text)">Reframe cards</span>
+            <div style="font-size:10px;color:var(--text-dimmer)">Daily insight card on Today tab</div>
+          </div>
+          <div style="position:relative;width:36px;height:22px;border-radius:11px;cursor:pointer;transition:background 0.2s;background:#3D8A5E"
+            id="settings-reframe-toggle" onclick="toggleReframeCards()">
+            <span style="position:absolute;top:3px;left:17px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s"
+              id="settings-reframe-knob"></span>
+          </div>
         </div>
       </div>
 
@@ -1225,13 +1379,16 @@ function buildPageHtml(pageTitle, firstRowHtml) {
     "Weekly Reviews":  "📅",
     "Weekly Summary":  "📊",
     "Shopping":        "🛒",
+    "Stuck moments":   "🧱",
   };
   const emoji = pageEmojis[pageTitle] || "📝";
   let headerRow;
   if (pageTitle === "EOD closure")
-    headerRow = `<tr>${th("Date")}${th("What I did today")}${th("What is next")}${th("What is unclear")}</tr>`;
+    headerRow = `<tr>${th("Date")}${th("What I did today")}${th("What is next")}${th("What is unclear")}${th("Thought pattern")}</tr>`;
+  else if (pageTitle === "Stuck moments")
+    headerRow = `<tr>${th("Date & time")}${th("Task")}${th("Thought")}${th("Helpful?")}${th("Next action")}</tr>`;
   else if (pageTitle === "Weekly Reviews")
-    headerRow = `<tr>${th("Week")}${th("Stats")}${th("Went well")}${th("Drained me")}${th("Do differently")}${th("Focus next week")}</tr>`;
+    headerRow = `<tr>${th("Week")}${th("Stats")}${th("Went well")}${th("Drained me")}${th("Do differently")}${th("Focus next week")}${th("Evidence log")}</tr>`;
   else if (pageTitle === "Weekly Summary")
     headerRow = `<tr>${th("Week")}${th("Habits %")}${th("Habits done")}${th("Tasks done")}${th("Avg mood")}${th("Avg energy")}</tr>`;
   else if (pageTitle === "Things I don't do")
@@ -1239,7 +1396,7 @@ function buildPageHtml(pageTitle, firstRowHtml) {
   else
     headerRow = `<tr>${th("Date")}${th("Entry")}</tr>`;
   const h1 = `<h1 style="font-family:Calibri,sans-serif;font-size:20pt;margin-bottom:12pt">${emoji} ${pageTitle}</h1>`;
-  return `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${pageTitle}</title></head><body>${h1}<table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">${headerRow}${firstRowHtml||""}</table></body></html>`;
+  return `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${emoji} ${pageTitle}</title></head><body>${h1}<table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">${headerRow}${firstRowHtml||""}</table></body></html>`;
 }
 
 // Get page ID, or create the page with the first row already inside the table
@@ -1402,8 +1559,6 @@ const DEFAULT_HABITS = [
   // HEALTH
   { id:"h1", task:"Drink 2L water", note:"Hydration affects focus, energy and mood.", color:"#2A9D8F", section:"HEALTH" },
   { id:"h2", task:"Take supplements / meds", note:"Consistency is what makes them work.", color:"#2A9D8F", section:"HEALTH" },
-  { id:"h3", task:"Move your body", note:"Walk, stretch, gym — anything counts.", color:"#2A9D8F", section:"HEALTH" },
-  { id:"h4", task:"No alcohol or junk", note:"One clean day at a time.", color:"#2A9D8F", section:"HEALTH" },
 ];
 
 const SECTION_DEFS = [
@@ -1446,6 +1601,11 @@ function loadAll() {
   myValues = ld(SK.values, []);
   myGoals = ld(SK.goals, []);
   projects = ld(SK.projects, []);
+  loadDopamine();
+  loadBdSessions();
+  loadFriction();
+  loadSwitchLog();
+  loadHyperfocus();
   // Auto-delete tasks older than 7 days
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
   const cutoffStr = cutoff.toISOString().split("T")[0];
@@ -1508,6 +1668,113 @@ function renderToday() {
   const content = document.getElementById("today-content");
   content.innerHTML = "";
 
+  // ── Shutdown time banner (appears at top when it's time) ────────────────────
+  const shutdownTimeSetting = getSettings().shutdownTime || "18:00";
+  const [sdHour, sdMin] = shutdownTimeSetting.split(":").map(Number);
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+  const sdMins  = sdHour * 60 + sdMin;
+  const shutdownDoneToday = ld("yd2-shutdown-" + today(), false);
+  if (!shutdownDoneToday && nowMins >= sdMins) {
+    const sdBanner = document.createElement("div");
+    sdBanner.style.cssText = "background:#3D8A5E11;border:1px solid #3D8A5E33;border-radius:5px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer";
+    sdBanner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">🛑</span>
+        <div>
+          <div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:1px">SHUTDOWN TIME</div>
+          <div style="font-size:12px;color:var(--text-muted)">Time to close out the day. Tap to begin.</div>
+        </div>
+      </div>
+      <span style="font-size:11px;color:#3D8A5E;font-family:'DM Mono',monospace;flex-shrink:0">↓ Go</span>`;
+    sdBanner.addEventListener("click", () => {
+      const ritual = document.getElementById("shutdown-ritual-block");
+      if (ritual) {
+        ritual.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        // If not rendered yet, scroll to bottom
+        const todayCont = document.getElementById("today-content");
+        if (todayCont) todayCont.scrollTop = todayCont.scrollHeight;
+      }
+    });
+    content.appendChild(sdBanner);
+  }
+
+  // ── Daily Anchor (from shutdown ritual) ──────────────────────────────────────
+  const anchorTask = getAnchorTask();
+  const anchorDoneToday = ld("yd2-anchor-done-" + today(), false);
+  const anchorEl = document.createElement("div");
+  anchorEl.id = "daily-anchor-wrap";
+  if (anchorTask && !anchorDoneToday) {
+    anchorEl.innerHTML = `
+      <div style="background:var(--bg-card);border:1px solid #C8962A44;border-left:3px solid #C8962A;border-radius:6px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px;flex-shrink:0">⚓</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><div class="mono" style="font-size:8px;color:#C8962A;letter-spacing:1.5px">TODAY'S ONE THING</div><button class="info-btn" onclick="openInfoModal('anchor')" style="padding:0"><span class="info-btn-circle">?</span></button></div>
+          <div style="font-size:14px;color:var(--text-heading);font-weight:500;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(anchorTask)}</div>
+        </div>
+        <button id="anchor-done-btn" style="background:#3D8A5E;color:#fff;border:none;border-radius:14px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;flex-shrink:0;white-space:nowrap">✓ Done</button>
+      </div>`;
+    const anchorDoneBtn = anchorEl.querySelector("#anchor-done-btn");
+    if (anchorDoneBtn) anchorDoneBtn.addEventListener("click", () => {
+      sv("yd2-anchor-done-" + today(), true);
+      addTask(anchorTask, today(), false);
+      const addedTask = tasks.find(t => t.text === anchorTask && !t.done);
+      if (addedTask) { addedTask.done = true; addedTask.doneAt = today(); sv(SK.tasks, tasks); }
+      renderToday();
+      renderFocus();
+      showToast("⚓ Anchor task done ✦");
+    });
+  } else if (!anchorTask) {
+    anchorEl.innerHTML = `
+      <div style="background:var(--bg-card);border:1px dashed var(--border);border-radius:6px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px;flex-shrink:0;opacity:0.4">⚓</span>
+        <input type="text" id="anchor-input" placeholder="What's the one thing that would make today a success?"
+          style="flex:1;background:transparent;border:none;outline:none;font-size:13px;color:var(--text);font-family:'Inter',sans-serif"
+          onkeydown="if(event.key==='Enter'&&this.value.trim()){saveAnchorTask(this.value.trim());renderToday();}" />
+      </div>`;
+  } else {
+    // Done today — show completed state
+    anchorEl.innerHTML = `
+      <div style="background:#3D8A5E11;border:1px solid #3D8A5E33;border-left:3px solid #3D8A5E;border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;opacity:0.7">
+        <span style="font-size:16px;flex-shrink:0">✅</span>
+        <div style="flex:1;min-width:0;font-size:13px;color:#3D8A5E;text-decoration:line-through;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(anchorTask)}</div>
+        <span class="mono" style="font-size:9px;color:#3D8A5E;flex-shrink:0">DONE</span>
+      </div>`;
+  }
+  content.appendChild(anchorEl);
+
+  // Reframe card at top
+  const settings = getSettings();
+  if (settings.showReframeCards !== false) {
+    const reframeEl = document.createElement("div");
+    reframeEl.id = "reframe-card-wrap";
+    renderReframeCard(reframeEl);
+    content.appendChild(reframeEl);
+  }
+
+  // Morning skip prompts — show yesterday's unchecked habits if it's before noon
+  const hour = new Date().getHours();
+  if (hour < 15) {
+    const yesterday = (() => { const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split("T")[0]; })();
+    const yesterdayChecked = ld(SK.hist, {})[yesterday] || {};
+    const skippedYesterday = habits.filter(h => !yesterdayChecked[h.id]);
+    if (skippedYesterday.length) {
+      const bannerEl = document.createElement("div");
+      bannerEl.style.cssText = "background:#7A5FA811;border:1px solid #7A5FA833;border-radius:5px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between";
+      const skippedNames = skippedYesterday.slice(0,3).map(h=>h.task).join(", ");
+      bannerEl.innerHTML = `
+        <div>
+          <div class="mono" style="font-size:9px;color:#7A5FA8;letter-spacing:1px;margin-bottom:2px">YESTERDAY'S SKIPS</div>
+          <div style="font-size:12px;color:var(--text-muted)">${skippedYesterday.length} habit${skippedYesterday.length>1?"s":""} not done — log why?</div>
+        </div>
+        <button id="yesterday-friction-btn"
+          style="background:#7A5FA8;color:#fff;border:none;border-radius:14px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;flex-shrink:0">Log why</button>`;
+      const frBtn = bannerEl.querySelector("#yesterday-friction-btn");
+      if (frBtn) frBtn.addEventListener("click", () => openFriction("habit", skippedNames, "yesterday"));
+      content.appendChild(bannerEl);
+    }
+  }
+
   SECTION_DEFS.forEach(s => {
     const sHabits = habits.filter(h => h.section === s.key);
     if (!sHabits.length) return;
@@ -1530,11 +1797,37 @@ function renderToday() {
     // Toggle header
     const toggle = document.createElement("button");
     toggle.className = "section-toggle";
+    // Energy suggestion label
+    const todayMood = moodData[today()] || {};
+    const energySuggest = getEnergySuggestedSections(todayMood.mood, todayMood.energy);
+    const isSuggested = energySuggest.suggested.includes(s.key);
+    const isMismatch  = energySuggest.mismatch.includes(s.key);
+    const hasEnergyData = !!(todayMood.mood || todayMood.energy);
+
+    if (hasEnergyData && !allDone) {
+      if (isSuggested) {
+        // Stronger positive indicator: teal left border on the block
+        block.style.borderColor = "#2A9D8F";
+        block.style.borderLeftWidth = "3px";
+        block.style.opacity = "1";
+      } else if (isMismatch) {
+        block.style.opacity = "0.55";
+      }
+    }
+
     toggle.innerHTML = `
       <span class="section-emoji">${s.emoji}</span>
       <div class="section-info">
         <div class="section-name">${s.key.charAt(0) + s.key.slice(1).toLowerCase()}</div>
-        <div class="section-time" style="color:${s.color}">${s.time}</div>
+        <div class="section-time" style="color:${s.color}">
+          ${s.time}
+          ${hasEnergyData && isSuggested && !allDone
+            ? `<span style="color:#2A9D8F;font-size:10px;margin-left:6px;font-weight:600">⚡ now</span>`
+            : ""}
+          ${hasEnergyData && isMismatch && !allDone
+            ? `<span style="color:var(--text-dimmer);font-size:9px;margin-left:6px">save for later</span>`
+            : ""}
+        </div>
       </div>
       <div class="section-right">
         <span class="section-count">${sDone}/${sHabits.length}</span>
@@ -1542,8 +1835,16 @@ function renderToday() {
         <span class="section-chevron ${isCollapsed ? "" : "open"}">▾</span>
       </div>`;
     toggle.addEventListener("click", () => {
-      collapsedSections[s.key] = !collapsedSections[s.key];
+      const isNowCollapsing = !collapsedSections[s.key];
+      collapsedSections[s.key] = isNowCollapsing;
       sv(SK.collapsed, collapsedSections);
+      // If collapsing a section that has unchecked habits — prompt why
+      if (isNowCollapsing && !allDone && sHabits.some(h => !checked[h.id])) {
+        const skipped = sHabits.filter(h => !checked[h.id]);
+        if (skipped.length) {
+          openFriction("habit", skipped.map(h => h.task).join(", "), s.key);
+        }
+      }
       renderToday();
     });
     block.appendChild(toggle);
@@ -1577,8 +1878,11 @@ function renderToday() {
         </div>
         ${streak >= 2 ? `<span style="font-size:10px;font-family:'DM Mono',monospace;color:${habit.color};padding:2px 6px;background:${habit.color}18;border-radius:8px;flex-shrink:0;align-self:center">${streak}🔥</span>` : ""}`;
       card.addEventListener("click", () => {
-        checked[habit.id] = !checked[habit.id];
+        const wasChecked = !!checked[habit.id];
+        checked[habit.id] = !wasChecked;
         saveChecked();
+        // Haptic feedback on completion (not on un-check)
+        if (!wasChecked && navigator.vibrate) navigator.vibrate(10);
         renderToday();
       });
       itemsInner.appendChild(card);
@@ -1612,6 +1916,101 @@ function renderToday() {
     msg.innerHTML = `<div style="font-size:24px;margin-bottom:8px">✦</div><div class="serif" style="font-size:15px;color:#3D8A5E;font-style:italic">Full day complete.<br>You showed up for yourself today.</div>`;
     content.appendChild(msg);
   }
+
+  // Shutdown ritual — always append at bottom of Today
+  renderShutdownRitual(content);
+}
+
+function renderShutdownRitual(container) {
+  const existing = document.getElementById("shutdown-ritual-block");
+  if (existing) existing.remove();
+
+  const t = today();
+  const shutdownDone = ld("yd2-shutdown-" + t, false);
+  const shutdownTime = getSettings().shutdownTime || "18:00";
+
+  const block = document.createElement("div");
+  block.id = "shutdown-ritual-block";
+  block.style.cssText = "margin-top:20px;padding:14px 16px;border-radius:6px;background:var(--bg-card);border:1px solid " + (shutdownDone ? "#3D8A5E44" : "var(--border)");
+
+  const header = document.createElement("div");
+  header.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:" + (shutdownDone ? "0" : "12px");
+  header.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:16px">${shutdownDone?"✅":"🛑"}</span>
+      <span class="mono" style="font-size:9px;letter-spacing:2px;color:${shutdownDone?"#3D8A5E":"var(--text-dimmer)"}">SHUTDOWN RITUAL</span>
+      <button class="info-btn" onclick="openInfoModal('shutdown')"><span class="info-btn-circle">?</span></button>
+    </div>
+    <span class="mono" style="font-size:9px;color:var(--text-dimmer)">${shutdownTime}</span>
+  `;
+  block.appendChild(header);
+
+  if (shutdownDone) {
+    block.appendChild(header);
+    container.appendChild(block);
+    return;
+  }
+
+  // Checklist items
+  const SHUTDOWN_STEPS = [
+    { id:"s1", label:"Write tomorrow's one task", sub:"What is the ONE thing that must happen tomorrow?", optional:false },
+    { id:"s2", label:"Close all browser tabs", sub:"No open loops — park anything important in Capture first", optional:false },
+    { id:"s3", label:"Clear your desk surface", sub:"Physical environment = mental environment", optional:true },
+    { id:"s4", label:"Put phone in another room", sub:"Or at minimum, out of reach and face down", optional:true },
+    { id:"s5", label:"Say out loud: 'Shutdown complete'", sub:"Sounds silly. Works anyway — verbal signals your brain.", optional:false },
+  ];
+
+  const tomorrowWrap = document.createElement("div");
+  tomorrowWrap.style.cssText = "margin-bottom:10px";
+  tomorrowWrap.innerHTML = `
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:5px">TOMORROW'S ONE TASK</div>
+    <input type="text" id="shutdown-tomorrow-task" placeholder="What must happen tomorrow?"
+      style="padding:8px 10px;font-size:13px" onchange="saveAnchorTask(this.value)" />`;
+  block.appendChild(tomorrowWrap);
+  // Pre-fill with current anchor value (date-aware via getAnchorTask)
+  const shutdownInput = block.querySelector("#shutdown-tomorrow-task");
+  if (shutdownInput) {
+    // Show existing anchor if set today or yesterday; otherwise show raw stored value
+    const anchorVal = getAnchorTask();
+    const rawVal = ld("yd2-tomorrow-task", "");
+    shutdownInput.value = anchorVal || rawVal;
+  }
+
+  const steps = document.createElement("div");
+  steps.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-bottom:12px";
+
+  SHUTDOWN_STEPS.slice(1).forEach(step => {
+    const saved = ld("yd2-sd-" + t + "-" + step.id, false);
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:flex-start;gap:10px;padding:8px;border-radius:5px;background:" + (saved ? "#3D8A5E11" : "var(--bg-input)") + ";cursor:pointer;border:1px solid " + (saved ? "#3D8A5E33" : "var(--border)");
+    row.innerHTML = `
+      <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid ${saved?"#3D8A5E":"var(--border-strong)"};background:${saved?"#3D8A5E":"transparent"};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
+        ${saved?'<span style="color:#fff;font-size:10px">✓</span>':""}
+      </div>
+      <div>
+        <div style="font-size:13px;color:${saved?"#3D8A5E":"var(--text)"};line-height:1.3${saved?";text-decoration:line-through;opacity:0.7":""}">${esc(step.label)}</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-top:2px">${esc(step.sub)}</div>
+        ${step.optional ? `<div style="font-size:9px;color:var(--text-dimmer);margin-top:1px;font-style:italic">optional — skip if needed</div>` : ""}
+      </div>`;
+    row.onclick = () => {
+      sv("yd2-sd-" + t + "-" + step.id, !saved);
+      renderToday();
+    };
+    steps.appendChild(row);
+  });
+  block.appendChild(steps);
+
+  // Complete button
+  const completeBtn = document.createElement("button");
+  completeBtn.style.cssText = "width:100%;background:#3D8A5E;color:#fff;border:none;border-radius:20px;padding:10px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;letter-spacing:0.5px";
+  completeBtn.textContent = "✦ Shutdown complete";
+  completeBtn.onclick = () => {
+    sv("yd2-shutdown-" + t, true);
+    showToast("Work is done. You're off duty. 🌙");
+    renderToday();
+  };
+  block.appendChild(completeBtn);
+  container.appendChild(block);
 }
 
 // ===================== CAPTURE =====================
@@ -1772,6 +2171,7 @@ function loadTodayReflection() {
     setBullets("did", Array.isArray(r.did) ? r.did : (r.did ? [r.did] : []));
     setBullets("next", Array.isArray(r.next) ? r.next : (r.next ? [r.next] : []));
     setBullets("unclear", Array.isArray(r.unclear) ? r.unclear : (r.unclear ? [r.unclear] : []));
+    setBullets("thought", Array.isArray(r.thought) ? r.thought : (r.thought ? [r.thought] : []));
     showToast("Loaded today's reflection");
   } else {
     showToast("No reflection saved today yet");
@@ -1851,7 +2251,8 @@ async function saveReflection() {
     date: t,
     did: getBullets("did"),
     next: getBullets("next"),
-    unclear: getBullets("unclear")
+    unclear: getBullets("unclear"),
+    thought: getBullets("thought")
   };
   reflections[t] = r;
   sv(SK.refs, reflections);
@@ -1866,6 +2267,7 @@ async function saveReflection() {
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.did,"✅") + '</td>' +
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.next,"➡️") + '</td>' +
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.unclear,"❓") + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.thought,"🧠") + '</td>' +
       '</tr>';
     await syncRowToPage("EOD closure", rowHtml);
   } else {
@@ -1881,7 +2283,7 @@ function renderReflectionsList() {
   const keys = Object.keys(reflections).sort().reverse().filter(d => d !== t).slice(0, 14);
   list.innerHTML = "";
   if (!keys.length) {
-    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-style:italic;font-size:13px">Past reflections will appear here</div>`;
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-size:13px;line-height:1.6">No past reflections yet.<br><span style="font-size:11px">Fill in today’s reflection above and tap <strong>Save + Sync</strong>.</span></div>`;
     return;
   }
   keys.forEach(date => {
@@ -1924,7 +2326,8 @@ function renderReflectionsList() {
     detail.innerHTML =
       section("✦ WHAT I DID", r.did) +
       section("→ WHAT IS NEXT", r.next) +
-      section("? WHAT IS UNCLEAR", r.unclear);
+      section("? WHAT IS UNCLEAR", r.unclear) +
+      (arr(r.thought).length ? section("🧠 THOUGHT THAT MADE IT HARDER", r.thought) : "");
     card.appendChild(detail);
 
     // Toggle expand on tap
@@ -2187,11 +2590,56 @@ function renderFocus() {
   document.getElementById("focus-count").textContent = done.length + "/" + total + " done";
   document.getElementById("focus-prog").style.width = pct + "%";
 
+  // Energy suggestion banner
+  const focusMood = moodData[t] || {};
+  const existingBanner = document.getElementById("energy-banner");
+  if (existingBanner) existingBanner.remove();
+  if (focusMood.mood || focusMood.energy) {
+    const sug = getEnergySuggestedSections(focusMood.mood, focusMood.energy);
+    if (sug.message) {
+      const eb = document.createElement("div");
+      eb.id = "energy-banner";
+      eb.style.cssText = "background:#2A9D8F11;border:1px solid #2A9D8F33;border-radius:5px;padding:9px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px";
+      eb.innerHTML = `
+        <div style="font-size:12px;color:#2A9D8F;line-height:1.4;flex:1">${esc(sug.message)}</div>
+        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-dimmer);font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">×</button>`;
+      const focusScroll = document.getElementById("focus-task-list").parentElement;
+      if (focusScroll) focusScroll.insertBefore(eb, document.getElementById("focus-task-list"));
+    }
+  }
+
+  // Dopamine activation banner — shown when energy is low and boosts exist
+  const existingDopaBanner = document.getElementById("dopamine-action-banner");
+  if (existingDopaBanner) existingDopaBanner.remove();
+  const dopaActionDismissed = ld("yd2-dopa-banner-" + t, false);
+  if (!dopaActionDismissed && focusMood.energy && focusMood.energy <= 2) {
+    const dopaPrompt = getBestDopaBoost();
+    if (dopaPrompt) {
+      const dab = document.createElement("div");
+      dab.id = "dopamine-action-banner";
+      dab.style.cssText = "background:#C8962A11;border:1px solid #C8962A44;border-radius:5px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px";
+      dab.innerHTML = `
+        <span style="font-size:16px;flex-shrink:0;margin-top:1px">⚡</span>
+        <div style="flex:1;min-width:0">
+          <div class="mono" style="font-size:8px;color:#C8962A;letter-spacing:1px;margin-bottom:3px">BEHAVIORAL ACTIVATION</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.5">${esc(dopaPrompt.message)}</div>
+        </div>
+        <button id="dopa-banner-dismiss" style="background:none;border:none;color:var(--text-dimmer);font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">×</button>`;
+      const focusScroll = document.getElementById("focus-task-list").parentElement;
+      if (focusScroll) focusScroll.insertBefore(dab, document.getElementById("focus-task-list"));
+      const dismissBtn = dab.querySelector("#dopa-banner-dismiss");
+      if (dismissBtn) dismissBtn.addEventListener("click", () => {
+        sv("yd2-dopa-banner-" + t, true);
+        dab.remove();
+      });
+    }
+  }
+
   const list = document.getElementById("focus-task-list");
   list.innerHTML = "";
 
   if (!active.length) {
-    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-dimmer);font-style:italic;font-size:14px">${done.length > 0 ? "All tasks done ✦" : "No tasks yet — add one above"}</div>`;
+    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-dimmer);font-style:italic;font-size:14px">${done.length > 0 ? "All tasks done ✦" : "Add your first task above — one thing, not a list."}</div>`;
   }
 
   active.forEach(task => {
@@ -2250,6 +2698,35 @@ const INFO_CONTENT = {
       </div>
       <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">This section is private and never synced anywhere.</p>`
   },
+  wins_inventory: {
+    title: "✦ What is the Evidence Log?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">This is a <b>CBT counter-evidence log</b> — a direct challenge to the core belief "I am lazy / broken / not enough."</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">How it works in CBT:</b><br/>
+        Your inner critic runs on a belief — usually something like "I'm fundamentally broken" or "I'll never be enough." That belief feels like a fact because it's been confirmed so many times. But it's a <em>filter</em>, not a fact.<br/><br/>
+        The evidence log works by deliberately collecting counter-evidence. One concrete, specific thing you did this week that contradicts the belief. Not "I was okay." Something real — "I sent that email I'd been avoiding for 3 days."<br/><br/>
+        <b style="color:var(--text-heading)">Why one thing, not a list:</b><br/>
+        Lists feel like performance. One real thing, written honestly, is harder to dismiss. The inner critic can argue with a list. It has a harder time dismissing a specific fact.<br/><br/>
+        <b style="color:var(--text-heading)">Over weeks:</b><br/>
+        You build an archive of evidence that the belief is not universally true. That archive is what weakens the belief — not positive thinking, not affirmations. Actual accumulated evidence.
+      </div>
+      <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">If nothing comes to mind — tap the purple suggestion above. It's pulled from your actual week's data.</p>`
+  },
+  nottodo_review: {
+    title: "🚫 Reviewing your Not-to-do list",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">This isn't about shame or failure tracking. It's about <b>understanding where your boundaries held and where they needed more support.</b></p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">How to use this honestly:</b><br/>
+        <b>None held</b> — your commitments supported you this week. The list is working.<br/><br/>
+        <b>One or two slipped</b> — normal. Notice which ones. Was it the same item as last week? That's a pattern worth understanding — not a failure to judge.<br/><br/>
+        <b>Several broke</b> — the list may need revisiting. Are the items realistic? Are they addressing the right things? Or was this just a hard week where your resources were stretched?<br/><br/>
+        <b style="color:var(--text-heading)">The real question isn't "did I break it?"</b><br/>
+        It's "what was happening when I broke it?" — energy level, stress, who you were with, time of day. That context is what CBT work uses to build better responses next time.
+      </div>
+      <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">Your not-to-do list lives in the Focus tab. Review and update it there.</p>`
+  },
   nottodo: {
     title: "🚫 What is a Not-to-do List?",
     body: `
@@ -2266,6 +2743,186 @@ const INFO_CONTENT = {
         <b style="color:var(--text-heading)">How to build it:</b><br/>
         Add items after noticing a pattern — not as punishment, but as a boundary you're setting with yourself. Review it occasionally. Delete what no longer applies.
       </div>`
+  },
+  shutdown: {
+    title: "🛑 Why a Shutdown Ritual?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">ADHD brains struggle to <b>switch off</b>. Without a clear signal, work bleeds into evenings — you're physically present but mentally still at the laptop. The shutdown ritual creates a hard boundary your nervous system can recognise.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">Why it works:</b><br/>
+        Rituals create <em>context switching</em> — the same way a commute used to separate "work brain" from "home brain." When you no longer commute, your brain needs a manufactured transition.<br/><br/>
+        <b style="color:var(--text-heading)">The key steps:</b><br/>
+        • <b>Write tomorrow's task</b> — closes the "what about tomorrow?" loop that keeps you mentally working<br/>
+        • <b>Close tabs</b> — open tabs are unfinished mental tasks. Closing them is permission to stop<br/>
+        • <b>Clear the desk</b> — visual clutter keeps your nervous system in "work mode"<br/>
+        • <b>Phone in another room</b> — removes the trigger that pulls you back into work<br/>
+        • <b>Say it out loud</b> — verbal declaration creates a stronger memory marker than just thinking it<br/><br/>
+        <b style="color:var(--text-heading)">It feels silly. Do it anyway.</b><br/>
+        The ritual only needs to happen consistently — not perfectly. Even completing 3 of 5 steps is enough to begin training the transition.
+      </div>
+      <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">You can set your shutdown time in Settings.</p>`
+  },
+  hyperfocus: {
+    title: "🌀 What is Hyperfocus?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">Hyperfocus is when your ADHD brain <b>locks onto something so intensely</b> that time disappears. It can be incredibly productive — or it can hijack hours you needed elsewhere.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">How to notice you're in it:</b><br/>
+        • You forgot to eat, drink water, or use the bathroom<br/>
+        • Someone spoke to you and you didn't hear them<br/>
+        • You look up and 2 hours have passed<br/>
+        • You're doing something adjacent to your task — not the task itself<br/>
+        • You feel mildly panicked when interrupted<br/>
+        • You're "optimising" something that didn't need optimising<br/><br/>
+        <b style="color:var(--text-heading)">The difference between flow and hyperfocus:</b><br/>
+        <em>Flow</em> — you're in deep work on the right thing.<br/>
+        <em>Hyperfocus</em> — you're in deep work on something that took over without your consent.<br/><br/>
+        <b style="color:var(--text-heading)">Why logging it matters:</b><br/>
+        Over time you'll see patterns — what topics, times of day, or conditions trigger hyperfocus. You can then <em>intentionally use it</em> by scheduling those triggers before tasks that need deep work.
+      </div>
+      <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">Tap 🌀 at any time — no judgment. Noticing it is the skill.</p>`
+  },
+  stuck: {
+    title: "🧱 Why this approach to being stuck?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">Being stuck rarely means the task is too hard. It usually means a <b>thought is getting in the way</b> — and that thought is often automatic, invisible, and wrong.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">The 3-step sequence:</b><br/>
+        <b>1. Name the thought</b> — bringing it into conscious awareness interrupts the automatic loop. You can't work with a thought you haven't seen.<br/><br/>
+        <b>2. Label it</b> — "is this helping me?" is a CBT technique called cognitive defusion. You're not arguing with the thought, just observing whether it's useful. That small act creates distance from it.<br/><br/>
+        <b>3. Name the next action</b> — only then. After you've addressed the thinking layer. Small enough that your brain can't mount a defence against starting.<br/><br/>
+        <b style="color:var(--text-heading)">Over time:</b><br/>
+        Your logged thoughts become a pattern. You'll start to see which thoughts block you most — perfectionism, fear of failure, overwhelm. That's the map of where CBT work is needed most.
+      </div>`
+  },
+  stuck_thought: {
+    title: "💭 What thought is making this hard?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">This is the most important field. ADHD brains often have a <b>layer of thought between them and a task</b> that operates below awareness. The goal is to surface it.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">Common patterns to look for:</b><br/>
+        • <b>Perfectionism:</b> "It has to be perfect or it doesn't count" / "If I start and it's bad, that's worse than not starting"<br/>
+        • <b>All-or-nothing:</b> "I can't do just part of it" / "If I can't finish it now, there's no point starting"<br/>
+        • <b>Should statements:</b> "I should be able to do this easily" / "Normal people don't struggle with this"<br/>
+        • <b>Catastrophizing:</b> "If I mess this up, everything falls apart"<br/>
+        • <b>Avoidance story:</b> "I'll do it when I feel more ready" / "I need to be in the right headspace"<br/>
+        • <b>Overwhelm thought:</b> "There's too much, I don't know where to start"<br/><br/>
+        <b style="color:var(--text-heading)">It's okay if it sounds irrational.</b><br/>
+        Write it exactly as it sounds in your head — not the sanitised version. The raw version is the one worth examining.
+      </div>`
+  },
+  anchor: {
+    title: "⚓ What is the Daily Anchor?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">The daily anchor is <b>one single task</b> — the thing that, if done today, would make today a success. Not a list. One thing.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">Why only one?</b><br/>
+        ADHD brains get lost in lists. When everything is priority, nothing is. A single anchor gives your brain a concrete target — something it can actually lock onto instead of cycling through options.<br/><br/>
+        <b style="color:var(--text-heading)">Where does it come from?</b><br/>
+        It's set during yesterday's <b>Shutdown Ritual</b> — the "tomorrow's one task" field. Doing this the night before means you start today already knowing what matters, instead of spending the first hour deciding.<br/><br/>
+        <b style="color:var(--text-heading)">What if nothing was set?</b><br/>
+        Type it here. Takes 10 seconds. Even an imperfect anchor is better than none — it gives your brain somewhere to return when it wanders.<br/><br/>
+        <b style="color:var(--text-heading)">Tapping ✓ Done:</b><br/>
+        Marks the task as complete in Focus and clears the anchor for today. The completion message carries forward into your EOD reflection.
+      </div>`
+  },
+  intention: {
+    title: "🎯 Why Set an Intention?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">ADHD brains often <b>start tasks without actually deciding to start them</b> — you sit down, open something, and drift. Setting a specific intention forces your brain to pre-commit: <em>"This is what I'm about to do. This is how I'll know I'm done."</em></p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">The difference it makes:</b><br/>
+        "Work on report" → brain finds 47 ways to avoid it.<br/>
+        "Write the opening paragraph — done when I can read it back" → brain has a target.<br/><br/>
+        <b style="color:var(--text-heading)">How to fill it in:</b><br/>
+        • Be specific enough that your future self knows exactly what to do<br/>
+        • The done condition should be observable — not "feel better" but "email sent"<br/>
+        • It's okay to change it once you start — the point is the commitment, not the contract
+      </div>`
+  },
+  dopamine: {
+    title: "⚡ What is Dopamine Tracking?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">ADHD involves <b>dopamine dysregulation</b> — not necessarily low dopamine, but inconsistent access to it. Tracking what gives and drains your energy helps you see your personal dopamine map.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+        <b style="color:var(--text-heading)">What to log:</b><br/>
+        • A 10-minute walk that cleared your head<br/>
+        • A conversation that left you energised or drained<br/>
+        • A food that caused a crash<br/>
+        • A win — even a small one<br/>
+        • An environment that helped you focus<br/><br/>
+        <b style="color:var(--text-heading)">After 2 weeks you'll start to see:</b><br/>
+        • Which activities reliably boost you vs reliably drain you<br/>
+        • Which times of day you're most energised<br/>
+        • What you can schedule before hard tasks to prime your brain
+      </div>`
+  },
+  thought: {
+    title: "🧠 Cognitive Distortions — ADHD Edition",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">Cognitive distortions are <b>automatic thought patterns that feel true but aren't accurate</b>. ADHD brains are especially prone to them because of emotional dysregulation, rejection sensitivity, and years of negative feedback.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:10px">
+        <b style="color:var(--text-heading)">Common patterns to watch for:</b><br/><br/>
+
+        <b style="color:#7A5FA8">Avoidance &amp; delay</b><br/>
+        • "I'll do it when I feel more like it" — the feeling never comes<br/>
+        • "I'll start tomorrow when I'm fresh" — tomorrow has the same brain<br/>
+        • "I just need to get in the right headspace first"<br/><br/>
+
+        <b style="color:#7A5FA8">All-or-nothing</b><br/>
+        • "If I can't do it perfectly, there's no point starting"<br/>
+        • "I ruined the whole day by missing the morning"<br/>
+        • "I either do it all or none of it counts"<br/><br/>
+
+        <b style="color:#7A5FA8">Should statements</b><br/>
+        • "I should be able to handle this — normal people do"<br/>
+        • "I shouldn't need so much structure just to function"<br/>
+        • "By my age I should have this figured out"<br/><br/>
+
+        <b style="color:#7A5FA8">Catastrophizing</b><br/>
+        • "If I start and fail, that proves I'm lazy"<br/>
+        • "One missed deadline will ruin everything"<br/>
+        • "If I can't focus now I'll never be able to"<br/><br/>
+
+        <b style="color:#7A5FA8">Mind reading</b><br/>
+        • "People can tell I'm struggling"<br/>
+        • "They think I'm incompetent"<br/>
+        • "Everyone else finds this easy"<br/><br/>
+
+        <b style="color:#7A5FA8">Emotional reasoning</b><br/>
+        • "I feel overwhelmed so it must be impossible"<br/>
+        • "I feel stupid so I must be stupid"<br/>
+        • "I don't feel productive so I didn't do anything"<br/><br/>
+
+        <b style="color:#7A5FA8">Labelling</b><br/>
+        • "I'm lazy" — vs "I'm struggling to start right now"<br/>
+        • "I'm broken" — vs "My brain works differently"<br/>
+        • "I'm a failure" — vs "This specific thing didn't go to plan"<br/><br/>
+
+        <b style="color:#7A5FA8">Magnification</b><br/>
+        • "This one mistake cancels out everything I did well"<br/>
+        • "Missing this makes the whole week a failure"<br/><br/>
+
+        <b style="color:#7A5FA8">Personalization</b><br/>
+        • "The meeting went badly because of me"<br/>
+        • "If I were more disciplined this wouldn't happen"<br/><br/>
+
+        <b style="color:#7A5FA8">Fortune telling</b><br/>
+        • "I'll never get better at managing my time"<br/>
+        • "I'll always be like this"<br/>
+        • "There's no point trying — I know how it'll end"<br/><br/>
+
+        <b style="color:#7A5FA8">Discounting positives</b><br/>
+        • "That doesn't count — it was easy"<br/>
+        • "Anyone could have done that"<br/>
+        • "I only finished it because of the deadline pressure"<br/><br/>
+
+        <b style="color:#7A5FA8">Rejection sensitivity</b><br/>
+        • "They didn't reply — they're annoyed at me"<br/>
+        • "I've disappointed everyone again"<br/>
+        • "If I ask for help they'll think less of me"
+      </div>
+      <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">You don't need to label the distortion — just noticing the thought is the work. Over weeks, patterns emerge.</p>`
   },
   mood: {
     title: "😊 How to rate your mood",
@@ -2337,6 +2994,11 @@ function renderMoodPicker() {
         moodData[t][type] = val;
         sv(SK.mood, moodData);
         renderMoodPicker();
+        // Refresh Today section labels and Focus banner if currently visible
+        const todayActive = document.getElementById("page-today")?.classList.contains("active");
+        const focusActive = document.getElementById("page-focus")?.classList.contains("active");
+        if (todayActive) renderToday();
+        if (focusActive) renderFocus();
       };
       picker.appendChild(btn);
     });
@@ -2345,9 +3007,11 @@ function renderMoodPicker() {
 
 // ===================== HABIT STREAKS =====================
 function getHabitStreak(habitId) {
+  // Forgiveness mode: show 0 streak on return day so user sees fresh start
+  const forgivenDate = ld("yd2-forgiveness-date", "");
+  if (forgivenDate === today()) return 0;
   let streak = 0;
   const d = new Date();
-  // Don't count today — streak is about consecutive past days completed
   d.setDate(d.getDate() - 1);
   for (let i = 0; i < 365; i++) {
     const key = d.toISOString().split("T")[0];
@@ -2391,15 +3055,83 @@ function computeWeekStats() {
     if (m && m.mood)   { moodSum += m.mood;   moodCount++; }
     if (m && m.energy) { energySum += m.energy; energyCount++; }
   }
-  const weekTasks = tasks.filter(t => t.createdAt >= getWeekKey());
+  // Focus tasks (this week)
+  const weekKey = getWeekKey();
+  const weekTasks = tasks.filter(t => t.createdAt >= weekKey);
   taskTotal = weekTasks.length;
   taskDone  = weekTasks.filter(t => t.done).length;
+  // Project tasks done this week
+  for (const proj of projects) {
+    for (const sec of proj.sections||[]) {
+      for (const task of sec.tasks||[]) {
+        if (task.status === "done" && task.doneAt && task.doneAt >= weekKey) {
+          taskTotal++;
+          taskDone++;
+        }
+      }
+    }
+  }
 
   const pct = habitTotal ? Math.round(habitDone/habitTotal*100) : 0;
   const avgMood   = moodCount   ? (moodSum/moodCount).toFixed(1)   : "–";
   const avgEnergy = energyCount ? (energySum/energyCount).toFixed(1) : "–";
 
-  return { pct, habitDone, habitTotal, taskDone, taskTotal, avgMood, avgEnergy };
+  // Body doubling sessions this week
+  const weekSessions = bdSessions.filter(s => s.date >= weekKey);
+  const bdCount = weekSessions.length;
+  const bdMins  = weekSessions.reduce((sum,s) => sum + (s.durationMins||0), 0);
+
+  // Hyperfocus flags this week
+  const weekHf = hyperfocusLog.filter(e => e.date >= weekKey);
+  const hfCount = weekHf.length;
+  const hfUnplanned = weekHf.filter(e => e.planned === false).length;
+
+  // Friction / skips this week
+  const weekFriction = frictionLog.filter(e => e.date >= weekKey);
+  const skipCount = weekFriction.length;
+  const topSkipReason = (() => {
+    const counts = {};
+    weekFriction.forEach(e => { if(e.reason) counts[e.reason]=(counts[e.reason]||0)+1; });
+    const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+    return top ? top[0] : null;
+  })();
+
+  // Dopamine net score this week
+  const weekDopa = dopamineLog.filter(e => e.date >= weekKey);
+  const dopaBoosts = weekDopa.filter(e => e.type === "boost").length;
+  const dopaDrains = weekDopa.filter(e => e.type === "drain").length;
+  const dopaNet = dopaBoosts - dopaDrains;
+
+  // Context switches daily avg this week
+  const weekSwitches = switchLog.filter(e => e.date >= weekKey);
+  const daysInWeek = Math.max(1, new Set(weekSwitches.map(e=>e.date)).size);
+  const switchAvg = Math.round(weekSwitches.length / daysInWeek);
+
+  // Stuck moments this week — from project tasks
+  let stuckCount = 0, unhelpfulThoughts = 0;
+  const stuckThoughtWords = {};
+  for (const proj of projects) {
+    for (const sec of proj.sections||[]) {
+      for (const task of sec.tasks||[]) {
+        if (task.stuckAt && task.stuckAt >= weekKey) {
+          stuckCount++;
+          if (task.stuckThoughtHelpful === false) unhelpfulThoughts++;
+          // Collect thought keywords for pattern
+          if (task.stuckThought) {
+            task.stuckThought.toLowerCase().split(/\s+/).filter(w=>w.length>4).forEach(w=>{
+              stuckThoughtWords[w] = (stuckThoughtWords[w]||0) + 1;
+            });
+          }
+        }
+      }
+    }
+  }
+  const topStuckWord = Object.entries(stuckThoughtWords).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+
+  return { pct, habitDone, habitTotal, taskDone, taskTotal, avgMood, avgEnergy,
+           bdCount, bdMins, hfCount, hfUnplanned, skipCount, topSkipReason,
+           dopaBoosts, dopaDrains, dopaNet, switchAvg,
+           stuckCount, unhelpfulThoughts, topStuckWord };
 }
 
 function renderWeeklyPage() {
@@ -2409,11 +3141,34 @@ function renderWeeklyPage() {
   const stats = computeWeekStats();
   const statsEl = document.getElementById("weekly-stats");
   if (statsEl) {
+    const s = stats;
+    const reasonLabels = { energy:"Low energy", unclear:"Felt unclear", overwhelm:"Overwhelmed", forgot:"Forgot", timing:"Wrong time", other:"Other" };
+    const dopaLabel = s.dopaNet > 0 ? "+" + s.dopaNet : String(s.dopaNet||0);
     statsEl.innerHTML =
-      "Habits: <strong>" + stats.habitDone + "/" + stats.habitTotal + "</strong> (" + stats.pct + "%)&nbsp;&nbsp;•&nbsp;&nbsp;" +
-      "Tasks: <strong>" + stats.taskDone + "/" + stats.taskTotal + "</strong>&nbsp;&nbsp;•&nbsp;&nbsp;" +
-      "Avg mood: <strong>" + stats.avgMood + "/5</strong>&nbsp;&nbsp;•&nbsp;&nbsp;" +
-      "Avg energy: <strong>" + stats.avgEnergy + "/5</strong>";
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px">' +
+      '<div>🏃 Habits <strong>' + s.habitDone + '/' + s.habitTotal + '</strong> (' + s.pct + '%)</div>' +
+      '<div>✅ Tasks <strong>' + s.taskDone + '/' + s.taskTotal + '</strong></div>' +
+      '<div>😊 Mood <strong>' + s.avgMood + '/5</strong> · ⚡ <strong>' + s.avgEnergy + '/5</strong></div>' +
+      '<div>⚡ Dopamine <strong style="color:' + (s.dopaNet>=0?"#3D8A5E":"#B05C5C") + '">' + dopaLabel + '</strong> (' + s.dopaBoosts + '↑ ' + s.dopaDrains + '↓)</div>' +
+      (s.bdCount ? '<div>🫂 Work sessions <strong>' + s.bdCount + '</strong> · ' + s.bdMins + ' min</div>' : '<div style="color:var(--text-dimmer)">🫂 No sessions this week</div>') +
+      (s.hfCount ? '<div>🌀 Hyperfocus <strong>' + s.hfCount + '×</strong> (' + s.hfUnplanned + ' unplanned)</div>' : '<div style="color:var(--text-dimmer)">🌀 No hyperfocus logged</div>') +
+      (s.skipCount ? '<div>🤔 Skips <strong>' + s.skipCount + '</strong>' + (s.topSkipReason ? " · top: " + (reasonLabels[s.topSkipReason]||s.topSkipReason) : "") + '</div>' : '<div style="color:var(--text-dimmer)">🤔 No skips logged</div>') +
+      '<div>🔀 Switches <strong>' + (s.switchAvg||0) + '/day</strong> avg</div>' +
+      (s.stuckCount !== undefined ? (s.stuckCount > 0 ? '<div>🧱 Stuck <strong>' + s.stuckCount + '×</strong>' + (s.unhelpfulThoughts ? ' · ' + s.unhelpfulThoughts + ' unhelpful thoughts' : '') + '</div>' : '<div style="color:var(--text-dimmer)">🧱 No stuck moments this week</div>') : '') +
+      (_weeklyNottodoBreak ? '<div>🚫 Not-to-do: <strong style="color:' + (_weeklyNottodoBreak==="none"?"#3D8A5E":_weeklyNottodoBreak==="few"?"#C8962A":"#B05C5C") + '">' + (_weeklyNottodoBreak==="none"?"All held ✓":_weeklyNottodoBreak==="few"?"1-2 slipped":"Several broke") + '</strong></div>' : '<div style="color:var(--text-dimmer)">🚫 Not-to-do not reviewed yet</div>') +
+      '</div>';
+  // Show wins entry below the grid if saved
+  const savedThisWeek = weeklyReviews[getWeekKey()];
+  const savedWins = savedThisWeek ? savedThisWeek.wins : null;
+  const winsInput = document.getElementById("wins-inventory-input");
+  const liveWins = winsInput ? winsInput.value.trim() : null;
+  const winsText = liveWins || savedWins || null;
+  if (winsText) {
+    const winsDisplay = document.createElement("div");
+    winsDisplay.style.cssText = "margin-top:10px;padding:10px 12px;background:#7A5FA811;border:1px solid #7A5FA833;border-left:3px solid #7A5FA8;border-radius:5px";
+    winsDisplay.innerHTML = '<div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:1.5px;margin-bottom:4px">✦ EVIDENCE LOG</div><div style="font-size:12px;color:#7A5FA8;font-style:italic">"' + esc(winsText) + '"</div>';
+    statsEl.appendChild(winsDisplay);
+  }
   }
 
   // Show daily journal entries for this week
@@ -2436,6 +3191,30 @@ function renderWeeklyPage() {
 
   // Load saved weekly review if exists
   const saved = weeklyReviews[getWeekKey()];
+
+  // Render not-to-do list for review
+  const nottodoList = document.getElementById("nottodo-review-list");
+  if (nottodoList) {
+    if (notTodos.length) {
+      nottodoList.innerHTML = notTodos.slice(0,8).map(item =>
+        `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+          <span style="color:#B05C5C;font-size:11px;flex-shrink:0">🚫</span>
+          <span style="font-size:12px;color:var(--text-muted);line-height:1.4">${esc(item.text)}</span>
+        </div>`
+      ).join("") + (notTodos.length > 8 ? `<div style="font-size:10px;color:var(--text-dimmer);margin-top:4px">+${notTodos.length-8} more</div>` : "");
+    } else {
+      nottodoList.innerHTML = '<div style="font-size:11px;color:var(--text-dimmer)">No not-to-do items yet.<br>Add commitments in the Focus tab \u2192 \uD83D\uDEAB Don\u2019t Do.</div>';
+    }
+  }
+
+  // Restore saved nottodoBreak selection
+  _weeklyNottodoBreak = saved ? (saved.nottodoBreak || null) : null;
+  if (_weeklyNottodoBreak) setNottodoBreak(_weeklyNottodoBreak);
+  else ["none","few","several"].forEach(k => {
+    const btn = document.getElementById("nottodo-" + k + "-btn");
+    if (btn) { btn.style.background="none"; btn.style.borderColor="var(--border)"; btn.style.color="var(--text-muted)"; btn.style.fontWeight="400"; }
+  });
+
   ["well","drained","differently","focus"].forEach(f => {
     const items = saved ? (saved[f] || []) : [];
     const container = document.getElementById("wbullets-" + f);
@@ -2444,12 +3223,33 @@ function renderWeeklyPage() {
     items.forEach(v => addBullet(f, v, "weekly"));
     if (!items.length) addBullet(f, "", "weekly");
   });
-  // Trigger auto-resize on loaded weekly bullet textareas
+
+  // Load wins inventory
+  const winsInput = document.getElementById("wins-inventory-input");
+  if (winsInput) winsInput.value = saved ? (saved.wins || "") : "";
+
+  // Auto-suggestion: pull from this week's actual data
+  const winsSuggestion = document.getElementById("wins-auto-suggestion");
+  if (winsSuggestion) {
+    const suggestion = generateWinsSuggestion(stats);
+    if (suggestion && (!saved || !saved.wins)) {
+      winsSuggestion.textContent = "Suggestion: " + suggestion + " — tap to use";
+      winsSuggestion.style.display = "block";
+    } else {
+      winsSuggestion.style.display = "none";
+    }
+  }
+  // Trigger auto-resize on loaded weekly bullet textareas + wins textarea
   requestAnimationFrame(() => {
     document.querySelectorAll("#weekly-section .bullet-input").forEach(ta => {
       ta.style.height = "auto";
       ta.style.height = ta.scrollHeight + "px";
     });
+    const winsTA = document.getElementById("wins-inventory-input");
+    if (winsTA && winsTA.value) {
+      winsTA.style.height = "auto";
+      winsTA.style.height = winsTA.scrollHeight + "px";
+    }
   });
 
   renderWeeklyPastList();
@@ -2462,17 +3262,36 @@ function getWeeklyBullets(field) {
     .map(el => el.value.trim()).filter(Boolean);
 }
 
+let _weeklyNottodoBreak = null; // 'none' | 'few' | 'several' | null
+
+function setNottodoBreak(val) {
+  _weeklyNottodoBreak = val;
+  const colors = { none:"#3D8A5E", few:"#C8962A", several:"#B05C5C" };
+  ["none","few","several"].forEach(k => {
+    const btn = document.getElementById("nottodo-" + k + "-btn");
+    if (!btn) return;
+    const active = k === val;
+    btn.style.background  = active ? colors[k] + "22" : "none";
+    btn.style.borderColor = active ? colors[k]        : "var(--border)";
+    btn.style.color       = active ? colors[k]        : "var(--text-muted)";
+    btn.style.fontWeight  = active ? "700"             : "400";
+  });
+}
+
 async function saveWeeklyReview() {
   const key = getWeekKey();
   const stats = computeWeekStats();
+  const winsInput = document.getElementById("wins-inventory-input");
   const review = {
     key,
     label: getWeekLabel(),
     stats,
-    well:        getWeeklyBullets("well"),
-    drained:     getWeeklyBullets("drained"),
-    differently: getWeeklyBullets("differently"),
-    focus:       getWeeklyBullets("focus"),
+    well:          getWeeklyBullets("well"),
+    drained:       getWeeklyBullets("drained"),
+    differently:   getWeeklyBullets("differently"),
+    focus:         getWeeklyBullets("focus"),
+    nottodoBreak:  _weeklyNottodoBreak,
+    wins:          winsInput ? winsInput.value.trim() : "",
     savedAt: today()
   };
   weeklyReviews[key] = review;
@@ -2481,19 +3300,7 @@ async function saveWeeklyReview() {
   renderWeeklyPastList();
 
   if (getAccount()) {
-    const s2 = review.stats;
-    const safe2 = (str) => (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    const bl2 = (items, sym) => Array.isArray(items) && items.length ? items.map(i=>sym+" "+safe2(i)).join("<br/>") : "—";
-    const rowHtml2 = '<tr>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:Calibri,sans-serif;font-size:13pt">📅 ' + safe2(review.label) + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:11pt;color:#888">🏃 Habits ' + s2.habitDone + '/' + s2.habitTotal + ' (' + s2.pct + '%) · ✅ Tasks ' + s2.taskDone + '/' + s2.taskTotal + ' · 😊 Mood ' + s2.avgMood + '/5 · ⚡ Energy ' + s2.avgEnergy + '/5</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + bl2(review.well,"✅") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + bl2(review.drained,"😓") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + bl2(review.differently,"🔄") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + bl2(review.focus,"🎯") + '</td>' +
-      '</tr>';
-    const token2 = await getToken();
-    await syncRowToPage("Weekly Reviews", rowHtml2);
+    await syncWeeklyPageToOneNote(review);
   }
 }
 
@@ -2519,7 +3326,7 @@ function renderWeeklyPastList() {
   const keys = Object.keys(weeklyReviews).filter(k => k !== currentKey).sort().reverse().slice(0,8);
   list.innerHTML = "";
   if (!keys.length) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-style:italic;font-size:13px">Past reviews will appear here</div>';
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-size:13px;line-height:1.6">No past reviews yet.<br><span style="font-size:11px">Complete this week’s review above and tap <strong>Save Week + Sync</strong>.</span></div>';
     return;
   }
   keys.forEach(key => {
@@ -2541,7 +3348,18 @@ function renderWeeklyPastList() {
       return '<div style="margin-bottom:10px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:4px">' + label + '</div>' +
         '<div style="font-size:13px;color:var(--text);line-height:1.6">' + (arr.length ? arr.map(i=>sym+" "+i).join("<br/>") : '<em style="color:var(--text-dimmer)">—</em>') + '</div></div>';
     };
-    detail.innerHTML = sec("✦","WENT WELL",r.well) + sec("✕","DRAINED ME",r.drained) + sec("→","DO DIFFERENTLY",r.differently) + sec("◎","FOCUS NEXT WEEK",r.focus);
+    const breakLabel = r.nottodoBreak === "none" ? "✓ All held"
+      : r.nottodoBreak === "few"  ? "~ One or two slipped"
+      : r.nottodoBreak === "several" ? "✗ Several broke"
+      : null;
+    const breakColor = r.nottodoBreak === "none" ? "#3D8A5E" : r.nottodoBreak === "few" ? "#C8962A" : "#B05C5C";
+    const nottodoHtml = breakLabel
+      ? `<div style="margin-bottom:10px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:4px">🚫 NOT-TO-DO</div><div style="font-size:13px;color:${breakColor}">${breakLabel}</div></div>`
+      : "";
+    const winsHtml = r.wins
+      ? `<div style="margin-bottom:10px"><div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:4px">✦ EVIDENCE LOG</div><div style="font-size:13px;color:#7A5FA8;font-style:italic">"${r.wins}"</div></div>`
+      : "";
+    detail.innerHTML = sec("✦","WENT WELL",r.well) + sec("✕","DRAINED ME",r.drained) + sec("→","DO DIFFERENTLY",r.differently) + sec("◎","FOCUS NEXT WEEK",r.focus) + nottodoHtml + winsHtml;
     card.appendChild(header); card.appendChild(summary); card.appendChild(detail);
     card.addEventListener("click", () => {
       const open = detail.style.display !== "none";
@@ -2597,7 +3415,7 @@ function renderBrainDumps() {
   if (!list) return;
   list.innerHTML = "";
   if (!brainDumps.length) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-style:italic;font-size:13px">Nothing dumped yet</div>';
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-size:13px;line-height:1.6">Nothing here yet.<br><span style="font-size:11px">Type whatever is occupying mental space — no structure needed.</span></div>';
     return;
   }
   brainDumps.slice(0, 20).forEach(entry => {
@@ -2632,11 +3450,106 @@ function toggleDumpExpand(btn, id) {
 // ===================== NOT-TO-DO — managed via unified LIST system =====================
 
 // ===================== WEEKLY SUMMARY SYNC =====================
+function renderTimeSenseInProgress() {
+  let container = document.getElementById("time-sense-section");
+  if (!container) return;
+  renderTimeSensePatterns(container);
+}
+
+async function syncWeeklyPageToOneNote(review) {
+  // Creates or replaces a dedicated OneNote page per week
+  // Title: "📅 Week of Mon D – Mon D, YYYY"
+  setSyncStatus("syncing", "Syncing weekly review...");
+  try {
+    const token = await getToken();
+    if (!token) { setSyncStatus("idle", "Not signed in"); return false; }
+
+    const nbId = await getNotebookId(token);
+    const secId = await getSectionId(nbId, token);
+    const s = review.stats || {};
+    const sf = (v) => String(v||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const rn = (v) => String(v||0);
+    const blItems = (items, sym) => {
+      if (!Array.isArray(items) || !items.length) return '<p style="font-family:Calibri,sans-serif;font-size:12pt;color:#999;font-style:italic">—</p>';
+      return items.map(i => '<p style="font-family:Calibri,sans-serif;font-size:13pt;margin:4pt 0">' + sf(sym) + ' ' + sf(i) + '</p>').join('');
+    };
+    const td  = (v) => '<td style="padding:6px 12px">' + v + '</td>';
+    const tdb = (v) => '<td style="padding:6px 12px"><strong>' + v + '</strong></td>';
+
+    const pageTitle = "📅 " + review.label;
+    const nottodoLabel = review.nottodoBreak === "none" ? "All held ✓"
+      : review.nottodoBreak === "few"     ? "One or two slipped"
+      : review.nottodoBreak === "several" ? "Several broke"
+      : "—";
+    const dopaSign = (s.dopaNet||0) >= 0 ? "+" : "";
+
+    const pageHtml = '<?xml version="1.0" encoding="utf-8"?>' +
+      '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>' + sf(pageTitle) + '</title></head><body>' +
+      '<h1 style="font-family:Calibri,sans-serif;font-size:22pt;color:#1a1a2e">' + sf(pageTitle) + '</h1>' +
+
+      '<h2 style="font-family:Calibri,sans-serif;font-size:14pt;color:#555;margin-top:16pt">📊 Stats at a glance</h2>' +
+      '<table border="1" style="border-collapse:collapse;font-family:Calibri,sans-serif;font-size:12pt;margin-bottom:16pt">' +
+        '<tr style="background:#f5f5f5">' + td('🏃 Habits') + tdb(rn(s.habitDone)+'/'+rn(s.habitTotal)+' ('+rn(s.pct)+'%)') + td('✅ Tasks') + tdb(rn(s.taskDone)+'/'+rn(s.taskTotal)) + '</tr>' +
+        '<tr>' + td('😊 Mood avg') + td(sf(s.avgMood)+'/5') + td('⚡ Energy avg') + td(sf(s.avgEnergy)+'/5') + '</tr>' +
+        '<tr style="background:#f5f5f5">' + td('🫂 Sessions') + td(rn(s.bdCount)+' ('+rn(s.bdMins)+' min)') + td('⚡ Dopamine') + td(dopaSign+rn(s.dopaNet)+' ('+rn(s.dopaBoosts)+'↑ '+rn(s.dopaDrains)+'↓)') + '</tr>' +
+        '<tr>' + td('🌀 Hyperfocus') + td(rn(s.hfCount)+'× ('+rn(s.hfUnplanned)+' unplanned)') + td('🔀 Switches') + td(rn(s.switchAvg)+'/day avg') + '</tr>' +
+        '<tr style="background:#f5f5f5">' + td('🧱 Stuck') + td(rn(s.stuckCount)+'× ('+rn(s.unhelpfulThoughts)+' unhelpful)') + td('🚫 Not-to-do') + td(sf(nottodoLabel)) + '</tr>' +
+      '</table>' +
+
+      '<h2 style="font-family:Calibri,sans-serif;font-size:14pt;color:#3D8A5E;margin-top:16pt">✦ What went well</h2>' +
+      blItems(review.well, "✦") +
+
+      '<h2 style="font-family:Calibri,sans-serif;font-size:14pt;color:#B05C5C;margin-top:16pt">✕ What drained me</h2>' +
+      blItems(review.drained, "✕") +
+
+      '<h2 style="font-family:Calibri,sans-serif;font-size:14pt;color:#4A90A4;margin-top:16pt">→ What I want to do differently</h2>' +
+      blItems(review.differently, "→") +
+
+      '<h2 style="font-family:Calibri,sans-serif;font-size:14pt;color:#C8962A;margin-top:16pt">◎ Focus for next week</h2>' +
+      blItems(review.focus, "◎") +
+
+      (review.wins
+        ? '<h2 style="font-family:Calibri,sans-serif;font-size:14pt;color:#7A5FA8;margin-top:16pt">✦ Evidence log</h2>' +
+          '<p style="font-family:Calibri,sans-serif;font-size:13pt;color:#7A5FA8;font-style:italic">&ldquo;' + sf(review.wins) + '&rdquo;</p>'
+        : '') +
+
+      '</body></html>';
+
+    // Delete existing page with same title then recreate (OneNote can't PATCH body)
+    const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
+    const existing = pagesData.value ? pagesData.value.find(p => p.title === pageTitle) : null;
+    if (existing) {
+      await fetch(`${ON_BASE}/pages/${existing.id}`, { method:"DELETE", headers:{ Authorization:`Bearer ${token}` } });
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
+      body: pageHtml
+    });
+
+    if (res.ok) {
+      setSyncStatus("connected", "Synced ✓");
+      showToast("✓ Weekly review saved to OneNote");
+      return true;
+    }
+    setSyncStatus("error", "Sync failed");
+    showToast("Weekly sync failed: " + res.status, 4000);
+    return false;
+  } catch(e) {
+    console.error("Weekly OneNote sync error:", e);
+    setSyncStatus("error", "Sync error");
+    showToast("Weekly sync error: " + e.message.substring(0,100), 6000);
+    return false;
+  }
+}
+
 async function syncWeeklySummary() {
   if (!getAccount()) { showToast("Connect OneNote first"); return; }
   const stats = computeWeekStats();
   const label = getWeekLabel();
-  const safe = (s) => String(s).replace(/&/g,"&amp;");
+  const safe = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   const rowHtml =
     '<tr>' +
       '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:Calibri,sans-serif;font-size:13pt">📊 ' + safe(label) + '</td>' +
@@ -2647,7 +3560,6 @@ async function syncWeeklySummary() {
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt">⚡ ' + safe(stats.avgEnergy) + '/5</td>' +
     '</tr>';
   showToast("Syncing weekly summary...", 2000);
-  const wsToken = await getToken();
   await syncRowToPage("Weekly Summary", rowHtml);
 }
 
@@ -2811,7 +3723,7 @@ async function pushListToOneNote(type) {
 
     if (!pageId) {
       const pageHtml = `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml">` +
-        `<head><title>${safe(cfg.pageName)}</title></head>` +
+        `<head><title>${cfg.emoji} ${safe(cfg.pageName)}</title></head>` +
         `<body><h1 style="font-family:Calibri,sans-serif;font-size:16pt">${cfg.emoji} ${safe(cfg.title)}</h1>` +
         `<p><span style="font-family:Calibri,sans-serif;font-size:20pt"> </span></p>` +
         `<ul>${bullets}</ul></body></html>`;
@@ -2962,7 +3874,7 @@ async function pullAllFromOneNote(force = false) {
             if (cells.length >= 4 && cells[0].match(/^\d{4}-\d{2}-\d{2}$/)) {
               const date = cells[0];
               if (!reflections[date]) {
-                reflections[date] = { date, did:[cells[1]], next:[cells[2]], unclear:[cells[3]] };
+                reflections[date] = { date, did:[cells[1]], next:[cells[2]], unclear:[cells[3]], thought: cells.length >= 5 ? [cells[4]] : [] };
                 added++;
               }
             }
@@ -3071,6 +3983,17 @@ function updateSettingsUI() {
     b.style.boxShadow = theme === t ? `0 0 0 1px ${accentColors[t]}40` : "none";
   });
 
+  // Shutdown time
+  const sdInput = document.getElementById("settings-shutdown-time");
+  if (sdInput) sdInput.value = settings.shutdownTime || "18:00";
+
+  // Reframe cards toggle
+  const reframeToggle = document.getElementById("settings-reframe-toggle");
+  const reframeKnob = document.getElementById("settings-reframe-knob");
+  const showReframe = settings.showReframeCards !== false;
+  if (reframeToggle) reframeToggle.style.background = showReframe ? "#3D8A5E" : "#555";
+  if (reframeKnob) reframeKnob.style.left = showReframe ? "17px" : "3px";
+
   // Brightness buttons
   const brightness = settings.brightness || "system";
   ["system","dark","light"].forEach(t => {
@@ -3107,8 +4030,8 @@ const THEMES = {
     "--border-strong":"#2a2a2e",
     "--text":         "#d8d4cc",
     "--text-heading": "#f0ebe0",
-    "--text-muted":   "#555555",
-    "--text-dimmer":  "#3a3a3a",
+    "--text-muted":   "#888888",
+    "--text-dimmer":  "#666666",
     "--input-text":   "#d8d4cc",
     "--nav-bg":       "#0a0a0c",
     "--nav-border":   "#1a1a1a",
@@ -3148,7 +4071,7 @@ const THEMES = {
     "--text":         "#e6d3c0",
     "--text-heading": "#ffffff",
     "--text-muted":   "#a89080",
-    "--text-dimmer":  "#5a4535",
+    "--text-dimmer":  "#8a7060",
     "--input-text":   "#e6d3c0",
     "--nav-bg":       "#0d1117",
     "--nav-border":   "#ff6b0022",
@@ -3168,7 +4091,7 @@ const THEMES = {
     "--text":         "#ffffff",
     "--text-heading": "#ffffff",
     "--text-muted":   "#888888",
-    "--text-dimmer":  "#333333",
+    "--text-dimmer":  "#666666",
     "--input-text":   "#ffffff",
     "--nav-bg":       "#000000",
     "--nav-border":   "#ffffff10",
@@ -3180,6 +4103,13 @@ const THEMES = {
     "--radius":       "0px",
   }
 };
+
+function saveShutdownTime(time) {
+  const s = getSettings();
+  s.shutdownTime = time;
+  saveSettings(s);
+  renderToday();
+}
 
 function setTheme(theme) {
   const s = getSettings();
@@ -3333,6 +4263,16 @@ async function handleImportFile(event) {
     if (data.values)        sv(SK.values,  data.values);
     if (data.goals)         sv(SK.goals,   data.goals);
     if (data.projects)      sv(SK.projects,data.projects);
+    // ADHD tracking data
+    if (data.bdSessions)    sv("yd2-bd-sessions",    data.bdSessions);
+    if (data.dopamineLog)   sv("yd2-dopamine",        data.dopamineLog);
+    if (data.frictionLog)   sv("yd2-friction",        data.frictionLog);
+    if (data.switchLog)     sv("yd2-switches",         data.switchLog);
+    if (data.hyperfocusLog) sv("yd2-hyperfocus",      data.hyperfocusLog);
+    if (data.anchor)        sv("yd2-anchor",           data.anchor);
+    if (data.savedReframes) sv("yd2-saved-reframes",  data.savedReframes);
+    if (data.forgivenessDate) sv("yd2-forgiveness-date", data.forgivenessDate);
+    if (data.tomorrowTask !== undefined) sv("yd2-tomorrow-task", data.tomorrowTask);
 
     // Reload everything
     loadAll();
@@ -3350,7 +4290,7 @@ async function handleImportFile(event) {
 function exportAllData() {
   const allData = {
     exportDate: new Date().toISOString(),
-    version: "1.0",
+    version: "2.0",
     history: ld(SK.hist, {}),
     captures: ld(SK.caps, []),
     reflections: ld(SK.refs, {}),
@@ -3362,7 +4302,17 @@ function exportAllData() {
     journal: ld(SK.journal, {}),
     values: ld(SK.values, []),
     goals: ld(SK.goals, []),
-    projects: ld(SK.projects, [])
+    projects: ld(SK.projects, []),
+    // ADHD tracking data
+    bdSessions:    ld("yd2-bd-sessions", []),
+    dopamineLog:   ld("yd2-dopamine", []),
+    frictionLog:   ld("yd2-friction", []),
+    switchLog:     ld("yd2-switches", []),
+    hyperfocusLog: ld("yd2-hyperfocus", []),
+    anchor:        ld("yd2-anchor", null),
+    savedReframes: ld("yd2-saved-reframes", []),
+    forgivenessDate: ld("yd2-forgiveness-date", null),
+    tomorrowTask:  ld("yd2-tomorrow-task", "")
   };
   const blob = new Blob([JSON.stringify(allData, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -3494,13 +4444,7 @@ function stopTimer() {
   timerTaskId = null;
 }
 
-function finishFromTimer() {
-  stopTimer();
-  if (timerTaskId && timerSecId) {
-    quickDoneTask(currentProjectId, timerTaskId);
-    showToast("✓ Task marked done");
-  }
-}
+// finishFromTimer defined below with actual time tracking
 
 // ── Alarm sound (Web Audio API — no file needed) ──────────────────────────────
 let alarmOscillators = [];
@@ -3724,7 +4668,7 @@ function renderProjectDetail() {
     if (!secTasks.length) {
       const empty = document.createElement("div");
       empty.style.cssText = "font-size:12px;color:var(--text-dimmer);font-style:italic;padding:8px 0";
-      empty.textContent = "No tasks yet";
+      empty.textContent = "Tap + Task to add the first step.";
       secDiv.appendChild(empty);
     }
 
@@ -3742,13 +4686,19 @@ function renderProjectDetail() {
 
       const estLabel = task.estimatedMins ? `<span class="mono" style="font-size:9px;color:var(--text-dimmer)">${task.estimatedMins}min</span>` : "";
       const doneOpacity = task.status === "done" ? "opacity:0.45;" : "";
-      const stuckNote = task.stuckNote ? `<div style="font-size:11px;color:#B05C5C;margin-top:6px;padding:6px 8px;background:#B05C5C11;border-radius:4px">🧱 ${task.stuckNote}</div>` : "";
+      const stuckNote = task.status === "stuck" && (task.stuckThought || task.stuckNote) ? `
+        <div style="margin-top:6px;padding:8px 10px;background:#B05C5C11;border-radius:4px;border-left:2px solid #B05C5C">
+          ${task.stuckThought ? `<div style="font-size:10px;color:#B05C5C;margin-bottom:3px;font-style:italic">"${esc(task.stuckThought)}"${task.stuckThoughtHelpful === false ? ' <span style="color:#B05C5C;font-size:9px">— not helping</span>' : task.stuckThoughtHelpful === true ? ' <span style="color:#3D8A5E;font-size:9px">— valid</span>' : ''}</div>` : ""}
+          ${task.stuckNote ? `<div style="font-size:11px;color:var(--text-muted)">→ ${esc(task.stuckNote)}</div>` : ""}
+        </div>` : "";
 
       taskEl.innerHTML = `
         <div style="display:flex;align-items:flex-start;gap:10px;${doneOpacity}">
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;color:var(--text);font-weight:500;margin-bottom:3px;${task.status==="done"?"text-decoration:line-through;color:var(--text-muted)":""}">${esc(task.name)}</div>
-            <div style="font-size:11px;color:var(--text-dimmer);line-height:1.4">Done when: ${task.doneDefinition}</div>
+            <div style="font-size:11px;color:var(--text-dimmer);line-height:1.4">Done when: ${esc(task.doneDefinition)}</div>
+            ${task.status === "active" && task.intention ? `<div style="font-size:11px;color:#4A90A4;margin-top:5px;padding:5px 8px;background:#4A90A411;border-radius:4px;border-left:2px solid #4A90A4">🎯 ${esc(task.intention)}</div>` : ""}
+            ${task.actualMins && task.estimatedMins ? `<div style="font-size:10px;color:var(--text-dimmer);margin-top:4px;font-family:'DM Mono',monospace">${task.actualMins}min actual · ${task.estimatedMins}min est · ${(task.actualMins/task.estimatedMins).toFixed(1)}×</div>` : ""}
             ${stuckNote}
           </div>
           <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
@@ -3783,11 +4733,15 @@ function cycleTaskStatus(secId, taskId) {
       showToast("Max 3 active tasks per session. Complete one first.", 4000);
       return;
     }
-    task.status = "active";
+    // Intercept with intention modal
+    openIntentionModal(secId, taskId);
+    return;
   } else if (task.status === "active") {
     task.status = "todo"; // pause
   } else if (task.status === "stuck") {
-    task.status = "active";
+    // Re-activating from stuck — show intention modal again
+    openIntentionModal(secId, taskId);
+    return;
   }
 
   saveProjects();
@@ -3800,7 +4754,12 @@ function quickDoneTask(projId, taskId) {
   if (!proj) return;
   for (const sec of proj.sections) {
     const task = sec.tasks.find(t => t.id === taskId);
-    if (task) { task.status = "done"; break; }
+    if (task) {
+      task.status = "done";
+      task.doneAt = today();
+      promptActualTime(projId, taskId);
+      break;
+    }
   }
   saveProjects();
   renderProjectsList();
@@ -3808,11 +4767,36 @@ function quickDoneTask(projId, taskId) {
 }
 
 // ── Stuck recovery ────────────────────────────────────────────────────────────
+let _stuckHelpful = null;
+
 function openStuck(taskId) {
   currentStuckTaskId = taskId;
-  document.getElementById("stuck-blocker").value = "";
+  _stuckHelpful = null;
+  document.getElementById("stuck-thought").value = "";
   document.getElementById("stuck-next").value = "";
+  // Reset step 2 buttons
+  ["stuck-helpful-yes","stuck-helpful-no"].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.style.background = "none";
+      btn.style.borderColor = "var(--border)";
+      btn.style.color = "var(--text-muted)";
+    }
+  });
   document.getElementById("stuck-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("stuck-thought").focus(), 100);
+}
+
+function setStuckHelpful(val) {
+  _stuckHelpful = val;
+  const yes = document.getElementById("stuck-helpful-yes");
+  const no  = document.getElementById("stuck-helpful-no");
+  yes.style.background  = val  ? "#3D8A5E22" : "none";
+  yes.style.borderColor = val  ? "#3D8A5E"   : "var(--border)";
+  yes.style.color       = val  ? "#3D8A5E"   : "var(--text-muted)";
+  no.style.background   = !val ? "#B05C5C22" : "none";
+  no.style.borderColor  = !val ? "#B05C5C"   : "var(--border)";
+  no.style.color        = !val ? "#B05C5C"   : "var(--text-muted)";
 }
 
 function closeStuck(e) {
@@ -3820,18 +4804,28 @@ function closeStuck(e) {
   document.getElementById("stuck-overlay").classList.remove("open");
 }
 
-function saveStuck() {
-  const blocker = document.getElementById("stuck-blocker").value.trim();
-  const next = document.getElementById("stuck-next").value.trim();
-  if (!blocker) { showToast("Describe what's blocking you"); return; }
+async function saveStuck() {
+  const thought = document.getElementById("stuck-thought").value.trim();
+  const next    = document.getElementById("stuck-next").value.trim();
+  if (!thought) { showToast("Write what you're telling yourself — even one word"); return; }
+  if (!next)    { showToast("Name one tiny next action"); return; }
 
   const proj = getProject(currentProjectId);
   if (!proj) return;
+
+  let taskName = "";
+  let projName = proj.name;
   for (const sec of proj.sections) {
     const task = sec.tasks.find(t => t.id === currentStuckTaskId);
     if (task) {
+      taskName = task.name;
+      // Build stuckNote for inline card display
+      const helpLabel = _stuckHelpful === true ? "valid" : _stuckHelpful === false ? "unhelpful" : "unchecked";
       task.status = "stuck";
-      task.stuckNote = blocker + (next ? " → " + next : "");
+      task.stuckNote = next;
+      task.stuckThought = thought;
+      task.stuckThoughtHelpful = _stuckHelpful;
+      task.stuckAt = today();
       break;
     }
   }
@@ -3839,6 +4833,26 @@ function saveStuck() {
   document.getElementById("stuck-overlay").classList.remove("open");
   renderProjectDetail();
   showToast("Logged. Small steps forward. 🙏");
+
+  // OneNote sync — same td structure as EOD closure
+  if (getAccount() && taskName) {
+    const safe = (s) => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const helpLabel = _stuckHelpful === true
+      ? '<span style="color:#3D8A5E">✓ Valid thought</span>'
+      : _stuckHelpful === false
+        ? '<span style="color:#B05C5C">✗ Not helping me</span>'
+        : '<em style="color:#999">—</em>';
+    const ts = new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+    const rowHtml =
+      '<tr>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:Calibri,sans-serif;font-size:13pt">📅 ' + safe(today()) + ' ' + safe(ts) + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + safe(projName) + ' → ' + safe(taskName) + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + safe(thought) + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + helpLabel + '</td>' +
+      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:Calibri,sans-serif;font-size:13pt;vertical-align:top">' + safe(next) + '</td>' +
+      '</tr>';
+    await syncRowToPage("Stuck moments", rowHtml);
+  }
 }
 
 // ── Forms ─────────────────────────────────────────────────────────────────────
@@ -4050,7 +5064,7 @@ function buildProjectPageHtml(proj) {
   const statusLabel = { active:"🟢 Active", paused:"⏸ Paused", done:"✅ Done" }[proj.status] || proj.status;
 
   let html = `<?xml version="1.0" encoding="utf-8"?>` +
-    `<html xmlns="http://www.w3.org/1999/xhtml"><head><title>${safe(proj.name)}</title></head><body>`;
+    `<html xmlns="http://www.w3.org/1999/xhtml"><head><title>🚀 ${safe(proj.name)}</title></head><body>`;
 
   // Title + status
   html += `<h1 style="font-family:Calibri,sans-serif;font-size:20pt">${safe(proj.name)}</h1>`;
@@ -4254,28 +5268,1537 @@ function confirmResolve(result) {
   if (_confirmResolve) { _confirmResolve(result); _confirmResolve = null; }
 }
 
+// ===================== BODY DOUBLING TIMER =====================
+let bdInterval = null;
+let bdPaused = false;
+let bdSeconds = 0;
+let bdTaskName = "";
+let bdTaskDef = "";
+let bdFinished = null;
+let bdSoundMode = "none";
+let bdAudioCtx = null;
+let bdSoundNode = null;
+let bdSessions = [];
+
+const BD_SK = "yd2-bd-sessions";
+
+function loadBdSessions() { bdSessions = ld(BD_SK, []); }
+
+function openBodyDouble() {
+  loadBdSessions();
+  document.getElementById("bd-start-task").value = "";
+  document.getElementById("bd-start-def").value = "";
+
+  // Show active project tasks
+  const active = activeSessionTasks();
+  const tasksSection = document.getElementById("bd-active-tasks-section");
+  const tasksList = document.getElementById("bd-active-tasks-list");
+  if (active.length) {
+    tasksSection.style.display = "block";
+    tasksList.innerHTML = active.map(({ task, project }) => `
+      <button onclick="pickBdTask('${esc(task.name).replace(/'/g,"\\'")}','${esc(task.doneDefinition||"").replace(/'/g,"\\'")}'); return false;"
+        style="text-align:left;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);width:100%;cursor:pointer;font-family:'Inter',sans-serif">
+        <div style="font-size:13px;color:var(--text)">${esc(task.name)}</div>
+        <div style="font-size:10px;color:var(--text-dimmer);font-family:'DM Mono',monospace">${esc(project.name)}</div>
+      </button>`).join("");
+  } else {
+    tasksSection.style.display = "none";
+  }
+
+  document.getElementById("body-double-start-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("bd-start-task").focus(), 100);
+}
+
+function pickBdTask(name, def) {
+  document.getElementById("bd-start-task").value = name;
+  document.getElementById("bd-start-def").value = def;
+}
+
+function closeBdStart(e) {
+  if (e && e.target !== document.getElementById("body-double-start-overlay")) return;
+  document.getElementById("body-double-start-overlay").classList.remove("open");
+}
+
+function startBodyDouble() {
+  const task = document.getElementById("bd-start-task").value.trim();
+  if (!task) { showToast("Write what you're working on first"); return; }
+  bdTaskName = task;
+  bdTaskDef = document.getElementById("bd-start-def").value.trim();
+  bdSeconds = 0;
+  bdPaused = false;
+  bdFinished = null;
+  bdSoundMode = "none";
+
+  document.getElementById("body-double-start-overlay").classList.remove("open");
+
+  // Show overlay
+  const overlay = document.getElementById("body-double-overlay");
+  overlay.style.display = "flex";
+  document.getElementById("bd-task-name").textContent = bdTaskName;
+  document.getElementById("bd-task-def").textContent = bdTaskDef ? "Done when: " + bdTaskDef : "";
+  document.getElementById("bd-clock").textContent = "00:00";
+  document.getElementById("bd-pause-btn").textContent = "Pause";
+  document.getElementById("bd-elapsed-label").textContent = "";
+  updateBdSoundUI();
+
+  bdInterval = setInterval(() => {
+    if (bdPaused) return;
+    bdSeconds++;
+    updateBdClock();
+  }, 1000);
+}
+
+function updateBdClock() {
+  const m = Math.floor(bdSeconds / 60);
+  const s = bdSeconds % 60;
+  document.getElementById("bd-clock").textContent =
+    String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  const hints = ["Nice start ✦","Stay with it →","You're doing it ●","Keep going ◎","In the zone 🔥"];
+  const idx = Math.min(Math.floor(bdSeconds / 300), hints.length - 1);
+  document.getElementById("bd-elapsed-label").textContent = hints[idx];
+}
+
+function toggleBdPause() {
+  bdPaused = !bdPaused;
+  document.getElementById("bd-pause-btn").textContent = bdPaused ? "Resume" : "Pause";
+  if (bdPaused) stopBdSound(); else if (bdSoundMode !== "none") startBdSound(bdSoundMode);
+}
+
+function endBodyDouble() {
+  if (bdInterval) { clearInterval(bdInterval); bdInterval = null; }
+  stopBdSound();
+  document.getElementById("body-double-overlay").style.display = "none";
+
+  // Show end reflection
+  const mins = Math.floor(bdSeconds / 60);
+  const secs = bdSeconds % 60;
+  document.getElementById("bd-end-duration").textContent =
+    `Session: ${String(mins).padStart(2,"0")}:${String(secs).padStart(2,"0")} · ${bdTaskName}`;
+  document.getElementById("bd-end-note").value = "";
+  document.getElementById("bd-end-yes").style.background = "none";
+  document.getElementById("bd-end-yes").style.borderColor = "var(--border)";
+  document.getElementById("bd-end-no").style.background = "none";
+  document.getElementById("bd-end-no").style.borderColor = "var(--border)";
+  bdFinished = null;
+  document.getElementById("body-double-end-overlay").classList.add("open");
+}
+
+function closeBdEnd(e) {
+  if (e && e.target !== document.getElementById("body-double-end-overlay")) return;
+  document.getElementById("body-double-end-overlay").classList.remove("open");
+}
+
+function setBdFinished(val) {
+  bdFinished = val;
+  const yes = document.getElementById("bd-end-yes");
+  const no = document.getElementById("bd-end-no");
+  yes.style.background = val ? "#3D8A5E22" : "none";
+  yes.style.borderColor = val ? "#3D8A5E" : "var(--border)";
+  yes.style.color = val ? "#3D8A5E" : "var(--text-muted)";
+  no.style.background = !val ? "#B05C5C22" : "none";
+  no.style.borderColor = !val ? "#B05C5C" : "var(--border)";
+  no.style.color = !val ? "#B05C5C" : "var(--text-muted)";
+}
+
+function saveBodyDoubleSession() {
+  const session = {
+    id: Date.now(),
+    date: today(),
+    time: new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}),
+    task: bdTaskName,
+    doneDefinition: bdTaskDef,
+    durationSecs: bdSeconds,
+    durationMins: Math.round(bdSeconds / 60),
+    sound: bdSoundMode,
+    finished: bdFinished,
+    note: document.getElementById("bd-end-note").value.trim()
+  };
+  bdSessions.unshift(session);
+  // Keep last 90 sessions
+  if (bdSessions.length > 90) bdSessions = bdSessions.slice(0, 90);
+  sv(BD_SK, bdSessions);
+  document.getElementById("body-double-end-overlay").classList.remove("open");
+  showToast(`✓ Session saved — ${session.durationMins} min`);
+}
+
+// ── Ambient sounds via Web Audio API ─────────────────────────────────────────
+function setBdSound(mode) {
+  bdSoundMode = mode;
+  stopBdSound();
+  if (mode !== "none") startBdSound(mode);
+  updateBdSoundUI();
+}
+
+function updateBdSoundUI() {
+  ["none","white","rain","lofi"].forEach(m => {
+    const btn = document.getElementById("bd-sound-" + m);
+    if (!btn) return;
+    btn.style.borderColor = bdSoundMode === m ? "#7A5FA8" : "#333";
+    btn.style.color = bdSoundMode === m ? "#7A5FA8" : "#666";
+  });
+}
+
+function startBdSound(mode) {
+  try {
+    bdAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (mode === "white") {
+      const bufferSize = bdAudioCtx.sampleRate * 2;
+      const buffer = bdAudioCtx.createBuffer(1, bufferSize, bdAudioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const source = bdAudioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      const gain = bdAudioCtx.createGain();
+      gain.gain.value = 0.08;
+      source.connect(gain);
+      gain.connect(bdAudioCtx.destination);
+      source.start();
+      bdSoundNode = source;
+    } else if (mode === "rain") {
+      // Pink-ish noise (softer than white, more rain-like)
+      const bufferSize = bdAudioCtx.sampleRate * 2;
+      const buffer = bdAudioCtx.createBuffer(1, bufferSize, bdAudioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0;
+      for (let i = 0; i < bufferSize; i++) {
+        const w = Math.random() * 2 - 1;
+        b0=0.99886*b0+w*0.0555179; b1=0.99332*b1+w*0.0750759;
+        b2=0.96900*b2+w*0.1538520; b3=0.86650*b3+w*0.3104856;
+        b4=0.55000*b4+w*0.5329522; b5=-0.7616*b5-w*0.0168980;
+        data[i] = (b0+b1+b2+b3+b4+b5+w*0.5362)/7 * 0.12;
+      }
+      const source = bdAudioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(bdAudioCtx.destination);
+      source.start();
+      bdSoundNode = source;
+    } else if (mode === "lofi") {
+      // Simple lo-fi: layered sine tones (chord-like warmth)
+      const gain = bdAudioCtx.createGain();
+      gain.gain.value = 0.04;
+      gain.connect(bdAudioCtx.destination);
+      const freqs = [130.81, 164.81, 196.00, 246.94]; // C3 chord
+      freqs.forEach(f => {
+        const osc = bdAudioCtx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = f;
+        osc.connect(gain);
+        osc.start();
+      });
+      bdSoundNode = gain;
+    }
+  } catch(e) { console.warn("Sound error:", e); }
+}
+
+function stopBdSound() {
+  try {
+    if (bdAudioCtx) { bdAudioCtx.close(); bdAudioCtx = null; bdSoundNode = null; }
+  } catch(e) {}
+}
+
+// ===================== DOPAMINE TRACKING =====================
+const DOPA_SK = "yd2-dopamine";
+const DOPA_CATS = [
+  { key:"body",    label:"🏃 Body",        color:"#3D8A5E" },
+  { key:"food",    label:"🍎 Food",         color:"#C8962A" },
+  { key:"social",  label:"👥 Social",       color:"#4A90A4" },
+  { key:"win",     label:"✅ Win",           color:"#2A9D8F" },
+  { key:"env",     label:"🌱 Environment",  color:"#7A5FA8" },
+  { key:"mental",  label:"🧠 Mental",       color:"#B05C5C" },
+];
+
+let dopamineLog = [];
+let dopamineEntryType = "boost"; // 'boost' or 'drain'
+let dopamineCategory = "body";
+
+function loadDopamine() { dopamineLog = ld(DOPA_SK, []); }
+
+function renderDopamineToday() {
+  const list = document.getElementById("dopamine-today-list");
+  if (!list) return;
+  const t = today();
+  const todayEntries = dopamineLog.filter(e => e.date === t).slice().reverse();
+  if (!todayEntries.length) {
+    list.innerHTML = `<div style="font-size:11px;color:var(--text-dimmer);font-style:italic;text-align:center;padding:6px 0">Nothing logged yet today</div>`;
+    return;
+  }
+  list.innerHTML = todayEntries.map(e => {
+    const cat = DOPA_CATS.find(c => c.key === e.category) || DOPA_CATS[0];
+    const isBoost = e.type === "boost";
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:${isBoost?"#3D8A5E11":"#B05C5C11"};border:1px solid ${isBoost?"#3D8A5E22":"#B05C5C22"}">
+      <span style="font-size:11px;flex-shrink:0">${isBoost?"⚡":"🪫"}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.text)}</div>
+        <div style="font-size:9px;color:var(--text-dimmer);font-family:'DM Mono',monospace">${cat.label} · ${e.time}</div>
+      </div>
+      <button onclick="deleteDopamineEntry('${e.id}')" style="background:none;border:none;color:var(--text-dimmer);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0">×</button>
+    </div>`;
+  }).join("");
+}
+
+function openDopamineEntry(type) {
+  dopamineEntryType = type;
+  dopamineCategory = "body";
+  const isBoost = type === "boost";
+  document.getElementById("dopamine-entry-title").textContent = isBoost ? "⚡ What gave you energy?" : "🪫 What drained you?";
+  document.getElementById("dopamine-entry-title").style.color = isBoost ? "#3D8A5E" : "#B05C5C";
+  document.getElementById("dopamine-save-btn").style.background = isBoost ? "#3D8A5E" : "#B05C5C";
+  document.getElementById("dopamine-entry-text").value = "";
+
+  // Render category pills
+  const pills = document.getElementById("dopamine-category-pills");
+  pills.innerHTML = DOPA_CATS.map(c => `
+    <button id="dopa-cat-${c.key}" onclick="selectDopaCat('${c.key}')"
+      style="padding:5px 12px;border-radius:16px;border:1px solid ${c.color}44;background:${dopamineCategory===c.key?c.color+"22":"transparent"};color:${c.color};font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:all 0.15s">
+      ${c.label}
+    </button>`).join("");
+
+  document.getElementById("dopamine-entry-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("dopamine-entry-text").focus(), 100);
+}
+
+function selectDopaCat(key) {
+  dopamineCategory = key;
+  DOPA_CATS.forEach(c => {
+    const btn = document.getElementById("dopa-cat-" + c.key);
+    if (!btn) return;
+    btn.style.background = dopamineCategory === c.key ? c.color + "22" : "transparent";
+  });
+}
+
+function closeDopamineEntry(e) {
+  if (e && e.target !== document.getElementById("dopamine-entry-overlay")) return;
+  document.getElementById("dopamine-entry-overlay").classList.remove("open");
+}
+
+function saveDopamineEntry() {
+  const text = document.getElementById("dopamine-entry-text").value.trim();
+  if (!text) { showToast("Write what it was first"); return; }
+  const entry = {
+    id: Date.now().toString(),
+    date: today(),
+    time: new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}),
+    type: dopamineEntryType,
+    category: dopamineCategory,
+    text
+  };
+  dopamineLog.unshift(entry);
+  // Keep last 180 days worth (rough cap)
+  if (dopamineLog.length > 1000) dopamineLog = dopamineLog.slice(0, 1000);
+  sv(DOPA_SK, dopamineLog);
+  document.getElementById("dopamine-entry-overlay").classList.remove("open");
+  renderDopamineToday();
+  showToast("Logged ✓");
+}
+
+function deleteDopamineEntry(id) {
+  dopamineLog = dopamineLog.filter(e => e.id !== id);
+  sv(DOPA_SK, dopamineLog);
+  renderDopamineToday();
+}
+
+// ── Patterns modal ────────────────────────────────────────────────────────────
+function openDopaminePatterns() {
+  renderDopaminePatterns();
+  document.getElementById("dopamine-patterns-overlay").classList.add("open");
+}
+
+function closeDopaminePatterns(e) {
+  if (e && e.target !== document.getElementById("dopamine-patterns-overlay")) return;
+  document.getElementById("dopamine-patterns-overlay").classList.remove("open");
+}
+
+function renderDopaminePatterns() {
+  const el = document.getElementById("dopamine-patterns-content");
+  if (!el) return;
+
+  if (dopamineLog.length < 3) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-dimmer);font-style:italic;font-size:13px">
+      Tap ⚡ or 🪫 in the Reflect tab to log what gave or drained your energy.<br><span style="font-size:11px;opacity:0.7">Patterns appear after a few entries.</span></div>`;
+    return;
+  }
+
+  const boosts = dopamineLog.filter(e => e.type === "boost");
+  const drains = dopamineLog.filter(e => e.type === "drain");
+
+  // Count by category
+  const countByCat = (entries) => {
+    const counts = {};
+    entries.forEach(e => { counts[e.category] = (counts[e.category]||0)+1; });
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  };
+
+  // Count by text (top items)
+  const countByText = (entries) => {
+    const counts = {};
+    entries.forEach(e => { const k=e.text.toLowerCase(); counts[k]=(counts[k]||0)+1; });
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  };
+
+  // Last 14 days heatmap
+  const last14 = Array.from({length:14},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-13+i);
+    const key=d.toISOString().split("T")[0];
+    const b=dopamineLog.filter(e=>e.date===key&&e.type==="boost").length;
+    const dr=dopamineLog.filter(e=>e.date===key&&e.type==="drain").length;
+    return {key,b,dr,label:d.toLocaleDateString("en-US",{weekday:"short"})};
+  });
+
+  const boostCats = countByCat(boosts);
+  const drainCats = countByCat(drains);
+  const topBoosts = countByText(boosts);
+  const topDrains = countByText(drains);
+
+  const catBar = (entries_by_cat, type) => entries_by_cat.slice(0,4).map(([key,count]) => {
+    const cat = DOPA_CATS.find(c=>c.key===key)||DOPA_CATS[0];
+    const pct = Math.round(count / (type==="boost"?boosts.length:drains.length) * 100);
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:11px;color:var(--text)">${cat.label}</span>
+        <span class="mono" style="font-size:9px;color:var(--text-dimmer)">${count}×</span>
+      </div>
+      <div style="height:4px;background:var(--border);border-radius:2px">
+        <div style="height:100%;width:${pct}%;background:${cat.color};border-radius:2px;transition:width 0.4s"></div>
+      </div>
+    </div>`;
+  }).join("");
+
+  const topList = (items, color) => items.map(([text,count]) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--text);flex:1;padding-right:8px">${esc(text)}</span>
+      <span class="mono" style="font-size:9px;color:${color};flex-shrink:0">${count}×</span>
+    </div>`).join("");
+
+  const heatmap = `<div style="display:flex;gap:3px;margin-bottom:4px">
+    ${last14.map(d => {
+      const net = d.b - d.dr;
+      const bg = net>0?"#3D8A5E":net<0?"#B05C5C":"var(--border)";
+      const opacity = Math.min(Math.abs(net)*0.25+0.2, 1);
+      return `<div title="${d.key}: ${d.b} boosts, ${d.dr} drains" style="flex:1;aspect-ratio:1;border-radius:3px;background:${bg};opacity:${opacity}"></div>`;
+    }).join("")}
+  </div>
+  <div style="display:flex;justify-content:space-between">
+    <span class="mono" style="font-size:8px;color:var(--text-dimmer)">${last14[0].label}</span>
+    <span class="mono" style="font-size:8px;color:var(--text-dimmer)">today</span>
+  </div>`;
+
+  el.innerHTML = `
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:2px;margin-bottom:8px">LAST 14 DAYS</div>
+    <div style="margin-bottom:6px;display:flex;gap:12px">
+      <span style="font-size:11px;color:var(--text-dimmer)">⚡ green · 🪫 red · neutral grey</span>
+    </div>
+    ${heatmap}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+      <div>
+        <div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:1px;margin-bottom:10px">⚡ ENERGY SOURCES</div>
+        ${boostCats.length ? catBar(boostCats,"boost") : '<div style="font-size:11px;color:var(--text-dimmer);font-style:italic">None yet</div>'}
+      </div>
+      <div>
+        <div class="mono" style="font-size:9px;color:#B05C5C;letter-spacing:1px;margin-bottom:10px">🪫 ENERGY DRAINS</div>
+        ${drainCats.length ? catBar(drainCats,"drain") : '<div style="font-size:11px;color:var(--text-dimmer);font-style:italic">None yet</div>'}
+      </div>
+    </div>
+
+    ${topBoosts.length ? `
+    <div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:1px;margin-top:20px;margin-bottom:8px">TOP ENERGY BOOSTERS</div>
+    ${topList(topBoosts,"#3D8A5E")}` : ""}
+
+    ${topDrains.length ? `
+    <div class="mono" style="font-size:9px;color:#B05C5C;letter-spacing:1px;margin-top:16px;margin-bottom:8px">TOP ENERGY DRAINS</div>
+    ${topList(topDrains,"#B05C5C")}` : ""}
+
+    <div style="margin-top:16px;padding:10px 12px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+      <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:4px">TOTALS (all time)</div>
+      <div style="font-size:12px;color:var(--text)">⚡ ${boosts.length} boosts &nbsp;·&nbsp; 🪫 ${drains.length} drains &nbsp;·&nbsp; ${dopamineLog.length} entries</div>
+    </div>`;
+}
+
+
+
+// ===================== INTENTION SETTING =====================
+let _intentionSecId = null;
+let _intentionTaskId = null;
+
+function openIntentionModal(secId, taskId) {
+  _intentionSecId = secId;
+  _intentionTaskId = taskId;
+
+  const proj = getProject(currentProjectId);
+  let task = null;
+  for (const s of (proj?.sections||[])) {
+    task = s.tasks.find(t => t.id === taskId);
+    if (task) break;
+  }
+  if (!task) return;
+
+  document.getElementById("intention-task-label").textContent = task.name.toUpperCase();
+  // Pre-fill with existing values if set before
+  document.getElementById("intention-specific").value = task.intention || "";
+  document.getElementById("intention-done-check").value = task.intentionDoneCheck || task.doneDefinition || "";
+
+  document.getElementById("intention-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("intention-specific").focus(), 100);
+}
+
+function closeIntention(e) {
+  if (e && e.target !== document.getElementById("intention-overlay")) return;
+  document.getElementById("intention-overlay").classList.remove("open");
+}
+
+function skipIntention() {
+  document.getElementById("intention-overlay").classList.remove("open");
+  _activateTask(_intentionSecId, _intentionTaskId, "", "");
+}
+
+function confirmIntention() {
+  const specific = document.getElementById("intention-specific").value.trim();
+  const doneCheck = document.getElementById("intention-done-check").value.trim();
+  document.getElementById("intention-overlay").classList.remove("open");
+  _activateTask(_intentionSecId, _intentionTaskId, specific, doneCheck);
+}
+
+function _activateTask(secId, taskId, intention, doneCheck) {
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  const sec = proj.sections.find(s => s.id === secId);
+  if (!sec) return;
+  const task = sec.tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  task.status = "active";
+  task.intentionSetAt = new Date().toISOString();
+  if (intention) task.intention = intention;
+  if (doneCheck) task.intentionDoneCheck = doneCheck;
+
+  saveProjects();
+  renderProjectDetail();
+  renderProjectsList();
+  showToast("Task started — you've got this 🎯");
+}
+
+// ===================== ACTUAL TIME TRACKING =====================
+let _actualTimeProjId = null;
+let _actualTimeTaskId = null;
+
+function promptActualTime(projId, taskId) {
+  const proj = getProject(projId);
+  if (!proj) return;
+  let task = null;
+  for (const s of proj.sections) {
+    task = s.tasks.find(t => t.id === taskId);
+    if (task) break;
+  }
+  if (!task) return;
+
+  // Auto-calculate from body doubling sessions today
+  const todaySessions = bdSessions.filter(s =>
+    s.date === today() && s.task.toLowerCase() === task.name.toLowerCase()
+  );
+  if (todaySessions.length) {
+    const totalMins = todaySessions.reduce((sum,s) => sum + (s.durationMins||0), 0);
+    task.actualMins = totalMins;
+    saveProjects();
+    showToast(`⏱ Actual time auto-set from Work With Me session: ${totalMins} min`);
+    return;
+  }
+
+  // Otherwise prompt
+  if (!task.estimatedMins) return; // no estimate = no point prompting
+  _actualTimeProjId = projId;
+  _actualTimeTaskId = taskId;
+  const hint = task.estimatedMins ? `Estimated: ${task.estimatedMins} min` : "";
+  document.getElementById("actual-time-estimate").textContent = hint;
+  document.getElementById("actual-time-input").value = "";
+  document.getElementById("actual-time-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("actual-time-input").focus(), 100);
+}
+
+function closeActualTime(e) {
+  if (e && e.target !== document.getElementById("actual-time-overlay")) return;
+  document.getElementById("actual-time-overlay").classList.remove("open");
+}
+
+function saveActualTime() {
+  const mins = parseInt(document.getElementById("actual-time-input").value);
+  if (!mins || mins < 1) { showToast("Enter a number in minutes"); return; }
+
+  const proj = getProject(_actualTimeProjId);
+  if (proj) {
+    for (const s of proj.sections) {
+      const task = s.tasks.find(t => t.id === _actualTimeTaskId);
+      if (task) { task.actualMins = mins; break; }
+    }
+    saveProjects();
+  }
+  document.getElementById("actual-time-overlay").classList.remove("open");
+  showToast(`⏱ Logged ${mins} min actual time`);
+}
+
+// Also prompt when marking done from task card (finishFromTimer path)
+function finishFromTimer() {
+  stopTimer();
+  if (timerTaskId && timerSecId) {
+    const proj = getProject(currentProjectId);
+    if (proj) {
+      for (const s of proj.sections) {
+        const task = s.tasks.find(t => t.id === timerTaskId);
+        if (task) {
+          task.status = "done";
+          task.doneAt = today();
+          // Elapsed time = estimated - remaining (timerSecondsLeft counts down, goes negative for overtime)
+          const totalSecs = (task.estimatedMins || 0) * 60;
+          const elapsedSecs = timerSecondsLeft >= 0
+            ? totalSecs - timerSecondsLeft   // still counting down
+            : totalSecs + Math.abs(timerSecondsLeft); // overtime
+          task.actualMins = Math.max(1, Math.round(elapsedSecs / 60));
+          break;
+        }
+      }
+    }
+    saveProjects();
+    renderProjectDetail();
+    renderProjectsList();
+    showToast("✓ Task marked done");
+  }
+}
+
+// ===================== TIME SENSE PATTERNS =====================
+function renderTimeSensePatterns(container) {
+  // Collect all done tasks with both estimated and actual time
+  const samples = [];
+  for (const proj of projects) {
+    for (const sec of proj.sections||[]) {
+      for (const task of sec.tasks||[]) {
+        if (task.status === "done" && task.estimatedMins && task.actualMins) {
+          samples.push({
+            name: task.name,
+            est: task.estimatedMins,
+            actual: task.actualMins,
+            ratio: task.actualMins / task.estimatedMins,
+            proj: proj.name
+          });
+        }
+      }
+    }
+  }
+
+  if (samples.length < 2) {
+    container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dimmer);font-style:italic;font-size:13px">
+      Mark a project task as done to log actual vs estimated time.<br><span style="font-size:11px;opacity:0.7">Your personal time ratio appears after 2+ completed tasks.</span></div>`;
+    return;
+  }
+
+  const avgRatio = samples.reduce((s,t) => s + t.ratio, 0) / samples.length;
+  const under = samples.filter(t => t.ratio > 1.2).length;
+  const over  = samples.filter(t => t.ratio < 0.8).length;
+  const spot  = samples.length - under - over;
+  const maxEst = Math.max(...samples.map(t => t.est));
+  const maxAct = Math.max(...samples.map(t => t.actual));
+  const maxVal = Math.max(maxEst, maxAct, 1);
+
+  // Scatter plot — SVG
+  const W = 260, H = 160, PAD = 28;
+  const x = v => PAD + (v/maxVal) * (W-PAD*2);
+  const y = v => H - PAD - (v/maxVal) * (H-PAD*2);
+
+  const dots = samples.map(t => {
+    const color = t.ratio > 1.3 ? "#B05C5C" : t.ratio < 0.8 ? "#4A90A4" : "#3D8A5E";
+    return `<circle cx="${x(t.est).toFixed(1)}" cy="${y(t.actual).toFixed(1)}" r="4" fill="${color}" fill-opacity="0.8" title="${esc(t.name)}: ${t.est}→${t.actual}min"/>`;
+  }).join("");
+
+  // Diagonal line (perfect estimate)
+  const diagEnd = maxVal;
+  const svg = `<svg width="${W}" height="${H}" style="overflow:visible">
+    <line x1="${x(0)}" y1="${y(0)}" x2="${x(diagEnd)}" y2="${y(diagEnd)}" stroke="#ffffff18" stroke-dasharray="4,4" stroke-width="1"/>
+    ${dots}
+    <text x="${PAD}" y="${H-2}" font-size="9" fill="#555" font-family="monospace">estimated (min)</text>
+    <text x="2" y="${PAD}" font-size="9" fill="#555" font-family="monospace" writing-mode="vertical-rl">actual</text>
+  </svg>`;
+
+  // Best calibrated tasks
+  const bestCal = [...samples].sort((a,b) => Math.abs(a.ratio-1)-Math.abs(b.ratio-1)).slice(0,3);
+
+  container.innerHTML = `
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:2px;margin-bottom:6px">YOUR TIME SENSE</div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:22px;font-weight:700;color:${avgRatio>1.3?"#B05C5C":avgRatio<0.85?"#4A90A4":"#3D8A5E"};font-family:'DM Mono',monospace;margin-bottom:4px">${avgRatio.toFixed(2)}×</div>
+      <div style="font-size:12px;color:var(--text-muted)">
+        ${avgRatio > 1.3 ? "You typically take longer than planned — very common with ADHD." :
+          avgRatio < 0.85 ? "You tend to overestimate — tasks often go faster than you think." :
+          "Your time estimates are well-calibrated. 🎯"}
+      </div>
+      <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-top:8px">${under} over · ${spot} on target · ${over} under · ${samples.length} tasks total</div>
+    </div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:8px">ESTIMATED vs ACTUAL — dots above line = took longer</div>
+    <div style="margin-bottom:4px;overflow-x:auto">${svg}</div>
+    <div style="display:flex;gap:12px;margin-bottom:16px;font-size:10px">
+      <span style="color:#B05C5C">● took longer</span>
+      <span style="color:#3D8A5E">● on target</span>
+      <span style="color:#4A90A4">● faster</span>
+    </div>
+
+    ${bestCal.length ? `
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:8px">BEST CALIBRATED TASKS</div>
+    ${bestCal.map(t => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px">${esc(t.name)}</span>
+      <span class="mono" style="font-size:9px;color:var(--text-dimmer);flex-shrink:0">${t.est}→${t.actual}min</span>
+    </div>`).join("")}` : ""}`;
+}
+
+
+// ===================== HYPERFOCUS LOG =====================
+const HF_SK = "yd2-hyperfocus";
+let hyperfocusLog = [];
+let _hfDuration = 30;
+
+function loadHyperfocus() { hyperfocusLog = ld(HF_SK, []); }
+
+let _hfPlanned = null;
+
+function logHyperfocus() {
+  document.getElementById("hf-what").value = "";
+  document.getElementById("hf-intended").value = "";
+  _hfDuration = 30;
+  _hfPlanned = null;
+  // Reset duration pills
+  [15,30,60,120].forEach(d => {
+    const btn = document.getElementById("hfd-" + d);
+    if (btn) {
+      btn.style.background = d === 30 ? "#7A5FA822" : "none";
+      btn.style.borderColor = d === 30 ? "#7A5FA8" : "var(--border)";
+      btn.style.color = d === 30 ? "#7A5FA8" : "var(--text-muted)";
+    }
+  });
+  // Reset planned buttons
+  ["hf-planned-yes","hf-planned-no"].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) { btn.style.background = "none"; btn.style.borderColor = "var(--border)"; btn.style.color = "var(--text-muted)"; }
+  });
+  document.getElementById("hyperfocus-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("hf-what").focus(), 100);
+}
+
+function setHfPlanned(val) {
+  _hfPlanned = val;
+  const yes = document.getElementById("hf-planned-yes");
+  const no  = document.getElementById("hf-planned-no");
+  if (yes) { yes.style.background = val ? "#3D8A5E22":"none"; yes.style.borderColor = val?"#3D8A5E":"var(--border)"; yes.style.color = val?"#3D8A5E":"var(--text-muted)"; }
+  if (no)  { no.style.background  = val===false?"#B05C5C22":"none"; no.style.borderColor = val===false?"#B05C5C":"var(--border)"; no.style.color = val===false?"#B05C5C":"var(--text-muted)"; }
+}
+
+function selectHfDuration(mins) {
+  _hfDuration = mins;
+  [15,30,60,120].forEach(d => {
+    const btn = document.getElementById("hfd-" + d);
+    if (!btn) return;
+    btn.style.background = d === mins ? "#7A5FA822" : "none";
+    btn.style.borderColor = d === mins ? "#7A5FA8" : "var(--border)";
+    btn.style.color = d === mins ? "#7A5FA8" : "var(--text-muted)";
+  });
+}
+
+function closeHyperfocus(e) {
+  if (e && e.target !== document.getElementById("hyperfocus-overlay")) return;
+  document.getElementById("hyperfocus-overlay").classList.remove("open");
+}
+
+function saveHyperfocus() {
+  const what = document.getElementById("hf-what").value.trim();
+  if (!what) { showToast("Write what you were doing"); return; }
+  const entry = {
+    id: Date.now().toString(),
+    date: today(),
+    time: new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}),
+    what,
+    intended: document.getElementById("hf-intended").value.trim(),
+    durationMins: _hfDuration,
+    planned: _hfPlanned
+  };
+  hyperfocusLog.unshift(entry);
+  if (hyperfocusLog.length > 200) hyperfocusLog = hyperfocusLog.slice(0,200);
+  sv(HF_SK, hyperfocusLog);
+  document.getElementById("hyperfocus-overlay").classList.remove("open");
+  showToast("🌀 Logged. Now gently redirect. →");
+}
+
+
+function openHfPatterns() {
+  document.getElementById("hyperfocus-overlay").classList.remove("open");
+  renderHfPatterns();
+  document.getElementById("hf-patterns-overlay").classList.add("open");
+}
+
+function closeHfPatterns(e) {
+  if (e && e.target !== document.getElementById("hf-patterns-overlay")) return;
+  document.getElementById("hf-patterns-overlay").classList.remove("open");
+}
+
+function renderHfPatterns() {
+  const el = document.getElementById("hf-patterns-content");
+  if (!el) return;
+
+  if (hyperfocusLog.length < 2) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-dimmer);font-style:italic;font-size:13px">
+      Tap 🌀 the next time you notice you've been pulled in.<br><span style="font-size:11px;opacity:0.7">Patterns appear after 2–3 entries.</span></div>`;
+    return;
+  }
+
+  const total = hyperfocusLog.length;
+  const unplanned = hyperfocusLog.filter(e => e.planned === false).length;
+  const planned   = hyperfocusLog.filter(e => e.planned === true).length;
+  const avgDur = Math.round(hyperfocusLog.reduce((s,e) => s + (e.durationMins||30), 0) / total);
+
+  // Time of day buckets
+  const buckets = { morning:0, afternoon:0, evening:0, night:0 };
+  hyperfocusLog.forEach(e => {
+    const h = parseInt((e.time||"00:00").split(":")[0]);
+    if (h >= 6  && h < 12) buckets.morning++;
+    else if (h >= 12 && h < 17) buckets.afternoon++;
+    else if (h >= 17 && h < 21) buckets.evening++;
+    else buckets.night++;
+  });
+  const maxBucket = Math.max(...Object.values(buckets), 1);
+
+  const bucketBar = (label, count) => `
+    <div style="margin-bottom:7px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:11px;color:var(--text)">${label}</span>
+        <span class="mono" style="font-size:9px;color:var(--text-dimmer)">${count}×</span>
+      </div>
+      <div style="height:4px;background:var(--border);border-radius:2px">
+        <div style="height:100%;width:${Math.round(count/maxBucket*100)}%;background:#7A5FA8;border-radius:2px"></div>
+      </div>
+    </div>`;
+
+  // Top triggers by keyword frequency
+  const wordCounts = {};
+  hyperfocusLog.forEach(e => {
+    if (!e.what) return;
+    e.what.toLowerCase().split(/\s+/).filter(w => w.length > 4).forEach(w => {
+      wordCounts[w] = (wordCounts[w]||0) + 1;
+    });
+  });
+  const topWords = Object.entries(wordCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+
+  // Recent entries
+  const recent = hyperfocusLog.slice(0,5);
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:#7A5FA8;font-family:'DM Mono',monospace">${total}</div>
+        <div style="font-size:9px;color:var(--text-dimmer)">total logged</div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:#B05C5C;font-family:'DM Mono',monospace">${unplanned}</div>
+        <div style="font-size:9px;color:var(--text-dimmer)">unplanned</div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace">${avgDur}m</div>
+        <div style="font-size:9px;color:var(--text-dimmer)">avg duration</div>
+      </div>
+    </div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:10px">WHEN IT HAPPENS MOST</div>
+    <div style="margin-bottom:18px">
+      ${bucketBar("Morning (6–12)", buckets.morning)}
+      ${bucketBar("Afternoon (12–17)", buckets.afternoon)}
+      ${bucketBar("Evening (17–21)", buckets.evening)}
+      ${bucketBar("Night (21–6)", buckets.night)}
+    </div>
+
+    ${topWords.length ? `
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:10px">COMMON TRIGGER WORDS</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px">
+      ${topWords.map(([w,c]) => `<span style="padding:3px 10px;border-radius:12px;border:1px solid #7A5FA844;background:#7A5FA811;font-family:'DM Mono',monospace;font-size:10px;color:#7A5FA8">${esc(w)} <span style="opacity:0.6">${c}×</span></span>`).join("")}
+    </div>` : ""}
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:10px">RECENT ENTRIES</div>
+    ${recent.map(e => `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px">${esc(e.what)}</span>
+        <span class="mono" style="font-size:9px;color:var(--text-dimmer);flex-shrink:0">${e.durationMins||"?"}m · ${e.date}</span>
+      </div>
+      ${e.planned===false?'<span style="font-size:9px;color:#B05C5C">✗ unplanned</span>':e.planned===true?'<span style="font-size:9px;color:#3D8A5E">✓ intentional</span>':""}
+    </div>`).join("")}`;
+}
+
+// ===================== SHUTDOWN RITUAL =====================
+function getShutdownSettings() {
+  return getSettings().shutdownTime || "18:00";
+}
+
+
+// ===================== REFRAME CARDS =====================
+const REFRAME_CARDS = [
+  { reframe: "Starting is the hardest part.", note: "Your brain resists initiation, not the work itself. The resistance is loudest before you begin — and quietest once you're in it." },
+  { reframe: "Done is better than perfect.", note: "Perfectionism is procrastination wearing a productive mask. An imperfect thing that exists beats a perfect thing that doesn't." },
+  { reframe: "Your brain isn't broken — it's different.", note: "ADHD is a difference in how dopamine signals. Not a character flaw. Not laziness. A different operating system running on standard hardware." },
+  { reframe: "Overwhelm is information, not failure.", note: "Feeling overwhelmed means you're taking on real things and you care. It's data about load — not evidence that you can't handle it." },
+  { reframe: "One thing. Just one.", note: "Your working memory holds less at once. That's not a weakness — it's your system. One task at a time isn't giving up. It's working with your brain." },
+  { reframe: "You don't have to feel like it to start.", note: "Motivation follows action, not the other way around. Start before you're ready. The feeling catches up." },
+  { reframe: "Every restart counts.", note: "Neurotypical brains stay on track. ADHD brains drift and re-engage — often dozens of times. Each re-engagement is a success, not a failure." },
+  { reframe: "The gap between knowing and doing is neurological.", note: "You're not lazy for not doing things you know you should do. The connection between intention and action works differently. It's a wiring issue, not a character issue." },
+  { reframe: "Rest is not the enemy of productivity.", note: "Your nervous system needs recovery. Pushing through exhaustion with ADHD produces errors, not output. Rest is the work." },
+  { reframe: "Small counts as progress.", note: "Five minutes of the thing beats zero minutes. Partial completion is real. Your brain will remember you started — that lowers the barrier next time." },
+  { reframe: "Time blindness is a symptom, not a flaw.", note: "ADHD brains struggle to feel time passing. Missing deadlines or misjudging duration isn't irresponsibility — it's a known neurological difference." },
+  { reframe: "Your attention goes where your dopamine takes it.", note: "You're not choosing the 'wrong' things to focus on. Your brain is following its reward system. Understanding this is the start of working with it." },
+  { reframe: "Consistency doesn't require perfection.", note: "Missing one day doesn't break a habit. Returning after a miss is the skill — not an unbroken streak." },
+  { reframe: "You've handled hard things before.", note: "Your history is full of difficult things you got through. Today is another one. Not the first. Probably not the last. You have evidence." },
+  { reframe: "Emotions aren't overreactions — they're amplified.", note: "ADHD comes with emotional intensity. Big feelings about small things aren't weakness. They're a feature of how your nervous system processes experience." },
+  { reframe: "Structure is freedom, not restriction.", note: "Predictable routines reduce the cognitive load of deciding. Less deciding = more energy for doing. Structure isn't a cage — it's scaffolding." },
+  { reframe: "Asking for help is self-awareness, not defeat.", note: "Knowing when you need support and acting on it is a skill. The ADHD brain often can't self-regulate alone — that's not failure, it's context." },
+  { reframe: "The 'right moment' is now.", note: "ADHD brains wait for optimal conditions that often don't come. Imperfect action in imperfect conditions beats perfect inaction every time." },
+  { reframe: "Your creativity and intensity are the same system.", note: "The traits that make focus hard — novelty-seeking, pattern-recognition, emotional depth — are the same traits behind your creativity. You can't have one without the other." },
+  { reframe: "You are not your productivity.", note: "What you get done today is not a measure of your worth. It's a measure of your output. Those are different things. You were enough before the to-do list." },
+];
+
+let _reframeIndex = -1;
+let _savedReframes = [];
+
+function getReframeIndex() {
+  // Seed by date so same card all day
+  const dateNum = parseInt(today().replace(/-/g,""));
+  return dateNum % REFRAME_CARDS.length;
+}
+
+function renderReframeCard(container) {
+  _savedReframes = ld("yd2-saved-reframes", []);
+  if (_reframeIndex < 0) _reframeIndex = getReframeIndex();
+  const card = REFRAME_CARDS[_reframeIndex];
+  const isSaved = _savedReframes.includes(_reframeIndex);
+
+  container.innerHTML = `
+    <div style="
+      background:linear-gradient(135deg,var(--bg-card) 0%,var(--bg-input) 100%);
+      border:1px solid var(--border-strong);
+      border-left:3px solid var(--accent);
+      border-radius:8px;
+      padding:18px 18px 14px;
+      margin-bottom:16px;
+      position:relative
+    ">
+      <div class="mono" style="font-size:8px;letter-spacing:2px;color:var(--accent);opacity:0.7;margin-bottom:10px">DAILY REFRAME</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <div style="font-size:16px;color:var(--text-heading);font-weight:400;line-height:1.5;flex:1;font-family:'Playfair Display',serif;font-style:italic">"${esc(card.reframe)}"</div>
+        <button onclick="toggleSaveReframe()" title="${isSaved?'Saved':'Save this card'}"
+          style="background:none;border:none;font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;opacity:${isSaved?'1':'0.25'};transition:opacity 0.2s">${isSaved?'🔖':'🔖'}</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;padding-left:2px">${esc(card.note)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:10px">
+        <span class="mono" style="font-size:8px;color:var(--text-dimmer)">${_reframeIndex+1} / ${REFRAME_CARDS.length}</span>
+        <button onclick="nextReframeCard()" style="background:none;border:none;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;padding:4px 0;letter-spacing:0.5px">next →</button>
+      </div>
+    </div>`;
+}
+
+function nextReframeCard() {
+  _reframeIndex = (_reframeIndex + 1) % REFRAME_CARDS.length;
+  const wrap = document.getElementById("reframe-card-wrap");
+  if (wrap) renderReframeCard(wrap);
+}
+
+function toggleSaveReframe() {
+  _savedReframes = ld("yd2-saved-reframes", []);
+  if (_savedReframes.includes(_reframeIndex)) {
+    _savedReframes = _savedReframes.filter(i => i !== _reframeIndex);
+    showToast("Removed from saved");
+  } else {
+    _savedReframes.push(_reframeIndex);
+    showToast("💾 Saved reframe");
+  }
+  sv("yd2-saved-reframes", _savedReframes);
+  const wrap = document.getElementById("reframe-card-wrap");
+  if (wrap) renderReframeCard(wrap);
+}
+
+function toggleReframeCards() {
+  const s = getSettings();
+  s.showReframeCards = s.showReframeCards === false ? true : false;
+  saveSettings(s);
+  updateSettingsUI();
+  renderToday();
+}
+
+// ===================== FRICTION LOG =====================
+const FRICTION_SK = "yd2-friction";
+const FRICTION_REASONS = [
+  { key:"energy",   label:"Low energy",      color:"#B05C5C" },
+  { key:"unclear",  label:"Felt unclear",     color:"#C8962A" },
+  { key:"overwhelm",label:"Overwhelmed",      color:"#7A5FA8" },
+  { key:"forgot",   label:"Forgot",           color:"#4A90A4" },
+  { key:"timing",   label:"Wrong time",       color:"#3D8A5E" },
+  { key:"other",    label:"Chose something else", color:"#555" },
+];
+
+let frictionLog = [];
+let _frictionItem = { type:"habit", name:"", context:"" };
+let _frictionReason = null;
+
+function loadFriction() { frictionLog = ld(FRICTION_SK, []); }
+
+function openFriction(type, name, context) {
+  _frictionItem = { type, name, context };
+  _frictionReason = null;
+  document.getElementById("friction-item-label").textContent =
+    type === "habit" ? `Habits skipped: ${name}` : `Task deferred: ${name}`;
+  document.getElementById("friction-note").value = "";
+  document.getElementById("friction-solution").value = "";
+
+  const pills = document.getElementById("friction-reason-pills");
+  pills.innerHTML = FRICTION_REASONS.map(r =>
+    `<button id="fr-${r.key}" onclick="selectFrictionReason('${r.key}')"
+      style="padding:6px 13px;border-radius:16px;border:1px solid ${r.color}44;background:transparent;color:${r.color};font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.15s">
+      ${r.label}
+    </button>`
+  ).join("");
+
+  document.getElementById("friction-overlay").classList.add("open");
+}
+
+function selectFrictionReason(key) {
+  _frictionReason = key;
+  FRICTION_REASONS.forEach(r => {
+    const btn = document.getElementById("fr-" + r.key);
+    if (!btn) return;
+    const active = r.key === key;
+    btn.style.background = active ? r.color + "22" : "transparent";
+    btn.style.borderColor = active ? r.color : r.color + "44";
+    btn.style.fontWeight = active ? "700" : "400";
+  });
+}
+
+function closeFriction(e) {
+  if (e && e.target !== document.getElementById("friction-overlay")) return;
+  document.getElementById("friction-overlay").classList.remove("open");
+}
+
+function saveFriction() {
+  if (!_frictionReason) { showToast("Tap a reason first"); return; }
+  const entry = {
+    id: Date.now().toString(),
+    date: today(),
+    time: new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}),
+    type: _frictionItem.type,
+    name: _frictionItem.name,
+    context: _frictionItem.context,
+    reason: _frictionReason,
+    note:     document.getElementById("friction-note").value.trim(),
+    solution: document.getElementById("friction-solution").value.trim()
+  };
+  frictionLog.unshift(entry);
+  if (frictionLog.length > 500) frictionLog = frictionLog.slice(0, 500);
+  sv(FRICTION_SK, frictionLog);
+  document.getElementById("friction-overlay").classList.remove("open");
+  showToast("Logged — no judgment, just data 🤍");
+}
+
+function openFrictionPatterns() {
+  renderFrictionPatterns();
+  document.getElementById("friction-patterns-overlay").classList.add("open");
+}
+
+function closeFrictionPatterns(e) {
+  if (e && e.target !== document.getElementById("friction-patterns-overlay")) return;
+  document.getElementById("friction-patterns-overlay").classList.remove("open");
+}
+
+function renderFrictionPatterns() {
+  const el = document.getElementById("friction-patterns-content");
+  if (!el) return;
+
+  if (frictionLog.length < 2) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-dimmer);font-style:italic;font-size:13px">
+      Log why you skipped something — even once.<br><span style="font-size:11px;opacity:0.7">Collapse a section with unchecked habits to get the prompt.</span></div>`;
+    return;
+  }
+
+  const total = frictionLog.length;
+
+  // Reason breakdown
+  const reasonCounts = {};
+  FRICTION_REASONS.forEach(r => { reasonCounts[r.key] = 0; });
+  frictionLog.forEach(e => { if (e.reason) reasonCounts[e.reason] = (reasonCounts[e.reason]||0)+1; });
+  const sortedReasons = Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]);
+  const maxReason = Math.max(...sortedReasons.map(r=>r[1]), 1);
+
+  // Day of week breakdown
+  const dayCounts = [0,0,0,0,0,0,0];
+  frictionLog.forEach(e => {
+    if (e.date) dayCounts[new Date(e.date+"T12:00:00").getDay()]++;
+  });
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const maxDay = Math.max(...dayCounts, 1);
+
+  // Most skipped items
+  const itemCounts = {};
+  frictionLog.forEach(e => { if(e.name) e.name.split(", ").forEach(n => { itemCounts[n.trim()]=(itemCounts[n.trim()]||0)+1; }); });
+  const topItems = Object.entries(itemCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  el.innerHTML = `
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:4px">THIS IS DATA, NOT JUDGMENT</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px">${total} skips logged. Patterns help you understand your blockers — not prove you're failing.</div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:10px">TOP REASONS</div>
+    <div style="margin-bottom:18px">
+      ${sortedReasons.map(([key, count]) => {
+        const r = FRICTION_REASONS.find(f=>f.key===key);
+        if (!r || !count) return "";
+        return `<div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-size:12px;color:var(--text)">${r.label}</span>
+            <span class="mono" style="font-size:9px;color:${r.color}">${count}× (${Math.round(count/total*100)}%)</span>
+          </div>
+          <div style="height:4px;background:var(--border);border-radius:2px">
+            <div style="height:100%;width:${Math.round(count/maxReason*100)}%;background:${r.color};border-radius:2px"></div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:10px">WHICH DAYS HAVE MOST SKIPS</div>
+    <div style="display:flex;gap:4px;align-items:flex-end;height:50px;margin-bottom:6px">
+      ${dayCounts.map((c,i) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:100%;background:#7A5FA8;border-radius:2px 2px 0 0;height:${Math.round(c/maxDay*40)}px;min-height:${c?2:0}px;transition:height 0.3s"></div>
+      </div>`).join("")}
+    </div>
+    <div style="display:flex;gap:4px;margin-bottom:18px">
+      ${dayNames.map(d => `<div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:8px;color:var(--text-dimmer)">${d}</div>`).join("")}
+    </div>
+
+    ${topItems.length ? `
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:10px">MOST SKIPPED</div>
+    ${topItems.map(([name,count]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px">${esc(name)}</span>
+      <span class="mono" style="font-size:9px;color:#7A5FA8;flex-shrink:0">${count}×</span>
+    </div>`).join("")}` : ""}
+
+    ${renderFrictionSolutions()}
+
+    ${renderStuckThoughtSummary()}`;
+}
+
+function renderFrictionSolutions() {
+  const solutions = frictionLog
+    .filter(e => e.solution && e.solution.trim())
+    .slice(0, 5);
+  if (!solutions.length) return "";
+
+  const rows = solutions.map(e => {
+    const reasonLabel = e.reason ? (FRICTION_REASONS.find(r=>r.key===e.reason)||{label:e.reason}).label : "";
+    const itemName = e.name ? " · " + esc(e.name.split(", ")[0]) : "";
+    return '<div style="padding:7px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="font-size:12px;color:#3D8A5E;margin-bottom:2px">→ ' + esc(e.solution) + '</div>' +
+      '<div style="font-size:9px;color:var(--text-dimmer);font-family:\'DM Mono\',monospace">' + esc(reasonLabel) + itemName + ' · ' + e.date + '</div>' +
+    '</div>';
+  }).join("");
+
+  return '<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">' +
+    '<div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:1px;margin-bottom:10px">💡 WHAT YOU\'VE PLANNED TO TRY</div>' +
+    '<div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">Solutions you logged alongside skips — your own playbook.</div>' +
+    rows +
+    '</div>';
+}
+
+function renderStuckThoughtSummary() {
+  // Collect all stuck thoughts logged on project tasks
+  const thoughts = [];
+  for (const proj of projects) {
+    for (const sec of proj.sections||[]) {
+      for (const task of sec.tasks||[]) {
+        if (task.stuckThought) {
+          thoughts.push({
+            thought: task.stuckThought,
+            helpful: task.stuckThoughtHelpful,
+            taskName: task.name,
+            date: task.stuckAt || ""
+          });
+        }
+      }
+    }
+  }
+  if (!thoughts.length) return "";
+
+  const unhelpful = thoughts.filter(t => t.helpful === false).length;
+  const pct = Math.round(unhelpful / thoughts.length * 100);
+
+  // Word frequency across all thoughts — reveals recurring patterns
+  const wordCounts = {};
+  const STOP_WORDS = new Set(["this","that","with","have","will","just","from","they","been","were","when","what","then","than","them","also","into","your","more","over","very","even","some","only","most","make","like","know","time","good","need","want","done","cant","dont","wont","should","could","would","because","myself"]);
+  thoughts.forEach(t => {
+    t.thought.toLowerCase().replace(/[^a-z\s]/g,"").split(/\s+/)
+      .filter(w => w.length > 3 && !STOP_WORDS.has(w))
+      .forEach(w => { wordCounts[w] = (wordCounts[w]||0) + 1; });
+  });
+  const topWords = Object.entries(wordCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+
+  return `
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div class="mono" style="font-size:9px;color:#B05C5C;letter-spacing:1px;margin-bottom:10px">🧱 STUCK THOUGHT PATTERNS (CBT)</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:#B05C5C;font-family:'DM Mono',monospace">${thoughts.length}</div>
+          <div style="font-size:9px;color:var(--text-dimmer)">stuck moments</div>
+        </div>
+        <div style="flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:${pct>50?"#B05C5C":"#C8962A"};font-family:'DM Mono',monospace">${pct}%</div>
+          <div style="font-size:9px;color:var(--text-dimmer)">identified unhelpful</div>
+        </div>
+        <div style="flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:#3D8A5E;font-family:'DM Mono',monospace">${thoughts.filter(t=>t.helpful===true).length}</div>
+          <div style="font-size:9px;color:var(--text-dimmer)">valid concerns</div>
+        </div>
+      </div>
+      ${topWords.length ? `
+      <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:6px">RECURRING WORDS IN YOUR STUCK THOUGHTS</div>
+      <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">These words appear most in what you tell yourself when blocked.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+        ${topWords.map(([w,c]) => `<span style="padding:4px 12px;border-radius:12px;border:1px solid #B05C5C44;background:#B05C5C11;font-family:'DM Mono',monospace;font-size:10px;color:#B05C5C">${esc(w)} <span style="opacity:0.5">${c}×</span></span>`).join("")}
+      </div>` : ""}
+      <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:8px">RECENT STUCK THOUGHTS</div>
+      ${thoughts.slice(0,4).map(t => `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--text);font-style:italic;margin-bottom:3px">"${esc(t.thought)}"</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:10px;color:var(--text-dimmer)">${esc(t.taskName)}</span>
+          <span style="font-size:9px;font-family:'DM Mono',monospace;color:${t.helpful===false?"#B05C5C":t.helpful===true?"#3D8A5E":"var(--text-dimmer)"}">
+            ${t.helpful===false?"✗ unhelpful":t.helpful===true?"✓ valid":"— unlabeled"}
+          </span>
+        </div>
+      </div>`).join("")}
+    </div>`;
+}
+
+// ===================== CONTEXT SWITCHING TRACKER =====================
+const SWITCH_SK = "yd2-switches";
+let switchLog = [];
+let _lastPage = "today";
+const _scrollMemory = {}; // tab name -> scrollTop
+
+function loadSwitchLog() { switchLog = ld(SWITCH_SK, []); }
+
+function logSwitch(from, to) {
+  if (from === to) return;
+  const entry = { from, to, ts: Date.now(), date: today() };
+  switchLog.unshift(entry);
+  // Keep 30 days rolling
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30);
+  switchLog = switchLog.filter(e => e.ts > cutoff.getTime());
+  sv(SWITCH_SK, switchLog);
+}
+
+function renderContextSwitchSection(container) {
+  if (!container) return;
+
+  // Count per day last 7 days
+  const days = Array.from({length:7},(_,i)=>{
+    const d = new Date(); d.setDate(d.getDate()-6+i);
+    return d.toISOString().split("T")[0];
+  });
+  const countsByDay = days.map(day => switchLog.filter(e=>e.date===day).length);
+  const todayCount = countsByDay[6];
+  const weekTotal = countsByDay.reduce((a,b)=>a+b,0);
+  const weekAvg = Math.round(weekTotal / 7);
+  const maxDay = Math.max(...countsByDay, 1);
+  const dayNames = days.map(d => new Date(d+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"}));
+
+  // Most common path
+  const paths = {};
+  switchLog.forEach(e => { const k=`${e.from}→${e.to}`; paths[k]=(paths[k]||0)+1; });
+  const topPath = Object.entries(paths).sort((a,b)=>b[1]-a[1])[0];
+
+  // Focus label
+  const focusLabel = weekAvg < 10 ? "🎯 Focused" : weekAvg < 25 ? "〰️ Moderate" : "🌀 Fragmented";
+  const focusColor = weekAvg < 10 ? "#3D8A5E" : weekAvg < 25 ? "#C8962A" : "#B05C5C";
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-label" style="margin:0">🔀 CONTEXT SWITCHES</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:20px;font-weight:700;color:${focusColor};font-family:'DM Mono',monospace">${todayCount} <span style="font-size:11px;font-weight:400;color:var(--text-dimmer)">today</span></div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-top:2px">avg ${weekAvg}/day this week · ${focusLabel}</div>
+        </div>
+        ${topPath ? `<div style="text-align:right"><div class="mono" style="font-size:9px;color:var(--text-dimmer)">most common</div><div style="font-size:11px;color:var(--text);margin-top:2px">${esc(topPath[0])} (${topPath[1]}×)</div></div>` : ""}
+      </div>
+      <div style="display:flex;gap:4px;align-items:flex-end;height:44px;margin-bottom:4px">
+        ${countsByDay.map((c,i) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="width:100%;background:${i===6?"#4A90A4":"var(--border-strong)"};border-radius:2px 2px 0 0;height:${Math.round(c/maxDay*36)}px;min-height:${c?2:0}px;transition:height 0.3s" title="${dayNames[i]}: ${c} switches"></div>
+        </div>`).join("")}
+      </div>
+      <div style="display:flex;gap:4px">
+        ${dayNames.map((d,i) => `<div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:8px;color:${i===6?"#4A90A4":"var(--text-dimmer)"}">${d}</div>`).join("")}
+      </div>
+    </div>`;
+}
+
+
+
+// ===================== ENERGY SUGGESTIONS =====================
+function getEnergySuggestedSections(mood, energy) {
+  // Returns { suggested: [], mismatch: [], message: "" }
+  const m = mood   || 0;
+  const e = energy || 0;
+  if (!m && !e) return { suggested:[], mismatch:[], message:"" };
+
+  let suggested = [], mismatch = [], message = "";
+
+  if (e <= 2 && m <= 2) {
+    // Very low energy + low mood → restorative only
+    suggested = ["HEALTH","EVENING"];
+    mismatch  = ["WORK BLOCK","MORNING"];
+    message   = "Low energy and mood today → focus on restorative habits. Deep work can wait. Start with HEALTH or EVENING sections.";
+  } else if (e <= 2 && m >= 3) {
+    // Low energy, okay mood → light tasks
+    suggested = ["MIDDAY","AFTERNOON","HEALTH"];
+    mismatch  = ["WORK BLOCK"];
+    message   = "Energy is low but mood is okay → light tasks and movement first. Save deep work for when energy returns.";
+  } else if (e === 3 && m === 3) {
+    // Middle of the road
+    suggested = ["AFTERNOON","MIDDAY"];
+    mismatch  = [];
+    message   = "Moderate energy today → pacing is key. Start with lower-stakes tasks and let momentum build.";
+  } else if (e >= 4 && m <= 2) {
+    // High energy, low mood → physical movement helps
+    suggested = ["MORNING","MIDDAY","HEALTH"];
+    mismatch  = [];
+    message   = "High energy but mood is low → movement first. Your body is ready even if your mind isn't. Start with physical habits.";
+  } else if (e >= 4 && m >= 4) {
+    // Peak state → tackle the hardest things
+    suggested = ["WORK BLOCK","MORNING"];
+    mismatch  = ["EVENING"];
+    message   = "High energy and good mood — your best state. Tackle deep work now while you have it.";
+  } else if (e >= 3 && m >= 4) {
+    suggested = ["WORK BLOCK","MORNING","AFTERNOON"];
+    mismatch  = [];
+    message   = "Good state today → good time for focused work and completing important habits.";
+  }
+
+  return { suggested, mismatch, message };
+}
+
+// ===================== FORGIVENESS MODE =====================
+const FORGIVENESS_KEY = "yd2-forgiveness-date";
+const FORGIVENESS_TRIGGERED = "yd2-forgiveness-triggered";
+
+function checkForgivenessMode() {
+  // Already shown today
+  if (ld(FORGIVENESS_TRIGGERED, "") === today()) return;
+
+  // Count consecutive missed days (no habits checked)
+  let missedDays = 0;
+  const d = new Date();
+  d.setDate(d.getDate() - 1); // start from yesterday
+  for (let i = 0; i < 30; i++) {
+    const key = d.toISOString().split("T")[0];
+    const dayData = history2[key] || {};
+    const anyDone = Object.values(dayData).some(Boolean);
+    if (!anyDone) {
+      missedDays++;
+      d.setDate(d.getDate() - 1);
+    } else break;
+  }
+
+  if (missedDays >= 3) {
+    const overlay = document.getElementById("forgiveness-overlay");
+    if (!overlay) return;
+    const title = document.getElementById("forgiveness-title");
+    const sub   = document.getElementById("forgiveness-sub");
+    if (missedDays >= 14) {
+      if (title) title.textContent = "Welcome back.";
+      if (sub) sub.textContent = missedDays + " days since you last opened. Life happens. No explanation needed.";
+    } else if (missedDays >= 7) {
+      if (title) title.textContent = "You've been away.";
+      if (sub) sub.textContent = "A week has passed. That's okay. You're here now — that's what matters.";
+    } else {
+      if (title) title.textContent = "You've been away.";
+      if (sub) sub.textContent = missedDays + " days since your last check-in. That's okay. Let's just start today.";
+    }
+    overlay.style.display = "flex";
+    sv(FORGIVENESS_TRIGGERED, today()); // only show once per day
+  }
+}
+
+function activateForgiveness() {
+  // Set forgiveness date — used to display streak as starting fresh
+  sv(FORGIVENESS_KEY, today());
+  document.getElementById("forgiveness-overlay").style.display = "none";
+  // Clear tomorrow task anchor from days ago to start clean
+  // (keep if it was set recently — within 2 days)
+  showToast("🌱 Fresh start. You've got this.");
+  renderToday();
+}
+
+// Modify getHabitStreak to respect forgiveness date
+
+
+
+// ===================== DAILY ANCHOR =====================
+// Anchor stores { task, setDate } so we know when it was set
+function getAnchorTask() {
+  try {
+    const raw = localStorage.getItem("yd2-anchor");
+    if (!raw) {
+      // Migrate from old plain string format
+      const old = localStorage.getItem("yd2-tomorrow-task");
+      return old || "";
+    }
+    const data = JSON.parse(raw);
+    // Show if set yesterday or today (shutdown sets "tomorrow", today reads it)
+    const yesterday = (() => { const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split("T")[0]; })();
+    if (data.setDate === yesterday || data.setDate === today()) return data.task || "";
+    return ""; // too old — don't show
+  } catch { return ""; }
+}
+
+function saveAnchorTask(task) {
+  const data = { task: task.trim(), setDate: today() };
+  localStorage.setItem("yd2-anchor", JSON.stringify(data));
+  localStorage.setItem("yd2-tomorrow-task", task.trim()); // keep old key for shutdown ritual display
+}
+
+
+// ===================== DOPAMINE ACTIVATION =====================
+function getBestDopaBoost() {
+  // Only fires when energy is low (1-2)
+  // Looks at all boost entries in the last 14 days
+  // Returns the most frequently logged boost with a message, or null
+  if (!dopamineLog || !dopamineLog.length) return null;
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  const cutoffStr = cutoff.toISOString().split("T")[0];
+
+  const recentBoosts = dopamineLog.filter(e =>
+    e.type === "boost" && e.date >= cutoffStr && e.date !== today()
+  );
+  if (!recentBoosts.length) return null;
+
+  // Count by text (case-insensitive) to find most reliable booster
+  const counts = {};
+  recentBoosts.forEach(e => {
+    const key = e.text.toLowerCase().trim();
+    counts[key] = (counts[key] || 0) + 1;
+  });
+
+  // Sort by frequency, pick top
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const [topKey, topCount] = sorted[0];
+
+  // Find the original entry to preserve original casing
+  const original = recentBoosts.find(e => e.text.toLowerCase().trim() === topKey);
+  if (!original) return null;
+
+  const cat = DOPA_CATS.find(c => c.key === original.category);
+  const catLabel = cat ? cat.label : "";
+
+  // Build contextual message
+  let message;
+  if (topCount >= 3) {
+    message = `"${original.text}" has boosted your energy ${topCount} times recently. Your brain already knows this works — want to start there?`;
+  } else if (topCount === 2) {
+    message = `Last time you were low energy, "${original.text}" helped. Want to start there before tackling tasks?`;
+  } else {
+    message = `"${original.text}" gave you energy recently${catLabel ? " (" + catLabel + ")" : ""}. A small dose before deep work?`;
+  }
+
+  return { text: original.text, category: original.category, count: topCount, message };
+}
+
+
+// ===================== WINS INVENTORY (CBT Evidence Log) =====================
+function generateWinsSuggestion(stats) {
+  // Builds a concrete, data-backed suggestion so the user never faces a blank box
+  // Priority: body doubling > project task done > habits % > hyperfocus logged > just opened app
+  if (!stats) return null;
+
+  if (stats.bdCount >= 1 && stats.bdMins >= 10) {
+    return "You showed up to " + stats.bdCount + " focused work session" + (stats.bdCount>1?"s":"") + " this week (" + stats.bdMins + " min total). That's not nothing.";
+  }
+  if (stats.taskDone >= 1) {
+    return "You completed " + stats.taskDone + " task" + (stats.taskDone>1?"s":"") + " this week. Each one required starting — the part your brain resists most.";
+  }
+  if (stats.pct >= 50) {
+    return "You hit " + stats.pct + "% of your habits this week. More than half. That's consistency, not laziness.";
+  }
+  if (stats.hfCount >= 1 && stats.hfUnplanned >= 1) {
+    return "You noticed yourself hyperfocusing and logged it. Awareness is the hardest part — you caught it.";
+  }
+  if (stats.skipCount >= 1) {
+    return "You logged what you skipped instead of pretending it didn't happen. That's honesty. Lazy people don't do that.";
+  }
+  // Fallback — always true
+  return "You opened this app this week. That means some part of you is still trying. That counts.";
+}
+
+function useWinsSuggestion() {
+  const suggestion = document.getElementById("wins-auto-suggestion");
+  const input = document.getElementById("wins-inventory-input");
+  if (!suggestion || !input) return;
+  // Strip the "Suggestion: " prefix and " — tap to use" suffix
+  let text = suggestion.textContent;
+  text = text.replace(/^Suggestion: /, "").replace(/ — tap to use$/, "");
+  input.value = text;
+  input.style.height = "auto";
+  input.style.height = input.scrollHeight + "px";
+  suggestion.style.display = "none";
+  input.focus();
+}
+
 // ===================== NAVIGATION =====================
 function showPage(name) {
+  // Save scroll position of current page before switching
+  const _leavingPage = document.getElementById("page-" + _lastPage);
+  if (_leavingPage) {
+    const _leavingScroll = _leavingPage.querySelector(".scroll-area");
+    if (_leavingScroll) _scrollMemory[_lastPage] = _leavingScroll.scrollTop;
+  }
+
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("page-" + name).classList.add("active");
   document.getElementById("nav-" + name).classList.add("active");
+  // Log context switch
+  logSwitch(_lastPage, name);
+  _lastPage = name;
+  // Show floating hyperfocus button only on Today and Focus tabs
+  const hfBtn = document.getElementById("hf-float-btn");
+  if (hfBtn) hfBtn.style.display = (name === "today" || name === "focus") ? "flex" : "none";
+  // Remove 🌀 button from Today topbar since float btn covers it
+  const topbarHf = document.querySelector('[onclick="logHyperfocus()"][title="Hyperfocus flag"]');
+  if (topbarHf && name === "today") topbarHf.style.display = "none";
   if (name === "focus") { renderFocus(); }
-  if (name === "progress") { renderProgress(); renderHabitsManage(); }
+  if (name === "progress") { renderProgress(); renderHabitsManage(); renderTimeSenseInProgress(); renderContextSwitchSection(document.getElementById("context-switch-section")); }
   if (name === "projects") { renderProjectsList(); }
   if (name === "capture") { renderTagRow(); renderFilterRow(); renderEntriesList(); renderBrainDumps(); updateLoginUI(); }
+  // Restore scroll position for this tab (after render so content exists)
+  requestAnimationFrame(() => {
+    const _arrivingPage = document.getElementById("page-" + name);
+    if (_arrivingPage && _scrollMemory[name] !== undefined) {
+      const _arrivingScroll = _arrivingPage.querySelector(".scroll-area");
+      if (_arrivingScroll) _arrivingScroll.scrollTop = _scrollMemory[name];
+    }
+  });
+
   if (name === "reflect") {
     document.getElementById("reflect-date").textContent =
       new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" }).toUpperCase();
     renderReflectionsList();
     renderMoodPicker();
+    renderDopamineToday();
     ["did","next","unclear"].forEach(f => {
       const c = document.getElementById("bullets-" + f);
       if (c && c.querySelectorAll(".bullet-input").length === 0) addBullet(f);
     });
-    // Show weekly review on Saturday, or Mon-Tue if last week's review was missed
+    // Show weekly review Thu–Sun, or Mon-Tue if last week's review was missed
     const _dayNow = new Date().getDay();
-    const isSaturday = _dayNow === 6;
+    // Thu=4, Fri=5, Sat=6, Sun=0
+    const isReviewWindow = _dayNow === 4 || _dayNow === 5 || _dayNow === 6 || _dayNow === 0;
     const isEarlyWeek = _dayNow >= 1 && _dayNow <= 2;
     const lastWeekKey = (() => {
       const d = new Date(); d.setDate(d.getDate() - 7);
@@ -4286,7 +6809,7 @@ function showPage(name) {
     const missedLastWeek = isEarlyWeek && !weeklyReviews[lastWeekKey];
     const weeklySection = document.getElementById("weekly-section");
     if (weeklySection) {
-      const show = isSaturday || missedLastWeek;
+      const show = isReviewWindow || missedLastWeek;
       weeklySection.style.display = show ? "block" : "none";
       if (show) renderWeeklyPage();
     }
@@ -4329,6 +6852,7 @@ window.addEventListener("offline", updateOnlineStatus);
 
 loadAll();
 renderToday();
+checkForgivenessMode();
 
 // Init progress buttons style
 ["week","month"].forEach((x, i) => {
@@ -4343,6 +6867,9 @@ handleAuthCallback();
 updateLoginUI();
 applyTheme();
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if ((getSettings().brightness || "system") === "system") applyTheme(); });
+// Show floating HF button on initial tab (today)
+const _initHfBtn = document.getElementById("hf-float-btn");
+if (_initHfBtn) _initHfBtn.style.display = "flex";
 // Silent background pull from OneNote on load
 if (getAccount() && getSettings().autoSync !== false) setTimeout(() => pullAllFromOneNote(), 2000);
 </script>
@@ -4351,6 +6878,288 @@ if (getAccount() && getSettings().autoSync !== false) setTimeout(() => pullAllFr
   <div id="offline-banner" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#B05C5C;color:#fff;text-align:center;padding:8px 16px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.5px;z-index:999">
     📡 You're offline — changes save locally
   </div>
+
+
+
+<!-- INTENTION SETTING MODAL -->
+<div class="info-overlay" id="intention-overlay" onclick="closeIntention(event)">
+  <div class="info-modal" style="max-width:400px;width:100%;padding:20px">
+    <div style="font-weight:600;color:var(--text-heading);font-size:15px;margin-bottom:2px">Before you start 🎯</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Pre-commit your brain. Takes 20 seconds.</div>
+
+    <div id="intention-task-label" class="mono" style="font-size:9px;color:#4A90A4;letter-spacing:1px;margin-bottom:10px"></div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">WHAT SPECIFICALLY ARE YOU ABOUT TO DO?</div>
+    <textarea id="intention-specific" rows="2" placeholder="Not just the task name — the exact first action..." style="margin-bottom:12px;resize:none"></textarea>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">HOW WILL YOU KNOW YOU'RE DONE?</div>
+    <input type="text" id="intention-done-check" placeholder="What will exist or be true when complete?" style="margin-bottom:18px" />
+
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <button onclick="skipIntention()" style="background:none;border:none;color:var(--text-dimmer);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;padding:0;text-decoration:underline">Skip</button>
+      <button onclick="confirmIntention()" style="background:#4A90A4;color:#fff;border:none;border-radius:20px;padding:10px 20px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Start working →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACTUAL TIME PROMPT -->
+<div class="info-overlay" id="actual-time-overlay" onclick="closeActualTime(event)">
+  <div class="info-modal" style="max-width:340px;width:100%;padding:20px;text-align:center">
+    <div style="font-size:22px;margin-bottom:8px">⏱</div>
+    <div style="font-weight:600;color:var(--text-heading);font-size:14px;margin-bottom:4px">How long did that take?</div>
+    <div id="actual-time-estimate" class="mono" style="font-size:10px;color:var(--text-dimmer);margin-bottom:16px"></div>
+    <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:18px">
+      <input type="number" id="actual-time-input" min="1" max="600" placeholder="mins"
+        style="width:80px;text-align:center;padding:10px;font-size:18px;font-family:'DM Mono',monospace"
+        onkeydown="if(event.key==='Enter')saveActualTime()" />
+      <span style="font-size:13px;color:var(--text-muted)">minutes</span>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button onclick="closeActualTime()" class="btn-ghost" style="font-size:11px">Skip</button>
+      <button onclick="saveActualTime()" style="background:#4A90A4;color:#fff;border:none;border-radius:20px;padding:9px 20px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Save</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- FORGIVENESS MODE OVERLAY -->
+<div id="forgiveness-overlay" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(8,8,16,0.97);flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;text-align:center">
+  <div style="max-width:340px;width:100%">
+    <div style="font-size:64px;margin-bottom:20px">🌱</div>
+    <div id="forgiveness-title" style="font-size:24px;font-weight:600;color:#f0ebe0;margin-bottom:8px;font-family:'Playfair Display',serif">You've been away.</div>
+    <div id="forgiveness-sub" style="font-size:14px;color:#888;margin-bottom:24px;line-height:1.6"></div>
+    <div style="background:#ffffff08;border-radius:8px;padding:14px 16px;margin-bottom:28px;font-size:13px;color:#aaa;line-height:1.6;text-align:left">
+      Returning is the skill. Every time you come back is evidence you haven't given up. Not failure — a restart.
+    </div>
+    <button onclick="activateForgiveness()" style="width:100%;background:#3D8A5E;color:#fff;border:none;border-radius:20px;padding:14px;font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;letter-spacing:0.5px;margin-bottom:16px">
+      🌱 Start fresh today
+    </button>
+    <div style="font-size:11px;color:#444;line-height:1.5">Your history is safe. Nothing was deleted.<br/>Streaks resume from today.</div>
+  </div>
+</div>
+
+<!-- FRICTION LOG MODAL -->
+<div class="info-overlay" id="friction-overlay" onclick="closeFriction(event)">
+  <div class="info-modal" style="max-width:360px;width:100%;padding:20px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:18px">🤔</span>
+      <span style="font-weight:600;color:var(--text-heading);font-size:14px">Why did you skip?</span>
+    </div>
+    <div id="friction-item-label" style="font-size:12px;color:var(--text-muted);margin-bottom:14px"></div>
+
+    <div id="friction-reason-pills" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+
+    <input type="text" id="friction-note" placeholder="Optional note..." style="margin-bottom:12px;padding:8px 10px;font-size:13px" />
+
+    <div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:1px;margin-bottom:6px">WHAT WOULD MAKE THIS EASIER TOMORROW? <span style="opacity:0.5">(optional)</span></div>
+    <input type="text" id="friction-solution" placeholder="e.g. Do it earlier / break it into smaller pieces / remove the trigger..."
+      style="margin-bottom:16px;padding:8px 10px;font-size:13px"
+      onkeydown="if(event.key==='Enter')saveFriction()" />
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeFriction()" class="btn-ghost">Skip</button>
+      <button onclick="saveFriction()" style="background:#7A5FA8;color:#fff;border:none;border-radius:20px;padding:9px 18px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Log it</button>
+    </div>
+  </div>
+</div>
+
+<!-- FRICTION PATTERNS MODAL -->
+<div class="info-overlay" id="friction-patterns-overlay" onclick="closeFrictionPatterns(event)">
+  <div class="info-modal" style="max-width:420px;width:100%;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <span style="font-weight:600;color:var(--text-heading);font-size:14px">🤔 Skip Patterns</span>
+      <button onclick="closeFrictionPatterns()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
+    </div>
+    <div id="friction-patterns-content" style="flex:1;overflow-y:auto;padding:16px 18px"></div>
+  </div>
+</div>
+
+<!-- HYPERFOCUS LOG MODAL -->
+<div class="info-overlay" id="hyperfocus-overlay" onclick="closeHyperfocus(event)">
+  <div class="info-modal" style="max-width:380px;width:100%;padding:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:20px">🌀</span>
+        <span style="font-weight:600;color:var(--text-heading);font-size:15px">Hyperfocus Flag</span>
+        <button class="info-btn" onclick="openInfoModal('hyperfocus')"><span class="info-btn-circle">?</span></button>
+      </div>
+      <button onclick="openHfPatterns()" style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:#7A5FA8;padding:0;text-decoration:underline">patterns ↗</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">You noticed. That's the hardest part.</div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">WHAT WERE YOU DOING?</div>
+    <input type="text" id="hf-what" placeholder="e.g. Reorganizing files instead of writing the report..." style="margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')document.getElementById('hf-intended').focus()" />
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">WHAT WERE YOU SUPPOSED TO BE DOING?</div>
+    <input type="text" id="hf-intended" placeholder="e.g. Writing the report intro..." style="margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')saveHyperfocus()" />
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:8px">HOW LONG WERE YOU IN IT?</div>
+    <div style="display:flex;gap:6px;margin-bottom:16px" id="hf-duration-pills">
+      <button onclick="selectHfDuration(15)" id="hfd-15" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">15m</button>
+      <button onclick="selectHfDuration(30)" id="hfd-30" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">30m</button>
+      <button onclick="selectHfDuration(60)" id="hfd-60" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">1h</button>
+      <button onclick="selectHfDuration(120)" id="hfd-120" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer">2h+</button>
+    </div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:8px">WAS THIS PLANNED?</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button id="hf-planned-yes" onclick="setHfPlanned(true)"
+        style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer;transition:all 0.15s">
+        ✓ Yes — intentional deep work
+      </button>
+      <button id="hf-planned-no" onclick="setHfPlanned(false)"
+        style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer;transition:all 0.15s">
+        ✗ No — I got pulled in
+      </button>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeHyperfocus()" class="btn-ghost">Cancel</button>
+      <button onclick="saveHyperfocus()" style="background:#7A5FA8;color:#fff;border:none;border-radius:20px;padding:10px 20px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Log it</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHUTDOWN TIME SETTINGS (inside Settings modal via openInfoModal) -->
+<!-- BODY DOUBLING OVERLAY -->
+<div id="body-double-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:#080810;flex-direction:column;align-items:center;justify-content:center">
+
+  <!-- Ambient pulse ring -->
+  <div id="bd-pulse-ring" style="position:absolute;width:200px;height:200px;border-radius:50%;border:1px solid #7A5FA833;animation:bdPulse 3s ease-in-out infinite;pointer-events:none"></div>
+
+  <div style="text-align:center;padding:40px 30px;max-width:360px;width:100%;position:relative;z-index:1">
+
+    <!-- What you're working on -->
+    <div class="mono" style="font-size:9px;letter-spacing:2px;color:#7A5FA8;margin-bottom:8px">WORKING ON</div>
+    <div id="bd-task-name" style="font-size:16px;color:#f0ebe0;margin-bottom:6px;font-family:'Playfair Display',serif;line-height:1.3"></div>
+    <div id="bd-task-def" style="font-size:11px;color:#555;margin-bottom:40px;font-style:italic;line-height:1.5"></div>
+
+    <!-- Running clock (counts up) -->
+    <div id="bd-clock" style="font-size:80px;font-weight:800;color:#fff;font-family:'DM Mono',monospace;letter-spacing:-4px;line-height:1;margin-bottom:40px">00:00</div>
+
+    <!-- Ambient sound pills -->
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:40px">
+      <button id="bd-sound-none" onclick="setBdSound('none')" style="padding:6px 14px;border-radius:20px;border:1px solid #333;background:none;color:#666;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s">Silent</button>
+      <button id="bd-sound-white" onclick="setBdSound('white')" style="padding:6px 14px;border-radius:20px;border:1px solid #333;background:none;color:#666;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s">🤍 White noise</button>
+      <button id="bd-sound-rain" onclick="setBdSound('rain')" style="padding:6px 14px;border-radius:20px;border:1px solid #333;background:none;color:#666;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s">🌧 Rain</button>
+      <button id="bd-sound-lofi" onclick="setBdSound('lofi')" style="padding:6px 14px;border-radius:20px;border:1px solid #333;background:none;color:#666;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s">🎵 Lo-fi</button>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button id="bd-pause-btn" onclick="toggleBdPause()" style="padding:10px 22px;border-radius:20px;border:1px solid #ffffff22;background:none;color:#888;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Pause</button>
+      <button onclick="endBodyDouble()" style="padding:10px 22px;border-radius:20px;border:1px solid #B05C5C44;background:none;color:#B05C5C;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">End Session</button>
+    </div>
+
+    <!-- Session duration hint -->
+    <div id="bd-elapsed-label" class="mono" style="font-size:9px;color:#333;margin-top:24px;letter-spacing:1px"></div>
+  </div>
+</div>
+
+<!-- BODY DOUBLING START MODAL -->
+<div class="info-overlay" id="body-double-start-overlay" onclick="closeBdStart(event)">
+  <div class="info-modal" style="max-width:380px;width:100%;padding:20px">
+    <div style="font-weight:600;color:var(--text-heading);font-size:15px;margin-bottom:4px">Work with me 🫂</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Start a focused session. The clock counts up — no pressure.</div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">WHAT ARE YOU WORKING ON?</div>
+    <input type="text" id="bd-start-task" placeholder="e.g. Write report intro, reply to emails..." style="margin-bottom:12px" />
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">HOW WILL YOU KNOW YOU'RE DONE? <span style="opacity:0.5">(optional)</span></div>
+    <input type="text" id="bd-start-def" placeholder="e.g. Draft sent, inbox at zero..." style="margin-bottom:16px" />
+
+    <!-- Or pick an active task -->
+    <div id="bd-active-tasks-section" style="display:none">
+      <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:8px">— OR PICK AN ACTIVE TASK —</div>
+      <div id="bd-active-tasks-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeBdStart()" class="btn-ghost">Cancel</button>
+      <button onclick="startBodyDouble()" style="background:#7A5FA8;color:#fff;border:none;border-radius:20px;padding:10px 20px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Start Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- BODY DOUBLING END REFLECTION -->
+<div class="info-overlay" id="body-double-end-overlay" onclick="closeBdEnd(event)">
+  <div class="info-modal" style="max-width:380px;width:100%;padding:20px">
+    <div style="font-weight:600;color:var(--text-heading);font-size:15px;margin-bottom:4px">Session complete 🎉</div>
+    <div id="bd-end-duration" class="mono" style="font-size:11px;color:#7A5FA8;margin-bottom:16px"></div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">DID YOU FINISH WHAT YOU PLANNED?</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button id="bd-end-yes" onclick="setBdFinished(true)" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);cursor:pointer;transition:all 0.2s">✓ Yes</button>
+      <button id="bd-end-no" onclick="setBdFinished(false)" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);cursor:pointer;transition:all 0.2s">✗ Partially</button>
+    </div>
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:6px">WHAT DID YOU ACTUALLY DO? <span style="opacity:0.5">(optional)</span></div>
+    <input type="text" id="bd-end-note" placeholder="Brief note..." style="margin-bottom:20px" />
+
+    <button onclick="saveBodyDoubleSession()" style="width:100%;background:#7A5FA8;color:#fff;border:none;border-radius:20px;padding:11px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">Save & Close</button>
+  </div>
+</div>
+
+<!-- DOPAMINE ENTRY MODAL -->
+<div class="info-overlay" id="dopamine-entry-overlay" onclick="closeDopamineEntry(event)">
+  <div class="info-modal" style="max-width:380px;width:100%;padding:20px">
+    <div id="dopamine-entry-title" style="font-weight:600;color:var(--text-heading);font-size:15px;margin-bottom:4px"></div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">What was it?</div>
+
+    <input type="text" id="dopamine-entry-text" placeholder="e.g. Morning walk, zoom call, skipped lunch..." style="margin-bottom:14px"
+      onkeydown="if(event.key==='Enter')saveDopamineEntry()" />
+
+    <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:8px">CATEGORY</div>
+    <div id="dopamine-category-pills" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px"></div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeDopamineEntry()" class="btn-ghost">Cancel</button>
+      <button id="dopamine-save-btn" onclick="saveDopamineEntry()" style="border:none;border-radius:20px;padding:10px 20px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;color:#fff">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOPAMINE PATTERNS MODAL -->
+<div class="info-overlay" id="dopamine-patterns-overlay" onclick="closeDopaminePatterns(event)">
+  <div class="info-modal" style="max-width:420px;width:100%;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <span style="font-weight:600;color:var(--text-heading);font-size:14px">⚡ Dopamine Patterns</span>
+      <button onclick="closeDopaminePatterns()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
+    </div>
+    <div id="dopamine-patterns-content" style="flex:1;overflow-y:auto;padding:16px 18px"></div>
+  </div>
+</div>
+
+
+<!-- FLOATING HYPERFOCUS BUTTON -->
+<button id="hf-float-btn" onclick="logHyperfocus()"
+  style="display:none;position:fixed;bottom:90px;right:16px;z-index:150;
+         width:44px;height:44px;border-radius:50%;border:1px solid #7A5FA844;
+         background:#7A5FA811;backdrop-filter:blur(8px);
+         font-size:20px;cursor:pointer;
+         box-shadow:0 2px 12px rgba(122,95,168,0.25);
+         transition:transform 0.15s,box-shadow 0.15s"
+  onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 4px 20px rgba(122,95,168,0.4)'"
+  onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 12px rgba(122,95,168,0.25)'"
+  title="Hyperfocus flag — tap when you notice you've been pulled in">
+  🌀
+</button>
+
+
+<!-- HYPERFOCUS PATTERNS MODAL -->
+<div class="info-overlay" id="hf-patterns-overlay" onclick="closeHfPatterns(event)">
+  <div class="info-modal" style="max-width:420px;width:100%;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <span style="font-weight:600;color:var(--text-heading);font-size:14px">🌀 Hyperfocus Patterns</span>
+      <button onclick="closeHfPatterns()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
+    </div>
+    <div id="hf-patterns-content" style="flex:1;overflow-y:auto;padding:16px 18px"></div>
+  </div>
+</div>
 
 </body>
 </html>
