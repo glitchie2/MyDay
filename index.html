@@ -176,7 +176,16 @@
     .bullet-input::placeholder { color: var(--placeholder); font-style: italic; }
     .bullet-del { background: none; border: none; color: var(--text-dimmer); font-size: 20px; padding: 0 4px; line-height: 1; flex-shrink: 0; transition: color 0.2s; }
     .bullet-del:hover { color: #B05C5C; }
-    .add-bullet-btn:active { opacity: 0.7; }
+    .add-bullet-btn {
+      background: none; border: none; padding: 4px 0; margin-top: 2px;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      color: var(--text-dimmer); cursor: pointer; letter-spacing: 0.5px;
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: color 0.15s;
+    }
+    .add-bullet-btn::before { content: '+'; font-size: 14px; line-height: 1; }
+    .add-bullet-btn:hover { color: var(--text-muted); }
+    .add-bullet-btn:active { opacity: 0.6; }
     /* Tooltip / info bubble */
     .info-btn { background:none;border:none;cursor:pointer;padding:6px 4px 6px 8px;line-height:1;display:inline-flex;align-items:center;min-width:28px;min-height:28px;justify-content:center; }
     .info-btn-circle { width:16px;height:16px;border-radius:50%;border:1px solid var(--text-dimmer);color:var(--text-dimmer);font-size:9px;font-family:'DM Mono',monospace;display:inline-flex;align-items:center;justify-content:center;font-weight:600;transition:all 0.2s;flex-shrink:0; }
@@ -334,17 +343,17 @@
       <div class="reflection-block">
         <div class="reflection-label" style="color:#3D8A5E;font-size:11px">✦ What did I do today?</div>
         <div id="bullets-did" class="bullet-list" data-symbol="✦" data-color="#3D8A5E"></div>
-        <button class="add-bullet-btn" onclick="addBullet('did')">+ add point</button>
+        <button class="add-bullet-btn" onclick="addBullet('did')">add point</button>
       </div>
       <div class="reflection-block">
         <div class="reflection-label" style="color:#4A90A4;font-size:11px">→ What is next?</div>
         <div id="bullets-next" class="bullet-list" data-symbol="→" data-color="#4A90A4"></div>
-        <button class="add-bullet-btn" onclick="addBullet('next')">+ add point</button>
+        <button class="add-bullet-btn" onclick="addBullet('next')">add point</button>
       </div>
       <div class="reflection-block">
         <div class="reflection-label" style="color:#C8962A;font-size:11px">? What is still unclear?</div>
         <div id="bullets-unclear" class="bullet-list" data-symbol="?" data-color="#C8962A"></div>
-        <button class="add-bullet-btn" onclick="addBullet('unclear')">+ add point</button>
+        <button class="add-bullet-btn" onclick="addBullet('unclear')">add point</button>
       </div>
       <div class="reflection-block">
         <div style="display:flex;align-items:center;gap:6px">
@@ -352,7 +361,7 @@
           <button class="info-btn" onclick="openInfoModal('thought')" style="margin-bottom:2px"><span class="info-btn-circle">?</span></button>
         </div>
         <div id="bullets-thought" class="bullet-list" data-symbol="🧠" data-color="#7A5FA8"></div>
-        <button class="add-bullet-btn" onclick="addBullet('thought')">+ add point</button>
+        <button class="add-bullet-btn" onclick="addBullet('thought')">add point</button>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
         <button class="btn-ghost" onclick="loadTodayReflection()">Load Today</button>
@@ -378,22 +387,22 @@
         <div class="reflection-block">
           <div class="reflection-label" style="color:#3D8A5E">✦ WHAT WENT WELL THIS WEEK</div>
           <div id="wbullets-well" class="bullet-list" data-symbol="✦" data-color="#3D8A5E"></div>
-          <button class="add-bullet-btn" onclick="addBullet('well','','weekly')">+ add point</button>
+          <button class="add-bullet-btn" onclick="addBullet('well','','weekly')">add point</button>
         </div>
         <div class="reflection-block">
           <div class="reflection-label" style="color:#B05C5C">✕ WHAT DRAINED ME</div>
           <div id="wbullets-drained" class="bullet-list" data-symbol="✕" data-color="#B05C5C"></div>
-          <button class="add-bullet-btn" onclick="addBullet('drained','','weekly')">+ add point</button>
+          <button class="add-bullet-btn" onclick="addBullet('drained','','weekly')">add point</button>
         </div>
         <div class="reflection-block">
           <div class="reflection-label" style="color:#4A90A4">→ WHAT I WANT TO DO DIFFERENTLY</div>
           <div id="wbullets-differently" class="bullet-list" data-symbol="→" data-color="#4A90A4"></div>
-          <button class="add-bullet-btn" onclick="addBullet('differently','','weekly')">+ add point</button>
+          <button class="add-bullet-btn" onclick="addBullet('differently','','weekly')">add point</button>
         </div>
         <div class="reflection-block">
           <div class="reflection-label" style="color:#C8962A">◎ FOCUS FOR NEXT WEEK</div>
           <div id="wbullets-focus" class="bullet-list" data-symbol="◎" data-color="#C8962A"></div>
-          <button class="add-bullet-btn" onclick="addBullet('focus','','weekly')">+ add point</button>
+          <button class="add-bullet-btn" onclick="addBullet('focus','','weekly')">add point</button>
         </div>
         <div class="reflection-block" style="border-left:2px solid #C8962A;padding-left:14px">
           <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:10px;letter-spacing:2px">📓 DAILY JOURNAL THIS WEEK</div>
@@ -833,10 +842,22 @@
       <div style="padding:10px 16px;border-bottom:1px solid var(--border)">
         <div class="mono" style="font-size:9px;letter-spacing:2px;color:var(--text-dimmer);margin-bottom:8px">DESIGN</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-          <button onclick="setTheme('default')" id="theme-default"
+          <button onclick="setTheme('slate')" id="theme-slate"
+            style="padding:10px 8px;border-radius:6px;border:1px solid #21262d;cursor:pointer;background:#0d1117;display:flex;flex-direction:column;align-items:flex-start;gap:3px;transition:border-color 0.2s">
+            <span style="font-size:13px">🩵</span>
+            <span style="font-family:'Inter',sans-serif;font-size:10px;color:#cdd5df;font-weight:500">Slate</span>
+            <span style="font-size:9px;color:#3d8b8b">Dark · Focus</span>
+          </button>
+          <button onclick="setTheme('clay')" id="theme-clay"
+            style="padding:10px 8px;border-radius:6px;border:1px solid #e0d6c8;cursor:pointer;background:#f7f3ee;display:flex;flex-direction:column;align-items:flex-start;gap:3px;transition:border-color 0.2s">
+            <span style="font-size:13px">🪴</span>
+            <span style="font-family:'Playfair Display',Georgia,serif;font-size:10px;color:#2c1f14;font-weight:600">Clay</span>
+            <span style="font-size:9px;color:#5a7f6a">Light · Warm</span>
+          </button>
+          <button onclick="setTheme('midnight')" id="theme-midnight"
             style="padding:10px 8px;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:#0a0a0c;display:flex;flex-direction:column;align-items:flex-start;gap:3px;transition:border-color 0.2s">
             <span style="font-size:13px">🌑</span>
-            <span style="font-family:'DM Mono',monospace;font-size:10px;color:#d8d4cc">Default</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:#d8d4cc">Midnight</span>
             <span style="font-size:9px;color:#444">Warm · Serif</span>
           </button>
           <button onclick="setTheme('forge')" id="theme-forge"
@@ -3973,13 +3994,16 @@ function updateSettingsUI() {
     knob.style.left = autoSync ? "23px" : "3px";
   }
 
-  // Theme cards
-  const theme = settings.theme || "default";
-  ["default","forge","ember","vibrant"].forEach(t => {
+  // Theme cards — smart default mirrors applyTheme logic
+  const prefersDarkUI = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const brightnessUI = settings.brightness || "system";
+  const systemDefaultUI = (brightnessUI === "dark" || (brightnessUI === "system" && prefersDarkUI)) ? "slate" : "clay";
+  const theme = settings.theme || systemDefaultUI;
+  ["midnight","forge","ember","vibrant","slate","clay"].forEach(t => {
     const b = document.getElementById("theme-" + t);
     if (!b) return;
-    const accentColors = { default:"#4A90A4", forge:"#00e5ff", ember:"#ff6b00", vibrant:"#00e5ff" };
-    b.style.borderColor = theme === t ? accentColors[t] : "var(--border)";
+    const accentColors = { midnight:"#C8962A", forge:"#00e5ff", ember:"#ff6b00", vibrant:"#00e5ff", slate:"#3d8b8b", clay:"#5a7f6a" };
+    b.style.borderColor = theme === t ? accentColors[t] : (t === "clay" ? "#e0d6c8" : "var(--border)");
     b.style.boxShadow = theme === t ? `0 0 0 1px ${accentColors[t]}40` : "none";
   });
 
@@ -4022,7 +4046,7 @@ async function manualPullSync() {
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const THEMES = {
-  default: {
+  midnight: {
     "--bg":           "#0a0a0c",
     "--bg-card":      "#111113",
     "--bg-input":     "#111113",
@@ -4101,6 +4125,56 @@ const THEMES = {
     "--font-body":    "'Inter', system-ui, sans-serif",
     "--font-mono":    "'JetBrains Mono', 'DM Mono', monospace",
     "--radius":       "0px",
+  },
+
+  // ── SLATE — deep blue-grey, ADHD-optimized dark mode ─────────────────────
+  slate: {
+    "--bg":           "#0d1117",
+    "--bg-card":      "#161b22",
+    "--bg-input":     "#1c2128",
+    "--border":       "#21262d",
+    "--border-strong":"#30363d",
+    "--text":         "#cdd5df",
+    "--text-heading": "#e6edf3",
+    "--text-muted":   "#8b949e",
+    "--text-dimmer":  "#6e7681",
+    "--text-done":    "#6e7681",
+    "--note-text":    "#7d8590",
+    "--input-text":   "#cdd5df",
+    "--placeholder":  "#484f58",
+    "--nav-bg":       "#0d1117",
+    "--nav-border":   "#21262d",
+    "--accent":       "#3d8b8b",
+    "--accent2":      "#7a8fa6",
+    "--font-heading": "'Inter', system-ui, sans-serif",
+    "--font-body":    "'Inter', system-ui, sans-serif",
+    "--font-mono":    "'DM Mono', monospace",
+    "--radius":       "6px",
+  },
+
+  // ── CLAY — warm earth tones, CBT therapy-room light mode ─────────────────
+  clay: {
+    "--bg":           "#f7f3ee",
+    "--bg-card":      "#ffffff",
+    "--bg-input":     "#f2ece4",
+    "--border":       "#e0d6c8",
+    "--border-strong":"#c8baa8",
+    "--text":         "#3d2e22",
+    "--text-heading": "#2c1f14",
+    "--text-muted":   "#7a6555",
+    "--text-dimmer":  "#a89484",
+    "--text-done":    "#b0a090",
+    "--note-text":    "#8a7060",
+    "--input-text":   "#3d2e22",
+    "--placeholder":  "#b8a898",
+    "--nav-bg":       "#f0ebe3",
+    "--nav-border":   "#ddd0be",
+    "--accent":       "#5a7f6a",
+    "--accent2":      "#a05a3a",
+    "--font-heading": "'Playfair Display', Georgia, serif",
+    "--font-body":    "'Inter', system-ui, sans-serif",
+    "--font-mono":    "'DM Mono', monospace",
+    "--radius":       "8px",
   }
 };
 
@@ -4148,19 +4222,24 @@ const BRIGHTNESS_LIGHT = {
 
 function applyTheme() {
   const s = getSettings();
-  const themeName = s.theme || "default";
   const brightness = s.brightness || "system";
-  const theme = THEMES[themeName] || THEMES.default;
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  // Smart default: slate for dark OS, clay for light OS (when no theme saved yet)
+  const systemDefault = (brightness === "dark" || (brightness === "system" && prefersDark)) ? "slate" : "clay";
+  const themeName = s.theme || systemDefault;
+  const theme = THEMES[themeName] || THEMES.slate;
   const root = document.documentElement;
 
   // Apply design theme vars first
   Object.entries(theme).forEach(([k, v]) => root.style.setProperty(k, v));
 
-  // Then apply brightness override (light mode overrides bg/text colors only)
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  // Brightness override — but not for self-contained themes (slate/clay define
+  // their own complete palette and must not be clobbered by BRIGHTNESS_LIGHT)
+  const selfContained = (themeName === "clay" || themeName === "slate");
   const useDark = brightness === "dark" || (brightness === "system" && prefersDark);
   const useLight = brightness === "light" || (brightness === "system" && !prefersDark);
-  if (useLight) {
+  if (useLight && !selfContained) {
     Object.entries(BRIGHTNESS_LIGHT).forEach(([k, v]) => root.style.setProperty(k, v));
   }
 
@@ -4220,6 +4299,26 @@ function applyTheme() {
     body.theme-vibrant .section-label { color: #00e5ff !important; letter-spacing: 3px; }
     body.theme-vibrant .note-item, body.theme-vibrant .section-block { border-radius: 0 !important; border-color: #ffffff15 !important; }
     body.theme-vibrant #main-nav { border-top: 1px solid #00e5ff22 !important; }
+
+    /* SLATE */
+    body.theme-slate .btn-primary { background: #3d8b8b !important; color: #e6edf3 !important; }
+    body.theme-slate input:focus, body.theme-slate textarea:focus { border-color: #3d8b8b66 !important; box-shadow: 0 0 0 2px #3d8b8b18; }
+    body.theme-slate .prog-fill { background: #3d8b8b !important; }
+    body.theme-slate .nav-btn.active .nav-label { color: #3d8b8b !important; }
+    body.theme-slate .nav-btn.active .nav-icon { filter: drop-shadow(0 0 3px #3d8b8b55); }
+    body.theme-slate .section-block { border-color: #21262d !important; }
+
+    /* CLAY */
+    body.theme-clay .btn-primary { background: #5a7f6a !important; color: #ffffff !important; }
+    body.theme-clay .btn-ghost { border-color: #c8baa8 !important; color: #7a6555 !important; }
+    body.theme-clay input:focus, body.theme-clay textarea:focus { border-color: #5a7f6a66 !important; box-shadow: 0 0 0 2px #5a7f6a12; }
+    body.theme-clay .prog-fill { background: #5a7f6a !important; }
+    body.theme-clay .nav-btn.active .nav-label { color: #5a7f6a !important; }
+    body.theme-clay #main-nav { box-shadow: 0 -1px 0 #e0d6c8; }
+    body.theme-clay .section-block { border-color: #e0d6c8 !important; box-shadow: 0 1px 4px rgba(60,40,20,0.06); }
+    body.theme-clay .item-card { box-shadow: 0 1px 3px rgba(60,40,20,0.07); }
+    body.theme-clay .add-bullet-btn { color: #a89484 !important; }
+    body.theme-clay .add-bullet-btn:hover { color: #7a6555 !important; }
   `;
   document.head.appendChild(style);
 })();
@@ -7137,17 +7236,16 @@ if (getAccount() && getSettings().autoSync !== false) setTimeout(() => pullAllFr
 
 <!-- FLOATING HYPERFOCUS BUTTON -->
 <button id="hf-float-btn" onclick="logHyperfocus()"
-  style="display:none;position:fixed;bottom:90px;right:16px;z-index:150;
-         width:44px;height:44px;border-radius:50%;border:1px solid #7A5FA844;
-         background:#7A5FA811;backdrop-filter:blur(8px);
-         font-size:20px;cursor:pointer;
-         box-shadow:0 2px 12px rgba(122,95,168,0.25);
-         transition:transform 0.15s,box-shadow 0.15s"
-  onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 4px 20px rgba(122,95,168,0.4)'"
-  onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 12px rgba(122,95,168,0.25)'"
-  title="Hyperfocus flag — tap when you notice you've been pulled in">
-  🌀
-</button>
+  style="display:none;position:fixed;bottom:88px;right:14px;z-index:150;
+         width:40px;height:40px;border-radius:50%;
+         border:1px solid #7A5FA866;
+         background:var(--bg);
+         font-size:18px;line-height:1;cursor:pointer;
+         box-shadow:0 1px 6px rgba(0,0,0,0.5);
+         transition:opacity 0.2s,border-color 0.2s;opacity:0.75"
+  onmouseover="this.style.opacity='1';this.style.borderColor='#7A5FA8aa'"
+  onmouseout="this.style.opacity='0.75';this.style.borderColor='#7A5FA866'"
+  title="Hyperfocus flag — tap when you notice you've been pulled in">🌀</button>
 
 
 <!-- HYPERFOCUS PATTERNS MODAL -->
