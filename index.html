@@ -1217,6 +1217,16 @@ async function getSectionId(nbId, token) {
 // Build page HTML with table header + first data row already inside
 function buildPageHtml(pageTitle, firstRowHtml) {
   const th = (t) => `<th style="padding:6px 10px;border:1px solid #ccc;background:#f0f0f0;font-weight:bold">${t}</th>`;
+  const pageEmojis = {
+    "Thoughts":        "💭",
+    "Questions":       "❓",
+    "Ideas":           "💡",
+    "EOD closure":     "🌙",
+    "Weekly Reviews":  "📅",
+    "Weekly Summary":  "📊",
+    "Shopping":        "🛒",
+  };
+  const emoji = pageEmojis[pageTitle] || "📝";
   let headerRow;
   if (pageTitle === "EOD closure")
     headerRow = `<tr>${th("Date")}${th("What I did today")}${th("What is next")}${th("What is unclear")}</tr>`;
@@ -1228,7 +1238,8 @@ function buildPageHtml(pageTitle, firstRowHtml) {
     headerRow = `<tr>${th("Commitment")}${th("Added")}</tr>`;
   else
     headerRow = `<tr>${th("Date")}${th("Entry")}</tr>`;
-  return `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${pageTitle}</title></head><body><table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">${headerRow}${firstRowHtml||""}</table></body></html>`;
+  const h1 = `<h1 style="font-family:Calibri,sans-serif;font-size:20pt;margin-bottom:12pt">${emoji} ${pageTitle}</h1>`;
+  return `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${pageTitle}</title></head><body>${h1}<table border="1" style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:13px">${headerRow}${firstRowHtml||""}</table></body></html>`;
 }
 
 // Get page ID, or create the page with the first row already inside the table
@@ -1345,7 +1356,16 @@ async function syncRowToPage(pageName, rowHtml) {
 const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals", projects:"yd2-projects" };
 
 // ── HTML escape helper (prevents XSS in innerHTML) ───────────────────────────
-const esc = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const esc = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+// Decode HTML entities pulled from OneNote back to plain text
+const decodeEntities = (s) => String(s||"")
+  .replace(/&amp;/g,"&")
+  .replace(/&lt;/g,"<")
+  .replace(/&gt;/g,">")
+  .replace(/&quot;/g,'"')
+  .replace(/&#39;/g,"'");
+
 
 const today = () => new Date().toISOString().split("T")[0];
 const ld = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
@@ -2853,7 +2873,7 @@ async function pullListFromOneNote(type) {
     // Parse <li> items — strip ALL leading emojis/whitespace
     const liBlocks = html.match(/<li[^>]*>[\s\S]*?<\/li>/gi) || [];
     const remoteTexts = liBlocks
-      .map(m => m.replace(/<[^>]+>/g, "").trim())
+      .map(m => decodeEntities(m.replace(/<[^>]+>/g, "").trim()))
       .map(t => t.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s\u2B50\uD83C-\uDFFF]*/gu, "").trim())
       .filter(t => t.length > 0);
 
@@ -2897,7 +2917,7 @@ async function pullAllFromOneNote(force = false) {
     const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
     if (!pagesData.value) return;
 
-    const safe = (html) => html.replace(/<[^>]+>/g,"").trim();
+    const safe = (html) => decodeEntities(html.replace(/<[^>]+>/g,"").trim());
 
     // Known pages to sync — skip project pages (handled separately) and unknown pages
     const knownPages = ["Thoughts","Questions","Ideas","EOD closure","Things I don't do","Shopping","My Values","My Goals"];
@@ -2958,11 +2978,11 @@ async function pullAllFromOneNote(force = false) {
           const paras = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)];
           let added = 0;
           for (const para of paras) {
-            let text = para[1]
+            let text = decodeEntities(para[1]
               .replace(/<input[^>]*>/gi, "")
               .replace(/<[^>]+>/g, "")
               .replace(/^🛒\s*/,"")
-              .trim();
+              .trim());
             if (!text || text.length < 2) continue;
             const already = captures.find(c => c.tag === "shopping" && c.text.toLowerCase() === text.toLowerCase());
             if (!already) {
