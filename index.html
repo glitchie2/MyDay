@@ -3318,6 +3318,9 @@ async function saveWeeklyReview() {
   weeklyReviews[key] = review;
   sv(SK.weekly, weeklyReviews);
   showToast("Weekly review saved ✓");
+  // Reset rendered flag so next tab return reloads from fresh saved state
+  const ws = document.getElementById("weekly-section");
+  if (ws) ws.dataset.rendered = "false";
   renderWeeklyPastList();
 
   if (getAccount()) {
@@ -6910,7 +6913,19 @@ function showPage(name) {
     if (weeklySection) {
       const show = isReviewWindow || missedLastWeek;
       weeklySection.style.display = show ? "block" : "none";
-      if (show) renderWeeklyPage();
+      // Only fully re-render if section wasn't already visible with content.
+      // If user typed a draft and switched tabs, preserve it — don't wipe on return.
+      if (show) {
+        const alreadyOpen = weeklySection.dataset.rendered === "true";
+        const hasDraft = alreadyOpen && ["well","drained","differently","focus"].some(f => {
+          const c = document.getElementById("wbullets-" + f);
+          return c && [...c.querySelectorAll(".bullet-input")].some(el => el.value.trim());
+        });
+        if (!hasDraft) {
+          renderWeeklyPage();
+          weeklySection.dataset.rendered = "true";
+        }
+      }
     }
   }
 }
