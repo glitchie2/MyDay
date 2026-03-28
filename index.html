@@ -23,7 +23,7 @@
     document.head.appendChild(ml);
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -35,17 +35,7 @@
       --nav-bg:#0a0a0c; --nav-border:#1a1a1a;
       --input-text:#d8d4cc; --placeholder:#333;
     }
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg:#f5f2ec; --bg-card:#ffffff; --bg-input:#faf8f4;
-        --border:#e0dbd0; --border-strong:#ccc6ba;
-        --text:#2a2520; --text-heading:#1a1510; --text-muted:#8a8070;
-        --text-dimmer:#aaa090; --text-done:#b0a898; --note-text:#9a9080;
-        --tab-inactive:#8a8070; --tab-border:#ddd8cc;
-        --nav-bg:#f5f2ec; --nav-border:#ddd8cc;
-        --input-text:#2a2520; --placeholder:#bbb8b0;
-      }
-    }
+    /* Light mode handled by applyTheme() JS */
     html, body {
       height: 100%; background: var(--bg); color: var(--text);
       font-family: 'Inter', sans-serif; overscroll-behavior: none;
@@ -202,12 +192,7 @@
     .info-level { display:flex;gap:10px;align-items:flex-start;margin:6px 0; }
     .info-level-emoji { font-size:16px;flex-shrink:0;margin-top:1px; }
     .info-level-text { font-size:12px;color:var(--text);line-height:1.5; }
-    .bullet-row { display: flex; align-items: center; gap: 8px; }
-    .bullet-dot { color: var(--text-muted); font-size: 16px; flex-shrink: 0; line-height: 1; }
-    .bullet-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--input-text); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
-    .bullet-input:focus { border-color: var(--border-strong); }
-    .bullet-del { background: none; border: none; color: var(--text-dimmer); font-size: 18px; padding: 2px 6px; line-height: 1; flex-shrink: 0; }
-    .add-bullet-btn { background: none; border: 1px dashed var(--border); border-radius: 4px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; width: 100%; transition: all 0.2s; }
+
 
     /* ONENOTE BAR */
     #onenote-login-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -290,7 +275,9 @@
         <div class="section-label" style="margin:0">ENTRIES</div>
         <span id="entries-count" class="mono" style="font-size:9px;color:var(--text-dimmer)"></span>
       </div>
-      <div id="filter-row" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap"></div>
+      <div id="filter-row" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"></div>
+      <input type="text" id="capture-search" placeholder="Search entries..." oninput="renderEntriesList()"
+        style="margin-bottom:14px;padding:8px 12px;font-size:13px" />
       <div id="entries-list"></div>
     </div>
   </div>
@@ -413,7 +400,7 @@
           <span>📊</span><span class="mono" style="font-size:11px">Sync this week summary</span>
         </button>
         <button class="btn-ghost" onclick="runFullSync()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-color:#C8962A">
-          <span>🔄</span><span class="mono" style="font-size:11px;color:#C8962A">Full sync all data to OneNote</span>
+          <span>🔄</span><span class="mono" style="font-size:11px;color:#C8962A">Pull all data from OneNote</span>
         </button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0;margin-bottom:12px">
@@ -470,7 +457,7 @@
         <button onclick="addTask()" style="background:#4A90A4;color:#fff;border:none;border-radius:20px;padding:11px 16px;font-family:'DM Mono',monospace;font-size:12px;flex-shrink:0">Add</button>
       </div>
       <!-- Carried over banner -->
-      <div id="carried-banner" style="display:none;background:#4A90A4 14;border:1px solid #4A90A444;border-radius:4px;padding:10px 14px;margin-bottom:14px">
+      <div id="carried-banner" style="display:none;background:#4A90A422;border:1px solid #4A90A444;border-radius:4px;padding:10px 14px;margin-bottom:14px">
         <span class="mono" style="font-size:10px;color:#4A90A4" id="carried-text"></span>
       </div>
       <!-- Task list -->
@@ -566,6 +553,7 @@
     <!-- Add section / task buttons -->
     <div style="padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;justify-content:flex-end">
       <button onclick="openAddSection()" class="btn-ghost" style="font-size:11px;padding:7px 14px">+ Section</button>
+      <button id="proj-pause-btn" onclick="toggleProjectPause()" class="btn-ghost" style="font-size:11px;padding:7px 14px;border-color:#C8962A;color:#C8962A">Pause</button>
       <button onclick="markProjectDone()" class="btn-ghost" style="font-size:11px;padding:7px 14px;border-color:#3D8A5E;color:#3D8A5E">Mark Done</button>
     </div>
   </div>
@@ -707,7 +695,7 @@
           <div style="font-size:12px;color:var(--text)">Auto-sync on open</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-          <button onclick="manualPullSync()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dimmer);cursor:pointer">↓ Pull</button>
+          <button onclick="manualPullSync()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dimmer);cursor:pointer" title="Force pull from OneNote now (ignores cooldown)">↓ Pull now</button>
           <button id="settings-autosync-toggle" onclick="toggleAutoSync()"
             style="width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;transition:background 0.2s;flex-shrink:0;position:relative">
             <span style="position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s" id="settings-autosync-knob"></span>
@@ -783,6 +771,11 @@
           style="flex:1;padding:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:5px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:6px">
           <span>↓</span><span>Export JSON</span>
         </button>
+        <button onclick="importDataFile()"
+          style="flex:1;padding:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:5px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:6px">
+          <span>↑</span><span>Import JSON</span>
+        </button>
+        <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="handleImportFile(event)" />
       </div>
 
       <div style="padding:4px 16px 12px;font-size:10px;color:var(--text-dimmer)">v1.0 · local storage</div>
@@ -821,6 +814,17 @@
       <button onclick="finishFromTimer()" style="padding:10px 22px;border-radius:20px;border:none;background:#3D8A5E;color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">✓ Done</button>
     </div>
     <div id="timer-alarm-msg" style="display:none;margin-top:24px;font-size:14px;color:#C8962A;font-family:'DM Mono',monospace;letter-spacing:1px">⏰ TIME'S UP — ARE YOU DONE?</div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="info-overlay" id="confirm-overlay">
+  <div class="info-modal" style="max-width:320px;width:100%;padding:20px;text-align:center">
+    <div id="confirm-message" style="font-size:14px;color:var(--text);margin-bottom:20px;line-height:1.5"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button onclick="confirmResolve(false)" class="btn-ghost" style="min-width:80px">Cancel</button>
+      <button id="confirm-ok-btn" onclick="confirmResolve(true)" style="min-width:80px;border:none;border-radius:20px;padding:8px 16px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;background:#B05C5C;color:#fff">Confirm</button>
+    </div>
   </div>
 </div>
 
@@ -874,7 +878,7 @@
     <div style="padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;gap:8px">
         <input type="text" id="list-modal-input" placeholder="Add new item..." onkeydown="if(event.key==='Enter')addListItem()" style="flex:1;padding:9px 12px;font-size:13px;font-family:'Inter',sans-serif;background:var(--bg-input);border:1px solid var(--border);border-radius:5px;color:var(--input-text);outline:none" />
-        <button onclick="addListItem()" style="background:#4A90A4;color:#fff;border:none;border-radius:16px;padding:9px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer">Add</button>
+        <button id="list-modal-add-btn" onclick="addListItem()" style="background:#4A90A4;color:#fff;border:none;border-radius:16px;padding:9px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer">Add</button>
       </div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px 18px">
@@ -933,13 +937,21 @@ function getStoredAccount() {
   } catch { return null; }
 }
 
+let _tokenCache = null;
+let _tokenCacheExpiry = 0;
+
 function getStoredToken() {
+  // Return in-memory cached token if still valid
+  if (_tokenCache && Date.now() < _tokenCacheExpiry) return _tokenCache;
   try {
     const t = localStorage.getItem("yd-auth-token");
     if (!t) return null;
     const parsed = JSON.parse(t);
     // Check expiry (with 5 min buffer)
     if (parsed.expires_at && Date.now() > parsed.expires_at - 300000) return null;
+    // Cache in memory
+    _tokenCache = parsed.access_token;
+    _tokenCacheExpiry = parsed.expires_at - 300000;
     return parsed.access_token;
   } catch { return null; }
 }
@@ -949,6 +961,9 @@ function storeToken(tokenData) {
     tokenData.expires_at = Date.now() + (tokenData.expires_in || 3600) * 1000;
     localStorage.setItem("yd-auth-token", JSON.stringify(tokenData));
     if (tokenData.account) localStorage.setItem("yd-auth-account", JSON.stringify(tokenData.account));
+    // Update in-memory cache
+    _tokenCache = tokenData.access_token;
+    _tokenCacheExpiry = tokenData.expires_at - 300000;
   } catch {}
 }
 
@@ -957,6 +972,9 @@ function clearAuth() {
   localStorage.removeItem("yd-auth-account");
   localStorage.removeItem("yd-pkce-verifier");
   localStorage.removeItem("yd-pkce-state");
+  _tokenCache = null; _tokenCacheExpiry = 0;
+  localStorage.removeItem("yd-last-pull");
+  _cachedNbId = null; _cachedSecId = null;
 }
 
 function getAccount() {
@@ -1163,8 +1181,12 @@ async function graphPost(url, body, token, ct="application/json") {
 }
 
 // Find notebook ID by name
+// Session-level cache for notebook/section IDs — never change during a session
+let _cachedNbId = null;
+let _cachedSecId = null;
+
 async function getNotebookId(token) {
-  // Graph API does not support $filter on notebooks — fetch all and match manually
+  if (_cachedNbId) return _cachedNbId;
   const data = await graphGet(`${ON_BASE}/notebooks?$select=id,displayName&$top=100`, token);
   if (!data.value) throw new Error("Could not retrieve notebooks");
   const nb = data.value.find(n => n.displayName === ON_NOTEBOOK);
@@ -1172,11 +1194,12 @@ async function getNotebookId(token) {
     const names = data.value.map(n => '"'+n.displayName+'"').join(", ");
     throw new Error(`Notebook "${ON_NOTEBOOK}" not found. Available: ${names}`);
   }
-  return nb.id;
+  _cachedNbId = nb.id;
+  return _cachedNbId;
 }
 
-// Find section ID by name within notebook
 async function getSectionId(nbId, token) {
+  if (_cachedSecId) return _cachedSecId;
   const data = await graphGet(`${ON_BASE}/notebooks/${nbId}/sections?$select=id,displayName&$top=100`, token);
   if (!data.value) throw new Error("Could not retrieve sections");
   const sec = data.value.find(s => s.displayName === ON_SECTION);
@@ -1184,7 +1207,8 @@ async function getSectionId(nbId, token) {
     const names = data.value.map(s => '"'+s.displayName+'"').join(", ");
     throw new Error(`Section "${ON_SECTION}" not found. Available: ${names}`);
   }
-  return sec.id;
+  _cachedSecId = sec.id;
+  return _cachedSecId;
 }
 
 // Find page ID by title within section
@@ -1319,6 +1343,10 @@ async function syncRowToPage(pageName, rowHtml) {
 
 // ===================== DATA =====================
 const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals", projects:"yd2-projects" };
+
+// ── HTML escape helper (prevents XSS in innerHTML) ───────────────────────────
+const esc = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
 const today = () => new Date().toISOString().split("T")[0];
 const ld = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -1381,6 +1409,7 @@ let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEn
 let tasks = [];
 
 function loadAll() {
+  try {
   history2 = ld(SK.hist, {});
   const t = today();
   checked = history2[t] ? { ...history2[t] } : {};
@@ -1403,6 +1432,28 @@ function loadAll() {
   const before = tasks.length;
   tasks = tasks.filter(t => t.done || t.createdAt >= cutoffStr);
   if (tasks.length !== before) sv(SK.tasks, tasks);
+
+  // Prune history2 to last 90 days (heatmaps only show 30, streaks need ~60)
+  const hist90 = new Date(); hist90.setDate(hist90.getDate() - 90);
+  const hist90Str = hist90.toISOString().split("T")[0];
+  const histKeys = Object.keys(history2);
+  const oldHistKeys = histKeys.filter(k => k < hist90Str);
+  if (oldHistKeys.length) {
+    oldHistKeys.forEach(k => delete history2[k]);
+    sv(SK.hist, history2);
+  }
+
+  // Prune reflections to last 90 days
+  const refKeys = Object.keys(reflections);
+  const oldRefKeys = refKeys.filter(k => k < hist90Str);
+  if (oldRefKeys.length) {
+    oldRefKeys.forEach(k => delete reflections[k]);
+    sv(SK.refs, reflections);
+  }
+  } catch(e) {
+    console.error("loadAll failed:", e);
+    showToast("Error loading data — some settings may have reset");
+  }
 }
 
 function saveChecked() {
@@ -1501,7 +1552,7 @@ function renderToday() {
           ${done ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="${habit.color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ""}
         </div>
         <div style="flex:1;min-width:0">
-          <div class="item-task">${habit.task}</div>
+          <div class="item-task">${esc(habit.task)}</div>
           ${habit.note ? `<div class="item-note">${habit.note}</div>` : ""}
         </div>
         ${streak >= 2 ? `<span style="font-size:10px;font-family:'DM Mono',monospace;color:${habit.color};padding:2px 6px;background:${habit.color}18;border-radius:8px;flex-shrink:0;align-self:center">${streak}🔥</span>` : ""}`;
@@ -1578,7 +1629,9 @@ function renderFilterRow() {
   });
 }
 
-function deleteCapture(id) {
+async function deleteCapture(id) {
+  const ok = await showConfirm("Delete this entry?", "Delete", "#B05C5C");
+  if (!ok) return;
   captures = captures.filter(e => e.id !== id);
   sv(SK.caps, captures);
   renderEntriesList();
@@ -1589,7 +1642,10 @@ function renderEntriesList() {
   const list = document.getElementById("entries-list");
   const cnt = document.getElementById("entries-count");
   if (!list) return;
-  const filtered = filterTag === "all" ? captures : captures.filter(e => e.tag === filterTag);
+  const searchEl = document.getElementById("capture-search");
+  const searchQ = searchEl ? searchEl.value.trim().toLowerCase() : "";
+  let filtered = filterTag === "all" ? captures : captures.filter(e => e.tag === filterTag);
+  if (searchQ) filtered = filtered.filter(e => e.text.toLowerCase().includes(searchQ));
   if (cnt) cnt.textContent = filtered.length + " entries";
   list.innerHTML = "";
   if (!filtered.length) {
@@ -1606,7 +1662,7 @@ function renderEntriesList() {
         <span class="note-tag" style="background:${tag.color}22;color:${tag.color}">${tag.label}</span>
         <span class="note-date">${entry.date}</span>
       </div>
-      <div class="note-text">${entry.text}</div>
+      <div class="note-text">${esc(entry.text)}</div>
       <button onclick="deleteCapture(${entry.id})" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text-dimmer);font-size:16px;cursor:pointer;line-height:1;padding:2px 4px" title="Delete">×</button>`;
     list.appendChild(item);
   });
@@ -1621,6 +1677,7 @@ async function saveCapture() {
   sv(SK.caps, captures);
   input.value = "";
   renderEntriesList();
+  showToast("Saved ✓");
   if (getAccount()) {
     if (entry.tag === "shopping") {
       await syncShoppingItem(entry);
@@ -1655,7 +1712,7 @@ async function syncShoppingItem(entry) {
     const pagesData = await graphGet(`${ON_BASE}/sections/${secId}/pages?$select=id,title&$top=100`, token);
     let pageId = null;
     if (pagesData.value) {
-      const pg = pagesData.value.find(p => p.title === "Shopping");
+      const pg = pagesData.value.find(p => p.title.toLowerCase() === "shopping");
       if (pg) pageId = pg.id;
     }
 
@@ -1752,6 +1809,13 @@ function setBullets(field, items) {
   if (!container) return;
   container.innerHTML = "";
   (items || []).forEach(v => addBullet(field, v, true)); // true = skipFocus
+  // Trigger auto-resize on all textareas after loading saved values
+  requestAnimationFrame(() => {
+    container.querySelectorAll(".bullet-input").forEach(ta => {
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+    });
+  });
 }
 
 function bulletsToHtml(items, symbol) {
@@ -1783,7 +1847,6 @@ async function saveReflection() {
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.next,"➡️") + '</td>' +
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.unclear,"❓") + '</td>' +
       '</tr>';
-    const token = await getToken();
     await syncRowToPage("EOD closure", rowHtml);
   } else {
     setSyncStatus("idle", "Saved locally");
@@ -1916,7 +1979,7 @@ function renderProgress() {
 
       const row = document.createElement("div"); row.style.marginBottom = "12px";
       const lr = document.createElement("div"); lr.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:5px";
-      lr.innerHTML = `<span style="font-size:12px;color:var(--text);font-family:'Playfair Display',serif;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${habit.task}</span>${streak>0?`<span class="streak-badge" style="background:${sec.color}22;color:${sec.color};flex-shrink:0;margin-left:8px">${streak}🔥</span>`:""}`;
+      lr.innerHTML = `<span style="font-size:12px;color:var(--text);font-family:'Playfair Display',serif;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(habit.task)}</span>${streak>0?`<span class="streak-badge" style="background:${sec.color}22;color:${sec.color};flex-shrink:0;margin-left:8px">${streak}🔥</span>`:""}`;
       row.appendChild(lr);
 
       const grid = document.createElement("div"); grid.className = "heatmap-grid"; grid.style.cssText = `grid-template-columns:repeat(${cols},1fr);gap:3px`;
@@ -1945,7 +2008,7 @@ function renderHabitsManage() {
     item.innerHTML = `
       <div style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:14px;color:var(--text);font-family:'Playfair Display',serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${habit.task}</div>
+        <div style="font-size:14px;color:var(--text);font-family:'Playfair Display',serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(habit.task)}</div>
         <div class="mono" style="font-size:9px;color:${col};margin-top:2px">${habit.section}</div>
       </div>
       <button onclick="deleteHabit('${habit.id}')" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;padding:4px 6px;line-height:1;cursor:pointer">×</button>`;
@@ -1990,10 +2053,11 @@ function saveNewHabit() {
   showToast("Habit added ✓");
 }
 
-function deleteHabit(id) {
+async function deleteHabit(id) {
   const habit = habits.find(h => h.id === id);
   if (!habit) return;
-  if (!confirm(`Remove "${habit.task}"?`)) return;
+  const ok = await showConfirm(`Remove "${habit.task}"?`, "Remove", "#B05C5C");
+  if (!ok) return;
   habits = habits.filter(h => h.id !== id);
   sv(SK.habits, habits);
   renderHabitsManage();
@@ -2344,7 +2408,7 @@ function renderWeeklyPage() {
       const entry = journalEntries[key];
       if (entry) {
         const dayLabel = d.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
-        journalHtml += `<div style="margin-bottom:8px"><span class="mono" style="font-size:9px;color:var(--text-dimmer)">${dayLabel}</span><div style="font-size:13px;color:var(--text);margin-top:3px;font-style:italic">"${entry}"</div></div>`;
+        journalHtml += `<div style="margin-bottom:8px"><span class="mono" style="font-size:9px;color:var(--text-dimmer)">${esc(dayLabel)}</span><div style="font-size:13px;color:var(--text);margin-top:3px;font-style:italic">"${esc(entry)}"</div></div>`;
       }
     }
     journalSection.innerHTML = journalHtml || '<div style="color:var(--text-dimmer);font-style:italic;font-size:13px">No journal entries this week yet</div>';
@@ -2359,6 +2423,13 @@ function renderWeeklyPage() {
     container.innerHTML = "";
     items.forEach(v => addBullet(f, v, "weekly"));
     if (!items.length) addBullet(f, "", "weekly");
+  });
+  // Trigger auto-resize on loaded weekly bullet textareas
+  requestAnimationFrame(() => {
+    document.querySelectorAll("#weekly-section .bullet-input").forEach(ta => {
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+    });
   });
 
   renderWeeklyPastList();
@@ -2538,74 +2609,7 @@ function toggleDumpExpand(btn, id) {
 }
 
 
-// ===================== NOT-TO-DO =====================
-let notTodoFormOpen = false;
-
-function toggleNotTodoForm() {
-  notTodoFormOpen = !notTodoFormOpen;
-  const form = document.getElementById("nottodo-form");
-  if (form) {
-    form.style.display = notTodoFormOpen ? "block" : "none";
-    if (notTodoFormOpen) document.getElementById("nottodo-input").focus();
-  }
-}
-
-async function saveNotTodo() {
-  const input = document.getElementById("nottodo-input");
-  const text = input.value.trim();
-  if (!text) { showToast("Write a commitment first"); return; }
-  const item = { id: "nt" + Date.now(), text, addedAt: today() };
-  notTodos.push(item);
-  sv(SK.nottodo, notTodos);
-  input.value = "";
-  toggleNotTodoForm();
-  renderNotTodos();
-  showToast("Added to not-to-do ✓");
-  if (getAccount()) await syncNotTodoToOneNote(item);
-}
-
-async function deleteNotTodo(id) {
-  notTodos = notTodos.filter(n => n.id !== id);
-  sv(SK.nottodo, notTodos);
-  renderNotTodos();
-  // Note: deletions are local only — OneNote keeps the history
-}
-
-function renderNotTodos() {
-  const list = document.getElementById("nottodo-list");
-  if (!list) return;
-  list.innerHTML = "";
-  if (!notTodos.length) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dimmer);font-style:italic;font-size:13px">No commitments yet</div>';
-    return;
-  }
-  notTodos.forEach(item => {
-    const card = document.createElement("div");
-    card.style.cssText = "display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-left:2px solid #B05C5C;border-radius:5px;margin-bottom:8px";
-    card.innerHTML = `
-      <span style="font-size:14px;flex-shrink:0">🚫</span>
-      <div style="flex:1;font-size:14px;color:var(--text);line-height:1.4">${item.text}</div>
-      <button onclick="deleteNotTodo('${item.id}')" style="background:none;border:none;color:var(--text-dimmer);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>`;
-    list.appendChild(card);
-  });
-}
-
-async function syncNotTodoToOneNote(item) {
-  // Now uses unified pushListToOneNote
-  if (getAccount()) await pushListToOneNote('nottodo');
-}
-
-// Sync ALL not-to-do items (use when items were added while disconnected)
-async function syncAllNotTodos() {
-  if (!getAccount()) { showToast("Connect OneNote first"); return; }
-  if (!notTodos.length) { showToast("No items to sync"); return; }
-  showToast("Syncing all items...", 2000);
-  for (const item of notTodos) {
-    await syncNotTodoToOneNote(item);
-    await new Promise(r => setTimeout(r, 600)); // small delay between rows
-  }
-  showToast(`✓ Synced ${notTodos.length} items to OneNote`);
-}
+// ===================== NOT-TO-DO — managed via unified LIST system =====================
 
 // ===================== WEEKLY SUMMARY SYNC =====================
 async function syncWeeklySummary() {
@@ -2631,12 +2635,12 @@ async function syncWeeklySummary() {
 async function runFullSync() {
   if (!getAccount()) { showToast("Connect OneNote first"); return; }
   showToast("Pulling from OneNote...", 2000);
-  await pullAllFromOneNote();
+  await pullAllFromOneNote(true);
   showToast("✓ Pulled latest data from OneNote", 3000);
 }
 
 // ===================== VALUES & GOALS MODAL =====================
-let currentListType = null; // 'values' or 'goals'
+let currentListType = null; // 'values', 'goals', or 'nottodo'
 
 const LIST_CONFIG = {
   values:  { title:"My Values",        emoji:"⭐", pageName:"My Values",        color:"#C8962A", infoKey:null    },
@@ -2673,6 +2677,8 @@ function openListModal(type) {
   const infoBtn = document.getElementById("list-modal-info-btn");
   if (infoBtn) infoBtn.style.display = cfg.infoKey ? "inline-flex" : "none";
   if (infoBtn && cfg.infoKey) infoBtn.onclick = () => openInfoModal(cfg.infoKey);
+  const addBtn = document.getElementById("list-modal-add-btn");
+  if (addBtn) addBtn.style.background = cfg.color;
   document.getElementById("list-modal-overlay").classList.add("open");
   // Show local immediately, then fetch from OneNote
   renderListItems();
@@ -2755,7 +2761,7 @@ function renderListItems() {
     el.style.cssText = "display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)";
     el.innerHTML = `
       <span style="color:${cfg.color};font-size:13px;flex-shrink:0">•</span>
-      <div style="flex:1;font-size:14px;color:var(--text);line-height:1.4">${item.text}</div>
+      <div style="flex:1;font-size:14px;color:var(--text);line-height:1.4">${esc(item.text)}</div>
       <button onclick="deleteListItem('${currentListType}','${item.id}')" style="background:none;border:none;color:var(--text-dimmer);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>`;
     list.appendChild(el);
   });
@@ -2876,8 +2882,13 @@ async function syncListModal() {
 
 // ===================== TWO-WAY SYNC ENGINE =====================
 // Pull data from all OneNote pages and merge with local storage
-async function pullAllFromOneNote() {
+async function pullAllFromOneNote(force = false) {
   if (!getAccount()) return;
+  // Skip if already pulled in the last 60 minutes (bypass with force=true)
+  if (!force) {
+    const lastPull = parseInt(localStorage.getItem("yd-last-pull") || "0");
+    if (Date.now() - lastPull < 60 * 60 * 1000) return;
+  }
   try {
     const token = await getToken();
     if (!token) return;
@@ -2888,11 +2899,23 @@ async function pullAllFromOneNote() {
 
     const safe = (html) => html.replace(/<[^>]+>/g,"").trim();
 
-    for (const pg of pagesData.value) {
-      try {
-        const res = await fetch(`${ON_BASE}/pages/${pg.id}/content`, { headers: { Authorization: `Bearer ${token}` } });
-        const html = await res.text();
+    // Known pages to sync — skip project pages (handled separately) and unknown pages
+    const knownPages = ["Thoughts","Questions","Ideas","EOD closure","Things I don't do","Shopping","My Values","My Goals"];
+    const pagesToSync = pagesData.value.filter(pg => knownPages.some(k => pg.title.toLowerCase() === k.toLowerCase()));
 
+    // Fetch all page contents in parallel, then process sequentially
+    const pageContents = await Promise.all(
+      pagesToSync.map(async pg => {
+        try {
+          const res = await fetch(`${ON_BASE}/pages/${pg.id}/content`, { headers: { Authorization: `Bearer ${token}` } });
+          return { pg, html: await res.text() };
+        } catch(e) { console.warn("Fetch error for page", pg.title, e); return { pg, html: "" }; }
+      })
+    );
+
+    for (const { pg, html } of pageContents) {
+      if (!html) continue;
+      try {
         if (["Thoughts","Questions","Ideas"].includes(pg.title)) {
           // Parse table rows: date | text
           const tag = pg.title === "Thoughts" ? "thought" : pg.title === "Questions" ? "question" : "idea";
@@ -2928,20 +2951,17 @@ async function pullAllFromOneNote() {
         }
 
         else if (pg.title.toLowerCase() === "things i don't do") {
-          // Handled by pullListFromOneNote unified engine
           await pullListFromOneNote('nottodo');
         }
 
         else if (pg.title === "Shopping") {
-          // Parse checkbox paragraphs — <p>...<input type="checkbox"/>... text ...</p>
-          // Strip checkbox input tag and emoji prefix, get plain text
           const paras = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)];
           let added = 0;
           for (const para of paras) {
             let text = para[1]
-              .replace(/<input[^>]*>/gi, "")  // remove checkbox element
-              .replace(/<[^>]+>/g, "")         // remove any other tags
-              .replace(/^🛒\s*/,"")            // strip heading emoji if leaked
+              .replace(/<input[^>]*>/gi, "")
+              .replace(/<[^>]+>/g, "")
+              .replace(/^🛒\s*/,"")
               .trim();
             if (!text || text.length < 2) continue;
             const already = captures.find(c => c.tag === "shopping" && c.text.toLowerCase() === text.toLowerCase());
@@ -2960,10 +2980,9 @@ async function pullAllFromOneNote() {
         else if (pg.title.toLowerCase() === "my goals") {
           await pullListFromOneNote('goals');
         }
-
-        await new Promise(r => setTimeout(r, 300)); // rate limit
-      } catch(e) { console.warn("Pull error for page", pg.title, e); }
+      } catch(e) { console.warn("Process error for page", pg.title, e); }
     }
+  localStorage.setItem("yd-last-pull", Date.now().toString());
   } catch(e) { console.warn("pullAllFromOneNote error:", e); }
 
   // Also pull project task status from readable pages
@@ -3054,7 +3073,7 @@ async function manualPullSync() {
   if (!getAccount()) { showToast("Connect OneNote first"); return; }
   closeSettings();
   showToast("Pulling from OneNote...", 2000);
-  await pullAllFromOneNote();
+  await pullAllFromOneNote(true);
   showToast("✓ Sync complete");
 }
 
@@ -3162,14 +3181,17 @@ function setBrightness(mode) {
 const BRIGHTNESS_LIGHT = {
   "--bg":           "#f5f2ec",
   "--bg-card":      "#ffffff",
-  "--bg-input":     "#ffffff",
+  "--bg-input":     "#faf8f4",
   "--border":       "#e0dbd0",
   "--border-strong":"#ccc6ba",
   "--text":         "#2a2520",
   "--text-heading": "#1a1510",
   "--text-muted":   "#8a8070",
   "--text-dimmer":  "#bbb5aa",
+  "--text-done":    "#b0a898",
+  "--note-text":    "#9a9080",
   "--input-text":   "#2a2520",
+  "--placeholder":  "#bbb8b0",
   "--nav-bg":       "#f5f2ec",
   "--nav-border":   "#ddd8cc",
 };
@@ -3251,6 +3273,58 @@ function applyTheme() {
   `;
   document.head.appendChild(style);
 })();
+
+
+// ── Import / Restore backup ───────────────────────────────────────────────────
+function importDataFile() {
+  document.getElementById("import-file-input").click();
+}
+
+async function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = ""; // reset so same file can be re-selected
+
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    // Basic validation
+    if (!data.exportDate || !data.version) {
+      showToast("Invalid backup file", 4000); return;
+    }
+
+    const ok = await showConfirm(
+      "This will replace all local data with the backup. Continue?",
+      "Restore", "#B05C5C"
+    );
+    if (!ok) return;
+
+    // Restore each key
+    if (data.history)       sv(SK.hist,    data.history);
+    if (data.captures)      sv(SK.caps,    data.captures);
+    if (data.reflections)   sv(SK.refs,    data.reflections);
+    if (data.habits)        sv(SK.habits,  data.habits);
+    if (data.tasks)         sv(SK.tasks,   data.tasks);
+    if (data.mood)          sv(SK.mood,    data.mood);
+    if (data.weeklyReviews) sv(SK.weekly,  data.weeklyReviews);
+    if (data.notTodos)      sv(SK.nottodo, data.notTodos);
+    if (data.journal)       sv(SK.journal, data.journal);
+    if (data.values)        sv(SK.values,  data.values);
+    if (data.goals)         sv(SK.goals,   data.goals);
+    if (data.projects)      sv(SK.projects,data.projects);
+
+    // Reload everything
+    loadAll();
+    renderToday();
+    renderFocus();
+    closeSettings();
+    showToast("✓ Backup restored — " + data.exportDate.split("T")[0]);
+  } catch(e) {
+    console.error("Import failed:", e);
+    showToast("Import failed — invalid file", 4000);
+  }
+}
 
 // ── Export ─────────────────────────────────────────────────────────────────────
 function exportAllData() {
@@ -3530,10 +3604,10 @@ function renderProjectsList() {
     card.style.cssText = `background:var(--bg-card);border:1px solid var(--border);border-left:3px solid ${statusColor};border-radius:5px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s`;
     card.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div class="serif" style="font-size:15px;color:var(--text-heading);font-weight:500;flex:1;margin-right:8px">${proj.name}</div>
-        <span class="mono" style="font-size:9px;color:${statusColor};flex-shrink:0">${proj.status.toUpperCase()}</span>
+        <div class="serif" style="font-size:15px;color:var(--text-heading);font-weight:500;flex:1;margin-right:8px">${esc(proj.name)}</div>
+        <span class="mono" style="font-size:9px;color:${statusColor};flex-shrink:0">${esc(proj.status.toUpperCase())}</span>
       </div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.4">${proj.outcome.substring(0,100)}${proj.outcome.length>100?"...":""}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.4">${esc(proj.outcome.substring(0,100))}${proj.outcome.length>100?"...":""}</div>
       <div style="display:flex;align-items:center;gap:10px">
         <div class="prog-track" style="flex:1"><div class="prog-fill" style="width:${prog.pct}%;background:${statusColor}"></div></div>
         <span class="mono" style="font-size:9px;color:${statusColor}">${prog.pct}% · ${prog.done}/${prog.total} tasks</span>
@@ -3587,6 +3661,13 @@ function renderProjectDetail() {
   document.getElementById("proj-detail-pct").textContent = prog.pct + "% · " + prog.done + "/" + prog.total;
   document.getElementById("proj-detail-status-badge").textContent = proj.status.toUpperCase();
   document.getElementById("proj-detail-status-badge").style.color = statusColor;
+  // Update pause/resume button label
+  const pauseBtn = document.getElementById("proj-pause-btn");
+  if (pauseBtn) {
+    const isDone = proj.status === "done";
+    pauseBtn.style.display = isDone ? "none" : "";
+    pauseBtn.textContent = proj.status === "paused" ? "Resume" : "Pause";
+  }
 
   // Scope pills
   const inEl = document.getElementById("proj-scope-in-pills");
@@ -3646,7 +3727,7 @@ function renderProjectDetail() {
       taskEl.innerHTML = `
         <div style="display:flex;align-items:flex-start;gap:10px;${doneOpacity}">
           <div style="flex:1;min-width:0">
-            <div style="font-size:14px;color:var(--text);font-weight:500;margin-bottom:3px;${task.status==="done"?"text-decoration:line-through;color:var(--text-muted)":""}">${task.name}</div>
+            <div style="font-size:14px;color:var(--text);font-weight:500;margin-bottom:3px;${task.status==="done"?"text-decoration:line-through;color:var(--text-muted)":""}">${esc(task.name)}</div>
             <div style="font-size:11px;color:var(--text-dimmer);line-height:1.4">Done when: ${task.doneDefinition}</div>
             ${stuckNote}
           </div>
@@ -3778,7 +3859,7 @@ function openProjReviewPanel(type) {
     list.innerHTML = items.map(item => `
       <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="color:${cfg.color};flex-shrink:0;font-size:12px;margin-top:2px">•</span>
-        <span style="font-size:13px;color:var(--text);line-height:1.4">${item.text}</span>
+        <span style="font-size:13px;color:var(--text);line-height:1.4">${esc(item.text)}</span>
       </div>`).join("");
   }
 
@@ -3818,10 +3899,27 @@ function saveProject() {
   openProjectDetail(proj.id);
 }
 
-function markProjectDone() {
+
+async function toggleProjectPause() {
   const proj = getProject(currentProjectId);
   if (!proj) return;
-  if (!confirm("Mark this project as done?")) return;
+  if (proj.status === "done") { showToast("Project is already done"); return; }
+  const isPaused = proj.status === "paused";
+  const msg = isPaused ? "Resume this project?" : "Pause this project?";
+  const label = isPaused ? "Resume" : "Pause";
+  const ok = await showConfirm(msg, label, "#C8962A");
+  if (!ok) return;
+  proj.status = isPaused ? "active" : "paused";
+  saveProjects();
+  renderProjectDetail();
+  showToast(isPaused ? "Project resumed ✓" : "Project paused ✓");
+}
+
+async function markProjectDone() {
+  const proj = getProject(currentProjectId);
+  if (!proj) return;
+  const ok = await showConfirm("Mark this project as done?", "Mark Done", "#3D8A5E");
+  if (!ok) return;
   proj.status = "done";
   saveProjects();
   renderProjectDetail();
@@ -4009,17 +4107,33 @@ async function syncProjectToOneNote(proj) {
       });
       if (!res.ok) console.warn("Create project page failed:", res.status);
     } else {
-      // Delete and recreate — cleanest way to fully rebuild readable page
+      // Page exists — fetch with IDs and replace body content
+      try {
+        const contentRes = await fetch(`${ON_BASE}/pages/${pageId}/content?includeIDs=true`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const existingHtml = await contentRes.text();
+        // Extract body element ID
+        const bodyMatch = existingHtml.match(/id="([^"]+)"[^>]*>[^]*?<\/body>/i)
+          || existingHtml.match(/<body[^>]+id="([^"]+)"/i);
+        if (bodyMatch) {
+          // Build just the inner body content (no xml/html wrapper)
+          const bodyContent = pageHtml.replace(/^[\s\S]*?<body[^>]*>/, "").replace(/<\/body>[\s\S]*$/, "");
+          const commands = [{ action: "replace", target: bodyMatch[1], content: bodyContent }];
+          const patchRes = await graphPatch(`${ON_BASE}/pages/${pageId}/content`, commands, token);
+          if (patchRes.ok) return; // success
+        }
+      } catch(e) { console.warn("Project PATCH failed, falling back to recreate:", e); }
+      // Fallback: delete and recreate
       await fetch(`${ON_BASE}/pages/${pageId}`, {
         method: "DELETE", headers: { Authorization: `Bearer ${token}` }
       });
       await new Promise(r => setTimeout(r, 800));
-      const res = await fetch(`${ON_BASE}/sections/${secId}/pages`, {
+      await fetch(`${ON_BASE}/sections/${secId}/pages`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xhtml+xml" },
         body: pageHtml
       });
-      if (!res.ok) console.warn("Recreate project page failed:", res.status);
     }
   } catch(e) { console.warn("syncProjectToOneNote error:", e); }
 }
@@ -4102,13 +4216,31 @@ async function pullProjectsFromOneNote() {
   } catch(e) { console.warn("pullProjectsFromOneNote error:", e); }
 }
 
+
+// ── In-app confirm modal (replaces native confirm()) ─────────────────────────
+let _confirmResolve = null;
+function showConfirm(message, okLabel = "Confirm", okColor = "#B05C5C") {
+  return new Promise(resolve => {
+    _confirmResolve = resolve;
+    document.getElementById("confirm-message").textContent = message;
+    const okBtn = document.getElementById("confirm-ok-btn");
+    okBtn.textContent = okLabel;
+    okBtn.style.background = okColor;
+    document.getElementById("confirm-overlay").classList.add("open");
+  });
+}
+function confirmResolve(result) {
+  document.getElementById("confirm-overlay").classList.remove("open");
+  if (_confirmResolve) { _confirmResolve(result); _confirmResolve = null; }
+}
+
 // ===================== NAVIGATION =====================
 function showPage(name) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("page-" + name).classList.add("active");
   document.getElementById("nav-" + name).classList.add("active");
-  if (name === "focus") { renderFocus(); renderNotTodos(); }
+  if (name === "focus") { renderFocus(); }
   if (name === "progress") { renderProgress(); renderHabitsManage(); }
   if (name === "projects") { renderProjectsList(); }
   if (name === "capture") { renderTagRow(); renderFilterRow(); renderEntriesList(); renderBrainDumps(); updateLoginUI(); }
@@ -4121,17 +4253,60 @@ function showPage(name) {
       const c = document.getElementById("bullets-" + f);
       if (c && c.querySelectorAll(".bullet-input").length === 0) addBullet(f);
     });
-    // Show weekly review section on Saturdays (day 6)
-    const isSaturday = new Date().getDay() === 6;
+    // Show weekly review on Saturday, or Mon-Tue if last week's review was missed
+    const _dayNow = new Date().getDay();
+    const isSaturday = _dayNow === 6;
+    const isEarlyWeek = _dayNow >= 1 && _dayNow <= 2;
+    const lastWeekKey = (() => {
+      const d = new Date(); d.setDate(d.getDate() - 7);
+      const wd = d.getDay(), diff = (wd === 0 ? -6 : 1 - wd);
+      const mon = new Date(d); mon.setDate(d.getDate() + diff);
+      return mon.toISOString().split("T")[0];
+    })();
+    const missedLastWeek = isEarlyWeek && !weeklyReviews[lastWeekKey];
     const weeklySection = document.getElementById("weekly-section");
     if (weeklySection) {
-      weeklySection.style.display = isSaturday ? "block" : "none";
-      if (isSaturday) renderWeeklyPage();
+      const show = isSaturday || missedLastWeek;
+      weeklySection.style.display = show ? "block" : "none";
+      if (show) renderWeeklyPage();
     }
   }
 }
 
 // ===================== INIT =====================
+
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+document.addEventListener("keydown", (e) => {
+  const isMac = navigator.platform.toUpperCase().includes("MAC");
+  const isSaveKey = (isMac ? e.metaKey : e.ctrlKey) && e.key === "Enter";
+  if (!isSaveKey) return;
+
+  // Save Capture if on capture page
+  const capturePage = document.getElementById("page-capture");
+  if (capturePage && capturePage.classList.contains("active")) {
+    e.preventDefault();
+    saveCapture();
+    return;
+  }
+
+  // Save Reflection if on reflect page
+  const reflectPage = document.getElementById("page-reflect");
+  if (reflectPage && reflectPage.classList.contains("active")) {
+    e.preventDefault();
+    saveReflection();
+    return;
+  }
+});
+
+// ── Offline detection ─────────────────────────────────────────────────────────
+function updateOnlineStatus() {
+  const banner = document.getElementById("offline-banner");
+  if (banner) banner.style.display = navigator.onLine ? "none" : "block";
+}
+window.addEventListener("online",  updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+
 loadAll();
 renderToday();
 
@@ -4151,5 +4326,11 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () 
 // Silent background pull from OneNote on load
 if (getAccount() && getSettings().autoSync !== false) setTimeout(() => pullAllFromOneNote(), 2000);
 </script>
+
+  <!-- OFFLINE BANNER -->
+  <div id="offline-banner" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#B05C5C;color:#fff;text-align:center;padding:8px 16px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.5px;z-index:999">
+    📡 You're offline — changes save locally
+  </div>
+
 </body>
 </html>
