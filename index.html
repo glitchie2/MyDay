@@ -272,8 +272,6 @@
     </div>
     <!-- Contextual lesson card — rendered by renderContextualLesson() -->
     <div id="today-lesson-card-wrapper" style="padding:14px 18px 0"></div>
-    <!-- Values-under-pressure check-in — rendered by renderTodayValuesCheckin() -->
-    <div id="today-values-checkin" style="padding:0 18px"></div>
     <div class="scroll-area" id="today-content"></div>
   </div>
 
@@ -303,6 +301,22 @@
       <div style="display:flex;justify-content:flex-end;margin-top:10px">
         <button class="btn-primary" onclick="saveCapture()">Save + Sync</button>
       </div>
+      <!-- DOPAMINE LOG -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:14px 16px;margin-top:20px;margin-bottom:4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:4px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:2px">⚡ DOPAMINE LOG</div><button class="info-btn" onclick="openInfoModal('dopamine')"><span class="info-btn-circle">?</span></button></div>
+          <button onclick="openDopaminePatterns()" style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:#7A5FA8;padding:0;text-decoration:underline">patterns ↗</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button onclick="openDopamineEntry('boost')" style="flex:1;padding:8px;border-radius:8px;border:1px solid #3D8A5E44;background:#3D8A5E11;font-family:'DM Mono',monospace;font-size:10px;color:#3D8A5E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+            <span>⚡</span> Gave me energy
+          </button>
+          <button onclick="openDopamineEntry('drain')" style="flex:1;padding:8px;border-radius:8px;border:1px solid #B05C5C44;background:#B05C5C11;font-family:'DM Mono',monospace;font-size:10px;color:#B05C5C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+            <span>🪫</span> Drained me
+          </button>
+        </div>
+        <div id="dopamine-today-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;margin-bottom:12px">
         <div class="section-label" style="margin:0">ENTRIES</div>
         <span id="entries-count" class="mono" style="font-size:9px;color:var(--text-dimmer)"></span>
@@ -323,7 +337,35 @@
       </div>
     </div>
     <div class="scroll-area">
-      <!-- MODE CHECK-IN — first, most prominent -->
+
+      <!-- ═══ A. ARRIVAL ═══ -->
+
+      <!-- MOOD / ENERGY CHECK-IN -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:10px 14px;margin-bottom:16px">
+        <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:8px;letter-spacing:2px">MOOD &amp; ENERGY — HOW WAS TODAY?</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            <span class="mono" style="font-size:9px;color:var(--text-muted)">MOOD</span>
+            <button class="info-btn" onclick="openInfoModal('mood')">
+              <span class="info-btn-circle">?</span>
+            </button>
+          </div>
+          <div id="mood-picker" style="display:flex;gap:4px;flex:1"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            <span class="mono" style="font-size:9px;color:var(--text-muted)">ENERGY</span>
+            <button class="info-btn" onclick="openInfoModal('energy')">
+              <span class="info-btn-circle">?</span>
+            </button>
+          </div>
+          <div id="energy-picker" style="display:flex;gap:4px;flex:1"></div>
+        </div>
+      </div>
+
+      <!-- ═══ B. MAIN PATTERN WORK ═══ -->
+
+      <!-- MODE CHECK-IN -->
       <div id="mode-checkin-card" style="background:var(--bg-card);border:1px solid var(--accent);border-radius:5px;padding:14px 16px;margin-bottom:16px;border-left:3px solid var(--accent)">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
           <div class="mono" style="font-size:9px;color:var(--accent);letter-spacing:2px">🧩 WHICH PART IS RUNNING YOU RIGHT NOW?</div>
@@ -340,16 +382,111 @@
         <div id="checkin-ha-note" style="display:none;margin-top:10px;font-size:11px;color:#3D8A5E;background:#3D8A5E0d;border-radius:5px;padding:8px 10px;line-height:1.6;border-left:3px solid #3D8A5E"></div>
       </div>
 
+      <!-- PROCESS AN EVENT -->
+      <div style="margin-top:14px;margin-bottom:4px">
+        <button onclick="openEventChain()"
+          style="width:100%;padding:12px;border-radius:8px;border:1px solid #7A5FA844;background:linear-gradient(135deg,#7A5FA808,#4A90A408);font-family:'DM Mono',monospace;font-size:11px;color:#7A5FA8;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.5px">
+          <span style="font-size:16px">🧩</span>
+          <span>PROCESS AN EVENT &mdash; trigger &rarr; sequence &rarr; repair</span>
+        </button>
+        <div style="font-size:10px;color:var(--text-dimmer);text-align:center;margin-top:5px">Opens a guided 8-step flow. Use as many times per day as needed.</div>
+      </div>
+      <div id="ec-today-list-wrap" style="margin-top:8px;margin-bottom:4px"></div>
 
-      <!-- DAILY TRIGGER CAPTURE — Phase 1 of non-negotiables -->
-      <!-- Shown when compensatory_child logged today; always accessible -->
+      <!-- MODE CHAIN -->
+      <div class="reflection-block" style="border-left:3px solid #7A5FA8;padding-left:14px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+          <div class="reflection-label" style="color:#7A5FA8;margin:0">🧩 TODAY'S MODE CHAIN</div>
+          <button class="info-btn" onclick="openInfoModal('mode_chain')"><span class="info-btn-circle">?</span></button>
+        </div>
+        <div class="mono" style="font-size:9px;color:#C8962A;margin-bottom:4px;letter-spacing:1px">1 — WHAT TRIGGERED IT?</div>
+        <input type="text" id="eod-trigger"
+          placeholder="The external event — what actually happened..."
+          style="margin-bottom:14px;padding:8px 10px;font-size:12px" />
+        <div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:4px;letter-spacing:1px">2 — WHAT HIT FIRST?</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">Your immediate first reaction — the first internal state that activated.</div>
+        <div id="eod-mode-cards" style="margin-bottom:14px"></div>
+        <div id="eod-prot-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:4px;letter-spacing:1px">3 — WHAT PROTECTED YOU NEXT?</div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">The coping mode that came after. Skip if there was only one state.</div>
+          <button onclick="skipEodProtMode()"
+            style="width:100%;padding:8px;border-radius:8px;border:1px dashed var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dimmer);cursor:pointer;margin-bottom:8px">
+            Skip — only one mode was active
+          </button>
+          <div id="eod-prot-mode-cards"></div>
+        </div>
+        <div id="eod-need-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:4px;letter-spacing:1px">4 — WHAT DID THAT PART NEED?</div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">Pick the closest one — then add your own words if needed.</div>
+          <div id="eod-need-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+          <input type="text" id="eod-need" placeholder="Add your own words if needed..."
+            style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box" />
+        </div>
+        <div id="eod-story-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#4A90A4;margin-bottom:4px;letter-spacing:1px">5 — WHAT STORY DID YOUR MIND TELL?</div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px;font-style:italic">"He's lying." / "I'm being screwed over." / "I always fail at this." — write it raw.</div>
+          <textarea id="eod-mind-story" rows="2"
+            placeholder="The exact story — not sanitised..."
+            style="width:100%;padding:8px 10px;font-size:12px;box-sizing:border-box;border-radius:5px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:'Inter',sans-serif;line-height:1.5"></textarea>
+          <div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:1px;margin-top:10px;margin-bottom:6px">WHICH DISTORTION PATTERN? <span style="color:var(--text-dimmer);font-weight:400">(optional)</span></div>
+          <div id="mc-distortion-chips" style="margin-bottom:8px"></div>
+          <div id="mc-distortion-reframe"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+            <div style="font-size:10px;color:var(--text-dimmer);flex-shrink:0">Threat was:</div>
+            <button id="eod-threat-verified" onclick="setEodThreat('verified')"
+              style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);cursor:pointer">
+              ✓ Verified fact
+            </button>
+            <button id="eod-threat-assumed" onclick="setEodThreat('assumed')"
+              style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);cursor:pointer">
+              ? Assumed / interpreted
+            </button>
+          </div>
+        </div>
+        <div id="eod-ha-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:10px;letter-spacing:1px">6 — HEALTHY ADULT RESPONSE</div>
+          <div style="margin-bottom:8px">
+            <div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:1px;margin-bottom:4px">HEALTHY ADULT SEES:</div>
+            <input type="text" id="eod-ha-sees"
+              placeholder="What is actually happening — without the mind story..."
+              style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box;border-left:2px solid #7A5FA8;border-radius:0 5px 5px 0;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-input);color:var(--text)" />
+          </div>
+          <div style="margin-bottom:8px">
+            <div class="mono" style="font-size:8px;color:#4A90A4;letter-spacing:1px;margin-bottom:4px">HEALTHY ADULT SAYS:</div>
+            <input type="text" id="eod-ha-says"
+              placeholder="What the grounded part says to the activated part..."
+              style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box;border-left:2px solid #4A90A4;border-radius:0 5px 5px 0;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-input);color:var(--text)" />
+          </div>
+          <div>
+            <div class="mono" style="font-size:8px;color:#3D8A5E;letter-spacing:1px;margin-bottom:4px">HEALTHY ADULT DOES NEXT TIME:</div>
+            <input type="text" id="eod-ha-response"
+              placeholder="One concrete action — behavioral, not a resolution..."
+              style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box;border-left:2px solid #3D8A5E;border-radius:0 5px 5px 0;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-input);color:var(--text)" />
+          </div>
+        </div>
+        <div id="eod-target-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:8px;letter-spacing:1px">7 — WHICH HEALTHY MODE NEXT TIME?</div>
+          <div id="eod-target-mode-cards" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+        <div id="eod-action-section" style="display:none;margin-bottom:4px">
+          <div class="mono" style="font-size:9px;color:#C8962A;margin-bottom:8px;letter-spacing:1px">8 — NEXT TIME, THE FIRST ADULT MOVE:</div>
+          <div id="eod-action-options" style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px"></div>
+          <input type="text" id="eod-action-other"
+            placeholder="Or write your own..."
+            style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box" />
+        </div>
+      </div>
+
+      <!-- ═══ C. PATTERN TRAINING ═══ -->
+
+      <!-- CATCH THE SHIFT (was: Trigger Captures) -->
       <div id="trigger-capture-block" style="background:var(--bg-card);border:1px solid #E8A02044;border-left:3px solid #E8A020;border-radius:5px;margin-top:14px;overflow:hidden">
         <div onclick="toggleTriggerCapture()" style="cursor:pointer;padding:11px 14px;display:flex;align-items:center;justify-content:space-between">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:14px">🎭</span>
             <div>
-              <div class="mono" style="font-size:9px;color:#E8A020;letter-spacing:1px">TRIGGER CAPTURES — NON-NEGOTIABLE #1</div>
-              <div style="font-size:10px;color:var(--text-dimmer);margin-top:1px">Catch the compensatory move. Map it.</div>
+              <div class="mono" style="font-size:9px;color:#E8A020;letter-spacing:1px">CATCH THE SHIFT</div>
+              <div style="font-size:10px;color:var(--text-dimmer);margin-top:1px">Map moments you left yourself — up to 3 per day</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px">
@@ -366,46 +503,67 @@
         </div>
       </div>
 
-      <!-- MOOD / ENERGY CHECK-IN -->
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:14px 16px;margin-bottom:16px">
-        <div class="mono" style="font-size:9px;color:var(--text-dimmer);margin-bottom:14px;letter-spacing:2px">MOOD &amp; ENERGY — HOW WAS TODAY?</div>
-        <div style="margin-bottom:12px">
-          <div style="display:flex;align-items:center;margin-bottom:8px">
-            <span class="mono" style="font-size:9px;color:var(--text-muted)">MOOD</span>
-            <button class="info-btn" onclick="openInfoModal('mood')">
-              <span class="info-btn-circle">?</span>
-            </button>
-          </div>
-          <div id="mood-picker" style="display:flex;gap:6px"></div>
+      <!-- BUILD YOUR HEALTHY ADULT -->
+      <div style="background:var(--bg-card);border:1px solid #3D8A5E44;border-left:3px solid #3D8A5E;border-radius:5px;padding:14px 16px;margin-top:14px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+          <div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:2px">🌱 BUILD YOUR HEALTHY ADULT</div>
+          <button class="info-btn" onclick="openInfoModal('ha_track')"><span class="info-btn-circle">?</span></button>
         </div>
-        <div>
-          <div style="display:flex;align-items:center;margin-bottom:8px">
-            <span class="mono" style="font-size:9px;color:var(--text-muted)">ENERGY</span>
-            <button class="info-btn" onclick="openInfoModal('energy')">
-              <span class="info-btn-circle">?</span>
-            </button>
-          </div>
-          <div id="energy-picker" style="display:flex;gap:6px"></div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:12px">Pick 1–2 <strong>adult reps</strong> — how you practiced adulthood today. ★ marks reps suggested for your current mode. Small reps done consistently change the internal structure.</div>
+        <div id="ha-embodiment-lines"></div>
+        <div id="ha-practice-grid" style="display:flex;flex-direction:column;gap:0;margin-bottom:10px"></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+          <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px">YOUR REP TODAY</div>
         </div>
-      </div>
-      <!-- DOPAMINE LOG -->
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:14px 16px;margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:4px"><div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:2px">⚡ DOPAMINE LOG</div><button class="info-btn" onclick="openInfoModal('dopamine')"><span class="info-btn-circle">?</span></button></div>
-          <button onclick="openDopaminePatterns()" style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:#7A5FA8;padding:0;text-decoration:underline">patterns ↗</button>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button onclick="openDopamineEntry('boost')" style="flex:1;padding:8px;border-radius:8px;border:1px solid #3D8A5E44;background:#3D8A5E11;font-family:'DM Mono',monospace;font-size:10px;color:#3D8A5E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
-            <span>⚡</span> Gave me energy
-          </button>
-          <button onclick="openDopamineEntry('drain')" style="flex:1;padding:8px;border-radius:8px;border:1px solid #B05C5C44;background:#B05C5C11;font-family:'DM Mono',monospace;font-size:10px;color:#B05C5C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
-            <span>🪫</span> Drained me
-          </button>
-        </div>
-        <div id="dopamine-today-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        <input type="text" id="ha-rep-note" placeholder="What did you actually do? Even a small thing counts..."
+          style="margin-top:6px;padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box" />
       </div>
 
-      <!-- EOD CLOSURE — four questions -->
+      <!-- ═══ D. PRELOAD TOMORROW ═══ -->
+
+      <!-- Tomorrow's edge -->
+      <div style="margin-top:14px;padding:10px 12px;background:#E8A0200d;border-left:3px solid #E8A020;border-radius:5px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <div class="mono" style="font-size:9px;color:#E8A020;letter-spacing:1px">TOMORROW'S EDGE</div>
+          <button class="info-btn" onclick="openInfoModal('tomorrow_edge')"><span class="info-btn-circle">?</span></button>
+        </div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">One pre-decided adult move for tomorrow</div>
+        <input type="text" id="tomorrow-edge-input"
+          placeholder="Tomorrow, when I feel..., I will..."
+          style="padding:8px 10px;font-size:12px;width:100%;box-sizing:border-box;background:var(--bg-card);border-radius:5px;border:1px solid var(--border);margin-bottom:8px"
+          onblur="if(this.value.trim()) saveTomorrowEdge(this.value.trim())" />
+        <div id="edge-suggestions-wrap"></div>
+      </div>
+
+      <!-- Thought that made it harder -->
+      <div style="margin-top:10px;background:var(--bg-input);border-radius:6px;padding:10px 12px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <div class="mono" style="font-size:9px;color:#7A5FA8;letter-spacing:1px">🧠 THOUGHT THAT MADE IT HARDER</div>
+          <button class="info-btn" onclick="openInfoModal('eod_distortion')"><span class="info-btn-circle">?</span></button>
+        </div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;line-height:1.5">Write the automatic thought — raw. Then identify which distortion pattern it follows.</div>
+        <input type="text" id="eod-thought-text"
+          placeholder="&quot;I always do this.&quot; / &quot;It has to be perfect.&quot; / &quot;They think I failed.&quot;"
+          style="width:100%;padding:8px 10px;font-size:12px;box-sizing:border-box;border-radius:5px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);margin-bottom:10px" />
+        <div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:1px;margin-bottom:6px">WHICH DISTORTION PATTERN?</div>
+        <div id="eod-distortion-chips"></div>
+        <div id="eod-distortion-reframe"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+          <div style="font-size:10px;color:var(--text-dimmer);flex-shrink:0">This thought:</div>
+          <button id="eod-thought-helpful-yes" onclick="setEodThoughtHelpful(true)"
+            style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);cursor:pointer">
+            ✓ Had a valid point
+          </button>
+          <button id="eod-thought-helpful-no" onclick="setEodThoughtHelpful(false)"
+            style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);cursor:pointer">
+            ✗ Was not helping me
+          </button>
+        </div>
+        <div id="bullets-thought" class="bullet-list" data-symbol="🧠" data-color="#7A5FA8" style="display:none"></div>
+      </div>
+
+      <!-- ═══ E. EMOTIONAL CLOSURE ═══ -->
+
       <div class="reflection-block">
         <div class="reflection-label" style="color:#B05C5C;font-size:11px">🌫 What weighed on me today?</div>
         <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:5px;font-style:italic">What was heavy — emotionally, mentally, physically. Not what went wrong. What pressed on you.</div>
@@ -418,11 +576,12 @@
         <div id="bullets-mattered" class="bullet-list" data-symbol="✦" data-color="#3D8A5E"></div>
         <button class="add-bullet-btn" onclick="addBullet('mattered')">add point</button>
       </div>
-      <div class="reflection-block">
-        <div class="reflection-label" style="color:#4A90A4;font-size:11px">→ What do I want to carry into tomorrow?</div>
-        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:5px;font-style:italic">Not a task list. One intention, one quality, one thing worth keeping.</div>
-        <div id="bullets-carry" class="bullet-list" data-symbol="→" data-color="#4A90A4"></div>
-        <button class="add-bullet-btn" onclick="addBullet('carry')">add point</button>
+      <div class="reflection-block" style="padding-top:4px;padding-bottom:4px">
+        <div id="bullets-carry" class="bullet-list" data-symbol="→" data-color="#4A90A4" style="display:none"></div>
+        <button onclick="openCarryTaskBubble()" style="background:none;border:1px solid #4A90A444;border-radius:6px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:10px;color:#4A90A4;cursor:pointer;display:flex;align-items:center;gap:6px;width:100%;transition:border-color 0.15s" onmouseover="this.style.borderColor='#4A90A4'" onmouseout="this.style.borderColor='#4A90A444'">
+          <span style="font-size:13px">＋</span>
+          <span>Add something to carry into tomorrow → tasks</span>
+        </button>
       </div>
       <div class="reflection-block" style="background:var(--bg-input);border-radius:5px;padding:10px 12px;border:1px dashed var(--border)">
         <div class="reflection-label" style="color:#7A5FA8;font-size:11px">🌙 One thing I release for tonight <span style="font-size:9px;color:var(--text-dimmer);font-weight:400">(optional)</span></div>
@@ -430,75 +589,35 @@
         <div id="bullets-release" class="bullet-list" data-symbol="🌙" data-color="#7A5FA8"></div>
         <button class="add-bullet-btn" onclick="addBullet('release')">add point</button>
       </div>
-      <!-- MODE CHAIN — EOD reflection upgrade -->
-      <div class="reflection-block" style="border-left:3px solid #7A5FA8;padding-left:14px">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-          <div class="reflection-label" style="color:#7A5FA8;margin:0">🧩 TODAY'S MODE CHAIN</div>
-          <button class="info-btn" onclick="openInfoModal('mode_chain')"><span class="info-btn-circle">?</span></button>
-        </div>
-        <!-- Guided prompt — collapsible -->
-        <div id="mode-chain-guide" style="font-size:11px;color:var(--text-dimmer);margin-bottom:10px;line-height:1.6;padding:8px 10px;background:var(--bg-input);border-radius:5px;cursor:pointer" onclick="toggleModeChainGuide()">
-          <span id="mode-chain-guide-text">💡 Tap to see the guiding questions</span>
-        </div>
-        <!-- Trigger -->
-        <div class="mono" style="font-size:9px;color:#C8962A;margin-bottom:4px;letter-spacing:1px">WHAT TRIGGERED IT?</div>
-        <input type="text" id="eod-trigger" placeholder="e.g. Got a critical message / missed the deadline / felt behind..."
-          style="margin-bottom:10px;padding:7px 10px;font-size:12px" />
-        <!-- Mode that ran -->
-        <div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:6px;letter-spacing:1px">WHICH MODE TOOK OVER?</div>
-        <div id="eod-mode-cards" style="margin-bottom:10px"></div>
-        <!-- What it needed -->
-        <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:4px;letter-spacing:1px">WHAT DID THAT PART NEED?</div>
-        <input type="text" id="eod-need" placeholder="e.g. Reassurance / permission to rest / realistic bar..."
-          style="margin-bottom:10px;padding:7px 10px;font-size:12px" />
-        <!-- Healthy Adult response -->
-        <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:4px;letter-spacing:1px">HEALTHY ADULT RESPONSE NEXT TIME</div>
-        <input type="text" id="eod-ha-response" placeholder="e.g. Do 5 minutes only / remind myself one thing at a time..."
-          style="margin-bottom:10px;padding:7px 10px;font-size:12px" />
 
-        <!-- Tomorrow's edge — Phase 5 non-negotiable -->
-        <div style="margin-top:4px;margin-bottom:10px;padding:10px 12px;background:#E8A0200d;border-left:2px solid #E8A020;border-radius:5px">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-            <div class="mono" style="font-size:9px;color:#E8A020;letter-spacing:1px">TOMORROW&#39;S EDGE</div>
-            <button class="info-btn" onclick="openInfoModal('tomorrow_edge')"><span class="info-btn-circle">?</span></button>
+      <!-- ═══ F. OPTIONAL ═══ -->
+
+      <!-- VALUES CHECK-IN — collapsible -->
+      <div id="reflect-values-wrap" style="margin-top:14px;border:1px solid #C8962A44;border-left:3px solid #C8962A;border-radius:6px;overflow:hidden">
+        <div onclick="toggleReflectValues()" style="cursor:pointer;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px">⭐</span>
+            <div>
+              <div class="mono" style="font-size:9px;color:#C8962A;letter-spacing:1px">DID YOU ACT ON YOUR VALUES TODAY?</div>
+              <div style="font-size:10px;color:var(--text-dimmer);margin-top:1px">Tap to expand — ACT values check-in</div>
+            </div>
           </div>
-          <input type="text" id="tomorrow-edge-input"
-            placeholder="Tomorrow, when I feel exposed, I will..."
-            style="padding:6px 9px;font-size:12px;width:100%;box-sizing:border-box;background:var(--bg-card)"
-            onblur="if(this.value.trim()) saveTomorrowEdge(this.value.trim())" />
-          <div style="font-size:10px;color:var(--text-dimmer);margin-top:4px;font-style:italic">One sentence. Specific. What the adult version of you will do.</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="info-btn" onclick="event.stopPropagation();openInfoModal('values_act')"><span class="info-btn-circle">?</span></button>
+            <span id="reflect-values-chevron" style="font-size:11px;color:var(--text-dimmer);transition:transform 0.2s">▾</span>
+          </div>
         </div>
-
-        <!-- Legacy thought field — kept for backward compat, relabelled -->
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-          <div class="mono" style="font-size:9px;color:#7A5FA8;letter-spacing:1px">🧠 ANY OTHER THOUGHT THAT MADE TODAY HARDER?</div>
-          <button class="info-btn" onclick="openInfoModal('thought')" style="margin-bottom:0"><span class="info-btn-circle">?</span></button>
+        <div id="reflect-values-body" style="display:none;padding:0 14px 14px">
+          <div id="reflect-values-checkin"></div>
         </div>
-        <div id="bullets-thought" class="bullet-list" data-symbol="🧠" data-color="#7A5FA8"></div>
-        <button class="add-bullet-btn" onclick="addBullet('thought')">add point</button>
       </div>
 
-      <!-- HEALTHY ADULT DEVELOPMENTAL TRACK -->
-      <div style="background:var(--bg-card);border:1px solid #3D8A5E44;border-left:3px solid #3D8A5E;border-radius:5px;padding:14px 16px;margin-top:14px">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-          <div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:2px">🌱 BUILD YOUR HEALTHY ADULT</div>
-          <button class="info-btn" onclick="openInfoModal('ha_track')"><span class="info-btn-circle">?</span></button>
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:12px">Pick 1–2 capacities you practiced today — or want to practice tomorrow. Small reps done consistently change the internal structure.</div>
-        <!-- Embodiment lines rendered by renderEmbodimentLines() -->
-        <div id="ha-embodiment-lines"></div>
-        <div id="ha-practice-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px"></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
-          <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px">YOUR REP TODAY</div>
-        </div>
-        <input type="text" id="ha-rep-note" placeholder="What did you actually do? Even a small thing counts..."
-          style="margin-top:6px;padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box" />
-      </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
         <button class="btn-ghost" onclick="loadTodayReflection()">Load Today</button>
         <button class="btn-primary" onclick="saveReflection()">Save + Sync</button>
       </div>
-      <div class="section-label" style="margin-top:24px">PAST REFLECTIONS</div>
+
+            <div class="section-label" style="margin-top:24px">PAST REFLECTIONS</div>
       <div id="reflections-list"></div>
 
       <!-- WEEKLY REVIEW — appears only on Saturdays -->
@@ -710,6 +829,14 @@
         </button>
         <button onclick="openListModal('nottodo')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
           <span style="font-size:12px">🚫</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Don't Do</span>
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="openListModal('limitingBeliefs')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:12px">🔒</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Limiting Beliefs</span>
+        </button>
+        <button onclick="openListModal('empoweringBeliefs')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:12px">⚡</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Empowering Beliefs</span>
         </button>
       </div>
       <button onclick="openBodyDouble()" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid #7A5FA8;border-radius:16px;padding:8px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#7A5FA811'" onmouseout="this.style.background='none'">
@@ -1112,12 +1239,7 @@
             <span style="font-family:'Impact','Arial Black',sans-serif;font-size:11px;font-weight:900;background:linear-gradient(90deg,#00e5ff,#ff6b00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px">VIVID</span>
             <span style="font-size:9px;color:#333">Impact font · Max contrast</span>
           </button>
-          <button onclick="setTheme('slate')" id="theme-slate"
-            style="padding:10px 8px;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:#0d1117;display:flex;flex-direction:column;align-items:flex-start;gap:3px;transition:border-color 0.2s">
-            <span style="font-size:13px">🩵</span>
-            <span style="font-family:'Inter',sans-serif;font-size:10px;color:#cdd5df;font-weight:500;letter-spacing:0.3px">Slate</span>
-            <span style="font-size:9px;color:#3d8b8b">Blue-grey · Focus</span>
-          </button>
+<!-- Slate removed from menu — it is now Clay's automatic dark mode -->
           <button onclick="setTheme('clay')" id="theme-clay"
             style="padding:10px 8px;border-radius:6px;border:1px solid #e0d6c8;cursor:pointer;background:#f7f3ee;display:flex;flex-direction:column;align-items:flex-start;gap:3px;transition:border-color 0.2s">
             <span style="font-size:13px">🪴</span>
@@ -1170,6 +1292,51 @@
             id="settings-reframe-toggle" onclick="toggleReframeCards()">
             <span style="position:absolute;top:3px;left:17px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s"
               id="settings-reframe-knob"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode strip toggle -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-size:12px;color:var(--text)">Mode pattern strip</span>
+            <div style="font-size:10px;color:var(--text-dimmer)">Which pattern is running you — Today tab</div>
+          </div>
+          <div style="position:relative;width:36px;height:22px;border-radius:11px;cursor:pointer;transition:background 0.2s"
+            id="settings-modestrip-toggle" onclick="toggleModeStrip()">
+            <span style="position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s"
+              id="settings-modestrip-knob"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shutdown ritual toggle -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-size:12px;color:var(--text)">Shutdown ritual</span>
+            <div style="font-size:10px;color:var(--text-dimmer)">End-of-day ritual block on Today tab</div>
+          </div>
+          <div style="position:relative;width:36px;height:22px;border-radius:11px;cursor:pointer;transition:background 0.2s;background:#3D8A5E"
+            id="settings-shutdown-toggle" onclick="toggleShutdownRitual()">
+            <span style="position:absolute;top:3px;left:17px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s"
+              id="settings-shutdown-knob"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Values act toggle -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-size:12px;color:var(--text)">Values check-in</span>
+            <div style="font-size:10px;color:var(--text-dimmer)">ACT values tracking in Reflect &amp; Progress</div>
+          </div>
+          <div style="position:relative;width:36px;height:22px;border-radius:11px;cursor:pointer;transition:background 0.2s;background:#3D8A5E"
+            id="settings-valuesact-toggle" onclick="toggleValuesAct()">
+            <span style="position:absolute;top:3px;left:17px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s"
+              id="settings-valuesact-knob"></span>
           </div>
         </div>
       </div>
@@ -1780,7 +1947,7 @@ async function syncRowToPage(pageName, rowHtml) {
 
 
 // ===================== DATA =====================
-const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals", projects:"yd2-projects" };
+const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals", projects:"yd2-projects", limitingBeliefs:"yd2-limiting-beliefs", empoweringBeliefs:"yd2-empowering-beliefs" };
 
 // ── HTML escape helper (prevents XSS in innerHTML) ───────────────────────────
 const esc = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -1800,35 +1967,9 @@ const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch
 
 // Full habits with all notes from original file
 const DEFAULT_HABITS = [
-  // MORNING
-  { id:"m1", task:"Same wake time", note:"Even weekends. Consistency = safety signal.", color:"#C8962A", section:"MORNING" },
-  { id:"m2", task:"No phone — 30 min", note:"Touch base with yourself first.", color:"#C8962A", section:"MORNING" },
-  { id:"m3", task:"Body grounding", note:"Stretch, breathe, or slow walk.", color:"#C8962A", section:"MORNING" },
-  { id:"m4", task:"Warm drink, no multitasking", note:"A micro-practice of presence.", color:"#C8962A", section:"MORNING" },
-  { id:"m5", task:"One journal sentence", note:"How do I feel right now?", color:"#C8962A", section:"MORNING" },
-  { id:"m6", task:"Sunlight in first hour", note:"Anchors rhythm. Affects serotonin.", color:"#C8962A", section:"MORNING" },
-  // WORK BLOCK
-  { id:"w1", task:"Set ONE clear intention", note:"What does done look like today?", color:"#4A90A4", section:"WORK BLOCK" },
-  { id:"w2", task:"45 min focus / 10 min break", note:"Each cycle = evidence you can.", color:"#4A90A4", section:"WORK BLOCK" },
-  { id:"w3", task:"Body breaks only", note:"Walk, stretch. No scrolling.", color:"#4A90A4", section:"WORK BLOCK" },
-  { id:"w4", task:"One task at a time", note:"Lists trigger overwhelm. One is enough.", color:"#4A90A4", section:"WORK BLOCK" },
-  // MIDDAY
-  { id:"n1", task:"Eat without a screen", note:"Sensory presence. Easy mindfulness.", color:"#B05C5C", section:"MIDDAY" },
-  { id:"n2", task:"Short walk outside", note:"Light + movement + being among humans.", color:"#B05C5C", section:"MIDDAY" },
-  { id:"n3", task:"Low-effort tasks only", note:"Admin, reading. Save hard thinking.", color:"#B05C5C", section:"MIDDAY" },
-  // AFTERNOON
-  { id:"a1", task:"No caffeine to fight the dip", note:"Use it for lighter tasks instead.", color:"#7A5FA8", section:"AFTERNOON" },
-  { id:"a2", task:"Second work block", note:"Emails, organizing, reading.", color:"#7A5FA8", section:"AFTERNOON" },
-  { id:"a3", task:"Hard stop — same time daily", note:"Boundaries with work = self-respect.", color:"#7A5FA8", section:"AFTERNOON" },
-  // EVENING
-  { id:"e1", task:"Small social contact", note:"A message or brief call. Isolation feeds itself.", color:"#3D8A5E", section:"EVENING" },
-  { id:"e2", task:"20 min walk if no morning move", note:"Mood + sleep improve within 2 weeks.", color:"#3D8A5E", section:"EVENING" },
-  { id:"e3", task:"One thing purely for pleasure", note:"Not earned — deserved.", color:"#3D8A5E", section:"EVENING" },
-  { id:"e4", task:"Wind-down routine", note:"30–45 min before sleep. No work, dim lights.", color:"#3D8A5E", section:"EVENING" },
-  { id:"e5", task:"Same sleep time", note:"Nervous system needs a runway, not a crash.", color:"#3D8A5E", section:"EVENING" },
   // HEALTH
-  { id:"h1", task:"Drink 2L water", note:"Hydration affects focus, energy and mood.", color:"#2A9D8F", section:"HEALTH" },
-  { id:"h2", task:"Take supplements / meds", note:"Consistency is what makes them work.", color:"#2A9D8F", section:"HEALTH" },
+  // { id:"h1", task:"Drink 2L water", note:"Hydration affects focus, energy and mood.", color:"#2A9D8F", section:"HEALTH" },
+  // { id:"h2", task:"Take supplements / meds", note:"Consistency is what makes them work.", color:"#2A9D8F", section:"HEALTH" },
 ];
 
 const SECTION_DEFS = [
@@ -1849,7 +1990,7 @@ const TAGS = [
 
 let history2 = {}, captures = [], reflections = {}, habits = [];
 let checked = {}, collapsedSections = {}, activeTag = "thought", filterTag = "all", progView = "week", newHabitSection = "MORNING";
-let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {}, myValues = [], myGoals = [], projects = [];
+let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {}, myValues = [], myGoals = [], projects = [], limitingBeliefs = [], empoweringBeliefs = [];
 
 let tasks = [];
 
@@ -1886,6 +2027,8 @@ function loadAll() {
     myValues = _validValues; // use only valid entries
   }
   myGoals = ld(SK.goals, []);
+  limitingBeliefs = ld(SK.limitingBeliefs, []);
+  empoweringBeliefs = ld(SK.empoweringBeliefs, []);
   projects = ld(SK.projects, []);
   loadDopamine();
   loadBdSessions();
@@ -1971,9 +2114,6 @@ function renderToday() {
     }
   })();
 
-  // ── Values-under-pressure check-in (Change 7) ─────────────────────────────
-  renderTodayValuesCheckin();
-
   // ── Contextual lesson card (Change 5) ─────────────────────────────────────
   // Render lesson based on pattern detection — before habits, after mode strip
   (function() {
@@ -2014,7 +2154,7 @@ function renderToday() {
   const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
   const sdMins  = sdHour * 60 + sdMin;
   const shutdownDoneToday = ld("yd2-shutdown-" + today(), false);
-  if (!shutdownDoneToday && nowMins >= sdMins) {
+  if (!shutdownDoneToday && nowMins >= sdMins && getSettings().showShutdownRitual !== false) {
     const sdBanner = document.createElement("div");
     sdBanner.style.cssText = "background:#3D8A5E11;border:1px solid #3D8A5E33;border-radius:5px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer";
     sdBanner.innerHTML = `
@@ -2261,11 +2401,16 @@ function renderToday() {
     content.appendChild(msg);
   }
 
-  // Shutdown ritual — always append at bottom of Today
-  renderShutdownRitual(content);
+  // Shutdown ritual — append at bottom of Today (unless disabled in settings)
+  if (getSettings().showShutdownRitual !== false) renderShutdownRitual(content);
 
   // Update the mode strip at top of today
-  updateTodayModeStrip();
+  // Mode strip visibility per settings
+  const todayModeStripEl = document.getElementById("today-mode-strip");
+  if (todayModeStripEl) {
+    todayModeStripEl.style.display = getSettings().showModeStrip !== false ? "flex" : "none";
+  }
+  if (getSettings().showModeStrip !== false) updateTodayModeStrip();
 }
 
 function renderShutdownRitual(container) {
@@ -2678,7 +2823,6 @@ async function saveReflection() {
       '<td style="padding:8px 12px;border:1px solid #bbb;font-weight:bold;white-space:nowrap;font-family:sans-serif;font-size:13px">📅 ' + r.date + '</td>' +
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.weighed,"🌫") + '</td>' +
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.mattered,"✦") + '</td>' +
-      '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.carry,"→") + '</td>' +
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.release,"🌙") + '</td>' +
       '<td style="padding:8px 12px;border:1px solid #bbb;font-family:sans-serif;font-size:13px;vertical-align:top">' + bl(r.thought,"🧠") + '</td>' +
       '</tr>';
@@ -2750,15 +2894,35 @@ function renderReflectionsList() {
     let modeChainHtml = "";
     if (r.modeChain && (r.modeChain.trigger || r.modeChain.mode || r.modeChain.need)) {
       const mc = r.modeChain;
-      const modeObj = (MODES || []).find(m => m.key === mc.mode);
+      const modeObj  = mc.mode     ? (MODES || []).find(m => m.key === mc.mode)     : null;
+      const protObj  = mc.protMode ? (MODES || []).find(m => m.key === mc.protMode) : null;
+      const targObj  = mc.targetMode ? (MODES||[]).find(m=>m.key===mc.targetMode)   : null;
       const modeLabel = modeObj ? modeObj.emoji + " " + modeObj.label : (mc.mode || "");
-      modeChainHtml = `<div style="margin-bottom:10px;padding:8px 10px;background:var(--bg-input);border-radius:5px;border-left:3px solid #7A5FA8">
-        <div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:6px;letter-spacing:1px">🧩 MODE CHAIN</div>
-        ${mc.trigger ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:var(--text-dimmer)">Trigger:</span> ${safe(mc.trigger)}</div>` : ""}
-        ${modeLabel ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:var(--text-dimmer)">Mode:</span> ${modeLabel}</div>` : ""}
-        ${mc.need ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:var(--text-dimmer)">Needed:</span> ${safe(mc.need)}</div>` : ""}
-        ${mc.haResponse ? `<div style="font-size:11px;color:#3D8A5E;margin-top:4px"><span style="color:var(--text-dimmer)">Next time:</span> ${safe(mc.haResponse)}</div>` : ""}
-      </div>`;
+      const protLabel = protObj ? protObj.emoji + " " + protObj.label : (mc.protSkipped ? "— (skipped)" : "");
+      modeChainHtml =
+        '<div style="margin-bottom:10px;padding:10px 12px;background:var(--bg-input);border-radius:5px;border-left:3px solid #7A5FA8">' +
+        '<div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:8px;letter-spacing:1px">🧩 MODE CHAIN</div>' +
+        (mc.trigger ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px"><span style="color:var(--text-dimmer)">Trigger:</span> ' + safe(mc.trigger) + '</div>' : "") +
+        (modeLabel  ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:2px"><span style="color:var(--text-dimmer)">First:</span> ' + modeLabel + '</div>' : "") +
+        (protLabel  ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px"><span style="color:var(--text-dimmer)">Then:</span> ' + protLabel + '</div>' : "") +
+        (mc.needKey || mc.need ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px"><span style="color:var(--text-dimmer)">Needed:</span> ' + safe(mc.need || mc.needKey || "") + '</div>' : "") +
+        (mc.mindStory ? '<div style="font-size:11px;color:#4A90A4;margin-bottom:4px;font-style:italic"><span style="color:var(--text-dimmer);font-style:normal">Mind story:</span> "' + safe(mc.mindStory.slice(0,80)) + (mc.mindStory.length>80?"…":"") + '"</div>' : "") +
+        (mc.haSees ? '<div style="font-size:10px;color:#7A5FA8;margin-bottom:2px"><span style="color:var(--text-dimmer)">Sees:</span> ' + safe(mc.haSees.slice(0,70)) + '</div>' : "") +
+        (mc.haSays ? '<div style="font-size:10px;color:#4A90A4;margin-bottom:2px"><span style="color:var(--text-dimmer)">Says:</span> ' + safe(mc.haSays.slice(0,70)) + '</div>' : "") +
+        (mc.haResponse ? '<div style="font-size:10px;color:#3D8A5E;margin-bottom:4px"><span style="color:var(--text-dimmer)">Does:</span> ' + safe(mc.haResponse.slice(0,80)) + '</div>' : "") +
+        (targObj ? '<div style="font-size:11px;color:' + targObj.color + ';margin-bottom:2px"><span style="color:var(--text-dimmer)">Toward:</span> ' + targObj.emoji + " " + targObj.label + '</div>' : "") +
+        (mc.nextAction || mc.nextActionOther ? '<div style="font-size:10px;color:#C8962A;margin-top:2px"><span style="color:var(--text-dimmer)">Next move:</span> ' + safe((mc.nextActionOther || mc.nextAction || "").slice(0,80)) + '</div>' : "") +
+        (() => {
+          if (!mc.distortionKey || mc.distortionKey === "unsure") return "";
+          const dt = DISTORTION_TYPES.find(d => d.key === mc.distortionKey);
+          if (!dt) return "";
+          const helpful = mc.thoughtHelpful;
+          return '<div style="font-size:10px;color:' + dt.color + ';margin-top:4px">' +
+            '<span style="color:var(--text-dimmer)">Distortion:</span> ' + dt.emoji + ' ' + dt.label +
+            (helpful === false ? ' <span style="color:#B05C5C">— not helpful</span>' : helpful === true ? ' <span style="color:#3D8A5E">— had a point</span>' : '') +
+            '</div>';
+        })() +
+        '</div>';
     }
     // Backward compat: show old fields if new ones empty
     const hasNew = arr(r.weighed).length || arr(r.mattered).length || arr(r.carry).length;
@@ -2846,16 +3010,16 @@ function renderProgress() {
       const rd = [...getDays(30)].reverse();
       for (const day of rd) { if (history2[day] && history2[day][habit.id]) streak++; else break; }
 
-      const row = document.createElement("div"); row.style.marginBottom = "12px";
-      const lr = document.createElement("div"); lr.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:5px";
+      const row = document.createElement("div"); row.style.marginBottom = "6px";
+      const lr = document.createElement("div"); lr.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:3px";
       lr.innerHTML = `<span style="font-size:12px;color:var(--text);font-family:'Playfair Display',serif;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(habit.task)}</span>${streak>0?`<span class="streak-badge" style="background:${sec.color}22;color:${sec.color};flex-shrink:0;margin-left:8px">${streak}🔥</span>`:""}`;
       row.appendChild(lr);
 
-      const grid = document.createElement("div"); grid.className = "heatmap-grid"; grid.style.cssText = `grid-template-columns:repeat(${cols},1fr);gap:3px`;
+      const grid = document.createElement("div"); grid.className = "heatmap-grid"; grid.style.cssText = `grid-template-columns:repeat(${cols},1fr);gap:2px`;
       days.forEach(day => {
         const done = history2[day] && history2[day][habit.id];
         const cell = document.createElement("div");
-        cell.style.cssText = `aspect-ratio:1;border-radius:2px;background:${done?sec.color:"var(--border)"};transition:background 0.3s`;
+        cell.style.cssText = `height:10px;border-radius:2px;background:${done?sec.color:"var(--border)"};transition:background 0.3s`;
         grid.appendChild(cell);
       });
       row.appendChild(grid);
@@ -3386,7 +3550,28 @@ const INFO_CONTENT = {
       </div>
       <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">You do not have to complete every field. Even just naming the thought is useful data. One field is better than none.</p>`
   },
-  stuck_thought: {
+  eod_distortion: {
+    title: "🧠 Cognitive Distortions",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">Cognitive distortions are <b>automatic thought patterns that feel true but are not accurate</b>. ADHD brains are especially prone to them. The goal is not to argue with the thought — it is to name the pattern. Naming weakens the grip.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:10px">
+        <b style="color:var(--text-heading)">The 12 patterns in this app:</b><br/><br/>
+        <b style="color:#B05C5C">&#x26AB; All-or-nothing</b> — If I cannot do it perfectly, there is no point starting.<br/>
+        <b style="color:#D4622A">&#x1F30B; Catastrophising</b> — If I mess this up, everything falls apart.<br/>
+        <b style="color:#7A5FA8">&#x1F52E; Mind reading</b> — They think I am incompetent.<br/>
+        <b style="color:#C8962A">&#x1F4CF; Should statements</b> — By my age I should have this figured out.<br/>
+        <b style="color:#B05C5C">&#x1F4A2; Emotional reasoning</b> — I feel overwhelmed so it must be impossible.<br/>
+        <b style="color:#7A5FA8">&#x1F3F7;&#xFE0F; Labelling</b> — I am lazy. / I am broken.<br/>
+        <b style="color:#C8962A">&#x1F52C; Magnification</b> — This one mistake cancels everything I did well.<br/>
+        <b style="color:#4A90A4">&#x1F0CF; Fortune telling</b> — I will never get better at this.<br/>
+        <b style="color:#D4622A">&#x1F3AF; Personalising</b> — The meeting went badly because of me.<br/>
+        <b style="color:#3D8A5E">&#x2702;&#xFE0F; Discounting positives</b> — That does not count, it was easy.<br/>
+        <b style="color:#6B8E9F">&#x1F4E1; Rejection sensitivity</b> — They did not reply, they are annoyed at me.<br/>
+        <b style="color:#8B6E4E">&#x1F6AA; Avoidance story</b> — I will do it when I feel more ready.
+      </div>
+      <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">After selecting a pattern, the app shows a short reframe — not to fix the thought, but to create one inch of distance from it. That distance is enough to act from. Patterns logged here feed into the weekly and monthly Schema Patterns dashboard.</p>`
+  },
+  thought: {
     title: "💭 What thought is making this hard?",
     body: `
       <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">This is the most important field. ADHD brains often have a <b>layer of thought between them and a task</b> that operates below awareness. The goal is to surface it.</p>
@@ -3684,6 +3869,25 @@ const INFO_CONTENT = {
         3. Ask: "What value do I want to act from instead right now?"<br/>
         4. Do that — while carrying the urge. You do not need the urge to disappear first.
       </div>`
+  },
+  event_chain: {
+    title: "🧩 What is the Event Chain Processor?",
+    body: `
+      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">The Event Chain Processor is an 8-step guided reflection for working through any specific event — an interaction, a moment of shutdown, a conflict, a stuck point. It can be used multiple times per day. Each entry is stored separately.</p>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:10px">
+        <b style="color:var(--text-heading)">The 8 steps:</b><br/><br/>
+        <b>1. Trigger</b> — What actually happened. The external event, not the feeling about it.<br/><br/>
+        <b>2. What hit first</b> — The immediate first reaction. The first internal state that activated.<br/><br/>
+        <b>3. What protected you next</b> — The coping mode that came after. How your system responded to the first state. Optional — skip if it was one state only.<br/><br/>
+        <b>4. What that part needed</b> — Guided need chips plus free text. The unmet need underneath the reaction.<br/><br/>
+        <b>5. The mind story</b> — What your mind concluded about what happened. The interpretation — not the fact. This is the ACT layer.<br/><br/>
+        <b>6. Healthy Adult: SEES / SAYS / DOES</b> — Three structured fields. What the grounded part of you sees about the situation, says to the activated part, and would do next time. Auto-filled from your mode selection, fully editable.<br/><br/>
+        <b>7. Target healthy mode</b> — Which healthy mode you want to move toward. Not where you were — where you want to go.<br/><br/>
+        <b>8. One adult move</b> — A specific behavioral option. Something concrete your hands or mouth can actually do next time.<br/><br/>
+        <b style="color:var(--text-heading)">Why sequence matters:</b><br/>
+        Real events rarely involve one mode. Usually: first reaction → coping mode → behavior. Capturing the sequence makes the pattern visible — and interruptible.
+      </div>
+      <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">Saved entries appear below the button in the Reflect tab. Each feeds into weekly and monthly pattern analysis.</p>`
   },
   mode_chain: {
     title: "🔗 Mode chains — the machine you were inside",
@@ -4075,20 +4279,38 @@ const INFO_CONTENT = {
       </div>`
   },
   tomorrow_edge: {
-    title: "🎯 What Is Tomorrow's Edge?",
+    title: "🎯 Tomorrow's Edge",
     body: `
-      <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">Tomorrow's edge is a single sentence written the night before — a specific commitment about what the adult version of you will do tomorrow when exposure shows up. It is the continuity mechanism between today's awareness and tomorrow's action.</p>
-      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;font-size:12px;color:var(--text-muted);margin-bottom:10px">
-        <b style="color:#E8A020">The format:</b><br/>
-        "Tomorrow, when I feel [exposed/judged/pressured/lesser than], I will [specific adult action]."<br/><br/>
-        <b style="color:var(--text-heading)">Examples:</b><br/>
-        "Tomorrow, when I feel exposed, I will slow down and speak directly instead of joking."<br/>
-        "Tomorrow, when I feel judged, I will hold my position for one extra beat before softening."<br/>
-        "Tomorrow, when I feel lesser than, I will stay in the room and keep speaking at the same pace."<br/><br/>
-        <b style="color:var(--text-heading)">Why it works:</b><br/>
-        Most development plans fail because they live in general intention. "I will be more direct" does nothing when the moment arrives — because the compensatory child move is faster than deliberation. Tomorrow's edge gives your brain a pre-loaded response that does not require a decision under pressure. The decision was already made last night.
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;margin-bottom:12px">
+        <div class="mono" style="font-size:8px;color:#E8A020;letter-spacing:1px;margin-bottom:5px">WHAT IT IS</div>
+        <p style="color:var(--text-muted);font-size:12px;margin:0;line-height:1.6">A one-sentence commitment written tonight about what the adult version of you will do tomorrow under pressure.</p>
       </div>
-      <p style="font-size:11px;color:var(--text-dimmer);font-style:italic">It appears at the top of your Today tab the next morning as a reminder. One sentence. Specific. Hold it.</p>`
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;margin-bottom:12px">
+        <div class="mono" style="font-size:8px;color:#E8A020;letter-spacing:1px;margin-bottom:5px">FORMAT</div>
+        <p style="color:var(--text);font-size:12px;margin:0;font-style:italic">"Tomorrow, when I feel [trigger], I will [specific adult action]."</p>
+      </div>
+      <div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;margin-bottom:12px">
+        <div class="mono" style="font-size:8px;color:#E8A020;letter-spacing:1px;margin-bottom:5px">WHY IT WORKS</div>
+        <p style="color:var(--text-muted);font-size:12px;margin:0;line-height:1.6">It preloads your response before the moment hits, so you do not need to invent maturity under pressure.</p>
+      </div>
+      <details style="margin-bottom:8px">
+        <summary style="font-family:'DM Mono',monospace;font-size:10px;color:#E8A020;cursor:pointer;padding:6px 0">See examples</summary>
+        <div style="padding:8px 10px;font-size:11px;color:var(--text-muted);line-height:1.7;margin-top:4px">
+          "Tomorrow, when I feel exposed, I will slow down and speak directly instead of joking."<br/>
+          "Tomorrow, when I feel suspicious, I will verify before accusing."<br/>
+          "Tomorrow, when I feel judged, I will hold my position for one extra beat."<br/>
+          "Tomorrow, when I feel treated unfairly, I will ask directly what happened."<br/>
+          <br/>
+          <strong style="color:var(--text)">Bad:</strong> "I will be better." / "I will stay calm." / "I will be more confident."<br/>
+          <strong style="color:var(--text)">Good:</strong> behavioral, short, concrete, doable under stress.
+        </div>
+      </details>
+      <details>
+        <summary style="font-family:'DM Mono',monospace;font-size:10px;color:#E8A020;cursor:pointer;padding:6px 0">Why this is real behavior design</summary>
+        <div style="padding:8px 10px;font-size:11px;color:var(--text-muted);line-height:1.7;margin-top:4px">
+          Most development plans fail because they live in general intention. "I will be more direct" does nothing when the moment arrives — the compensatory move is faster than deliberation. Tomorrow's edge gives your brain a pre-loaded response that does not require a decision under pressure. The decision was already made last night.
+        </div>
+      </details>`
   },
   ha_track: {
     title: "🌱 What Is the Healthy Adult Track?",
@@ -4169,7 +4391,7 @@ function renderMoodPicker() {
       const val = i + 1;
       const selected = saved[type] === val;
       const btn = document.createElement("button");
-      btn.style.cssText = `font-size:20px;background:${selected?"var(--border-strong)":"transparent"};border:2px solid ${selected?"var(--border-strong)":"transparent"};border-radius:8px;padding:4px 6px;cursor:pointer;transition:all 0.15s;line-height:1;flex:1;max-width:44px`;
+      btn.style.cssText = `font-size:16px;background:${selected?"var(--border-strong)":"transparent"};border:2px solid ${selected?"var(--border-strong)":"transparent"};border-radius:6px;padding:2px 4px;cursor:pointer;transition:all 0.15s;line-height:1;flex:1;max-width:36px`;
       btn.textContent = e;
       btn.title = val + "/5";
       btn.onclick = () => {
@@ -4972,24 +5194,30 @@ async function runFullSync() {
 }
 
 // ===================== VALUES & GOALS MODAL =====================
-let currentListType = null; // 'values', 'goals', or 'nottodo'
+let currentListType = null; // 'values', 'goals', 'nottodo', 'limitingBeliefs', 'empoweringBeliefs'
 
 const LIST_CONFIG = {
-  values:  { title:"My Values",        emoji:"⭐", pageName:"My Values",        color:"#C8962A", infoKey:null    },
-  goals:   { title:"My Goals",         emoji:"🎯", pageName:"My Goals",         color:"#4A90A4", infoKey:"goals" },
-  nottodo: { title:"Things I Don't Do",emoji:"🚫", pageName:"Things I don't do",color:"#B05C5C", infoKey:"nottodo" }
+  values:            { title:"My Values",             emoji:"⭐", pageName:"My Values",              color:"#C8962A", infoKey:null        },
+  goals:             { title:"My Goals",              emoji:"🎯", pageName:"My Goals",               color:"#4A90A4", infoKey:"goals"     },
+  nottodo:           { title:"Things I Don't Do",     emoji:"🚫", pageName:"Things I don't do",      color:"#B05C5C", infoKey:"nottodo"   },
+  limitingBeliefs:   { title:"Limiting Beliefs",      emoji:"🔒", pageName:"Limiting Beliefs",       color:"#7A5FA8", infoKey:null        },
+  empoweringBeliefs: { title:"Empowering Beliefs",    emoji:"⚡", pageName:"Empowering Beliefs",     color:"#3D8A5E", infoKey:null        }
 };
 
 function getListData(type) {
-  if (type === "values")  return myValues;
-  if (type === "goals")   return myGoals;
-  if (type === "nottodo") return notTodos;
+  if (type === "values")            return myValues;
+  if (type === "goals")             return myGoals;
+  if (type === "nottodo")           return notTodos;
+  if (type === "limitingBeliefs")   return limitingBeliefs;
+  if (type === "empoweringBeliefs") return empoweringBeliefs;
   return [];
 }
 function setListData(type, data) {
-  if (type === "values")  { myValues = data;  sv(SK.values,  data); }
-  if (type === "goals")   { myGoals  = data;  sv(SK.goals,   data); }
-  if (type === "nottodo") { notTodos = data;  sv(SK.nottodo, data); }
+  if (type === "values")            { myValues           = data; sv(SK.values,            data); }
+  if (type === "goals")             { myGoals            = data; sv(SK.goals,             data); }
+  if (type === "nottodo")           { notTodos           = data; sv(SK.nottodo,           data); }
+  if (type === "limitingBeliefs")   { limitingBeliefs   = data; sv(SK.limitingBeliefs,   data); }
+  if (type === "empoweringBeliefs") { empoweringBeliefs = data; sv(SK.empoweringBeliefs, data); }
 }
 
 function openListModal(type) {
@@ -5388,13 +5616,15 @@ function updateSettingsUI() {
   }
 
   // Theme cards
-  const theme = settings.theme || "default";
-  ["default","forge","ember","vibrant","slate","clay"].forEach(t => {
+  // Slate is auto-applied as dark Clay — treat clay as active in both light and dark
+  const themeForDisplay = settings.theme || "clay";
+  ["default","forge","ember","vibrant","clay"].forEach(t => {
     const b = document.getElementById("theme-" + t);
     if (!b) return;
-    const accentColors = { default:"#4A90A4", forge:"#00e5ff", ember:"#ff6b00", vibrant:"#00e5ff", slate:"#3d8b8b", clay:"#5a7f6a" };
-    b.style.borderColor = theme === t ? accentColors[t] : (t === "clay" ? "#e0d6c8" : "var(--border)");
-    b.style.boxShadow = theme === t ? `0 0 0 1px ${accentColors[t]}40` : "none";
+    const accentColors = { default:"#4A90A4", forge:"#00e5ff", ember:"#ff6b00", vibrant:"#00e5ff", clay:"#5a7f6a" };
+    const active = themeForDisplay === t || (t === "clay" && (themeForDisplay === "slate" || !themeForDisplay));
+    b.style.borderColor = active ? accentColors[t] : (t === "clay" ? "#e0d6c8" : "var(--border)");
+    b.style.boxShadow = active ? "0 0 0 1px " + accentColors[t] + "40" : "none";
   });
 
   // Shutdown time
@@ -5407,6 +5637,27 @@ function updateSettingsUI() {
   const showReframe = settings.showReframeCards !== false;
   if (reframeToggle) reframeToggle.style.background = showReframe ? "#3D8A5E" : "#555";
   if (reframeKnob) reframeKnob.style.left = showReframe ? "17px" : "3px";
+
+  // Mode strip toggle
+  const modeStripToggle = document.getElementById("settings-modestrip-toggle");
+  const modeStripKnob = document.getElementById("settings-modestrip-knob");
+  const showModeStrip = settings.showModeStrip !== false; // default on
+  if (modeStripToggle) modeStripToggle.style.background = showModeStrip ? "#3D8A5E" : "#555";
+  if (modeStripKnob) modeStripKnob.style.left = showModeStrip ? "17px" : "3px";
+
+  // Shutdown ritual toggle
+  const shutdownToggle = document.getElementById("settings-shutdown-toggle");
+  const shutdownKnob = document.getElementById("settings-shutdown-knob");
+  const showShutdown = settings.showShutdownRitual !== false; // default on
+  if (shutdownToggle) shutdownToggle.style.background = showShutdown ? "#3D8A5E" : "#555";
+  if (shutdownKnob) shutdownKnob.style.left = showShutdown ? "17px" : "3px";
+
+  // Values act toggle
+  const valuesActToggle = document.getElementById("settings-valuesact-toggle");
+  const valuesActKnob = document.getElementById("settings-valuesact-knob");
+  const showValuesAct = settings.showValuesAct !== false; // default on
+  if (valuesActToggle) valuesActToggle.style.background = showValuesAct ? "#3D8A5E" : "#555";
+  if (valuesActKnob) valuesActKnob.style.left = showValuesAct ? "17px" : "3px";
 
   // Brightness buttons
   const brightness = settings.brightness || "system";
@@ -5517,11 +5768,9 @@ const THEMES = {
     "--radius":       "0px",
   },
 
-  // ── SLATE — Deep blue-grey, ADHD-optimized dark mode ─────────────────────
-  // Research basis: narrow cool palette reduces visual noise; desaturated teal
-  // accent activates parasympathetic calm without stimulating the RAS.
-  // No pure black (harsh contrast = visual noise for ADHD).
-  // All text tokens pass WCAG AA on their respective backgrounds.
+  // ── SLATE — Deep blue-grey dark mode (used automatically when Clay + dark brightness)
+  // Original design: ADHD-optimized dark mode with desaturated teal accent.
+  // Applied automatically when Clay theme is selected and brightness is dark.
   slate: {
     "--bg":           "#0d1117",
     "--bg-card":      "#161b22",
@@ -5622,9 +5871,14 @@ function applyTheme() {
   const s = getSettings();
   const brightness = s.brightness || "system";
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const systemDefault = (brightness === "dark" || (brightness === "system" && prefersDark)) ? "slate" : "clay";
-  const themeName = s.theme || systemDefault;
-  const theme = THEMES[themeName] || THEMES.slate;
+  // Slate is now the dark version of Clay — applied automatically
+  const preferDarkMode = brightness === "dark" || (brightness === "system" && prefersDark);
+  const systemDefault = preferDarkMode ? "slate" : "clay"; // slate = dark Clay
+  let themeName = s.theme || "clay";
+  // If Clay is selected (or default) and user is in dark mode → use slate (dark Clay)
+  if (themeName === "clay" && preferDarkMode) themeName = "slate";
+  // Never expose slate as a direct selection — it's always auto-applied via Clay
+  const theme = THEMES[themeName] || THEMES[systemDefault] || THEMES.clay;
   const root = document.documentElement;
 
   // Apply design theme vars first
@@ -5633,7 +5887,7 @@ function applyTheme() {
   // Then apply brightness override — Clay and Slate are self-contained, skip override
   const useDark = brightness === "dark" || (brightness === "system" && prefersDark);
   const useLight = brightness === "light" || (brightness === "system" && !prefersDark);
-  const selfContained = themeName === "clay" || themeName === "slate";
+  const selfContained = themeName === "clay" || themeName === "slate"; // both are complete palettes
   if (useLight && !selfContained) {
     Object.entries(BRIGHTNESS_LIGHT).forEach(([k, v]) => root.style.setProperty(k, v));
   }
@@ -5804,6 +6058,8 @@ async function handleImportFile(event) {
     if (data.values)        sv(SK.values,  data.values);
     if (data.goals)         sv(SK.goals,   data.goals);
     if (data.projects)      sv(SK.projects,data.projects);
+    if (data.limitingBeliefs)   sv(SK.limitingBeliefs,   data.limitingBeliefs);
+    if (data.empoweringBeliefs) sv(SK.empoweringBeliefs, data.empoweringBeliefs);
     // ADHD tracking data
     if (data.bdSessions)    sv("yd2-bd-sessions",    data.bdSessions);
     if (data.dopamineLog)   sv("yd2-dopamine",        data.dopamineLog);
@@ -5845,6 +6101,8 @@ function exportAllData() {
     values: ld(SK.values, []),
     goals: ld(SK.goals, []),
     projects: ld(SK.projects, []),
+    limitingBeliefs: ld(SK.limitingBeliefs, []),
+    empoweringBeliefs: ld(SK.empoweringBeliefs, []),
     // ADHD tracking data
     bdSessions:    ld("yd2-bd-sessions", []),
     dopamineLog:   ld("yd2-dopamine", []),
@@ -8264,6 +8522,34 @@ function toggleReframeCards() {
   renderToday();
 }
 
+function toggleModeStrip() {
+  const s = getSettings();
+  s.showModeStrip = s.showModeStrip === false ? true : false;
+  saveSettings(s);
+  updateSettingsUI();
+  renderToday();
+}
+
+function toggleShutdownRitual() {
+  const s = getSettings();
+  s.showShutdownRitual = s.showShutdownRitual === false ? true : false;
+  saveSettings(s);
+  updateSettingsUI();
+  renderToday();
+}
+
+function toggleValuesAct() {
+  const s = getSettings();
+  s.showValuesAct = s.showValuesAct === false ? true : false;
+  saveSettings(s);
+  updateSettingsUI();
+  // Re-render reflect values block visibility and progress panel
+  const body = document.getElementById("reflect-values-body");
+  const wrap = body ? body.closest("div[style*='border-left:3px solid #C8962A']") : null;
+  if (wrap) wrap.style.display = s.showValuesAct !== false ? "" : "none";
+  renderValuesDriftPanel();
+}
+
 // ===================== FRICTION LOG =====================
 const FRICTION_SK = "yd2-friction";
 const FRICTION_REASONS = [
@@ -9099,7 +9385,7 @@ function _modeCard(mode, selectedKey, onSelect) {
   card.innerHTML =
     '<div style="font-size:13px;margin-bottom:2px">' + mode.emoji + '</div>' +
     '<div style="font-size:10px;font-weight:600;color:' + (active ? mode.color : "var(--text)") + ';line-height:1.2;margin-bottom:2px">' + mode.label + '</div>' +
-    '<div style="font-size:8px;color:var(--text-dimmer);line-height:1.3">' + mode.desc.slice(0, 45) + '…</div>' +
+    '<div style="font-size:8px;color:var(--text-dimmer);line-height:1.3">' + mode.desc + '</div>' +
     (isCompensatory ? '<div style="font-size:7px;color:' + mode.color + ';margin-top:3px;font-family:var(--font-mono);letter-spacing:0.5px">⚠ check underneath</div>' : '');
   card.onclick = () => onSelect(mode.key);
   return card;
@@ -9411,28 +9697,309 @@ function toggleModeChainGuide() {
   }
 }
 
+// State vars for EOD mode chain redesign
+let _eodProtMode = null;     // protective mode (step 3)
+let _eodDistortionKey = null;   // selected distortion type
+let _eodThoughtHelpful = null;  // true/false/null
+let _eodProtSkipped = false; // user skipped step 3
+let _eodNeedKey = null;      // selected need chip key
+let _eodThreat = null;       // "verified" | "assumed" | null
+let _eodTargetMode = null;   // target healthy mode (step 7)
+let _eodNextAction = null;   // behavioral move (step 8)
+
+// Need options for EOD need chips
+const EOD_NEED_OPTIONS = [
+  { key:"fairness",      label:"Fairness",             emoji:"⚖️" },
+  { key:"honesty",       label:"Honesty",              emoji:"🪞" },
+  { key:"reliability",   label:"Reliability",          emoji:"🔒" },
+  { key:"respect",       label:"Respect",              emoji:"🫡" },
+  { key:"reassurance",   label:"Reassurance",          emoji:"🤝" },
+  { key:"protection",    label:"Protection",           emoji:"🛡️" },
+  { key:"realistic_expectations", label:"Realistic bar", emoji:"📏" },
+  { key:"rest",          label:"Rest / space",         emoji:"😴" },
+  { key:"structure",     label:"Structure / clarity",  emoji:"🗂️" },
+  { key:"to_be_heard",   label:"To be heard",          emoji:"👂" },
+  { key:"to_slow_down",  label:"To slow down",         emoji:"🐢" },
+  { key:"autonomy",      label:"Autonomy / control",   emoji:"🗺️" },
+  { key:"connection",    label:"Connection",           emoji:"🫂" },
+  { key:"safety",        label:"Safety / no threat",   emoji:"🏠" },
+  { key:"validation",    label:"Validation",           emoji:"✓" },
+  { key:"competence",    label:"To feel capable",      emoji:"⚙️" },
+];
+
+// Adult move options for EOD step 8
+const EOD_ADULT_MOVES = [
+  { key:"ask_question",   label:"Ask one clarifying question before reacting" },
+  { key:"slow_down",      label:"Slow down — pause before responding" },
+  { key:"state_directly", label:"State the concern directly and calmly" },
+  { key:"verify_facts",   label:"Verify facts first, then respond" },
+  { key:"leave_briefly",  label:"Leave the situation for 30 seconds" },
+  { key:"write_first",    label:"Write it out before speaking" },
+  { key:"name_feeling",   label:"Name what I'm feeling out loud" },
+  { key:"set_limit",      label:"Set a clear limit without over-explaining" },
+  { key:"stay_present",   label:"Stay in the room without retreating" },
+  { key:"disagree_calmly",label:"Disagree calmly and hold the position" },
+];
+
+// HA auto-fill by mode (sees/says/does)
+const EOD_HA_BY_MODE = {
+  vulnerable_child:      { sees:"I felt exposed and scared — this part was bracing for failure.", says:"You are not broken. The fear is information, not a verdict.", does:"Take one tiny action alongside the fear — not to silence it, but to move." },
+  demanding_parent:      { sees:"Impossible standards were running — the bar kept moving.", says:"Good enough is real. Define done before you start.", does:"Write one specific done-definition and lock it before you begin." },
+  detached_protector:    { sees:"Something felt threatening and the system checked out.", says:"Numbness is protection, not laziness. What was it protecting from?", does:"Two minutes of contact with the thing. No decision to continue — just touch it." },
+  punitive_parent:       { sees:"The inner critic was attacking — not motivating.", says:"Stop. That voice is not helpful and not the truth.", does:"Name the attack. Then redirect to one concrete action." },
+  angry_child:           { sees:"Anger was signaling a perceived violation or unfairness.", says:"My anger may point to something real, but I do not need to accuse before I verify.", does:"Pause, ask directly, check facts, then respond firmly from values." },
+  compliant_surrenderer: { sees:"Self-erasure was active — needs were suppressed to keep the peace.", says:"My needs are real. Compliance that erases me is not peace.", does:"Say one honest sentence without over-explaining or apologising." },
+  overcompensator:       { sees:"I was armoring up — performing strength to cover something vulnerable.", says:"The armor was a solution once. Check what it costs now.", does:"Ask: what am I protecting? Set it down for ten minutes." },
+  compensatory_child:    { sees:"Lightness turned on as protection — something exposed me.", says:"I do not need to stay light to stay safe.", does:"Name what exposed me. Ask: what would the grounded version of me do?" },
+};
+
+function getEodHa(modeKey) {
+  const base = EOD_HA_BY_MODE[modeKey];
+  if (base) return base;
+  const modeObj = MODES.find(m => m.key === modeKey);
+  if (!modeObj) return { sees:"", says:"", does:"" };
+  const har = modeObj.healthyAdultResponse;
+  const dot = har.indexOf(".");
+  return {
+    sees: "This mode was running: " + modeObj.label + ".",
+    says: dot > 0 ? har.slice(0, dot+1) : har.slice(0, 80),
+    does: dot > 0 ? har.slice(dot+1).trim().slice(0, 120) : "Take one grounded action."
+  };
+}
+
 function renderEodModeCards() {
   const t = today();
   const r = reflections[t] || {};
-  _eodMode = (r.modeChain && r.modeChain.mode) || null;
+  const mc = r.modeChain || {};
+  _eodMode      = mc.mode      || null;
+  _eodProtMode  = mc.protMode  || null;
+  _eodProtSkipped = mc.protSkipped || false;
+  _eodNeedKey   = mc.needKey   || null;
+  _eodThreat    = mc.threat    || null;
+  _eodTargetMode = mc.targetMode || null;
+  _eodNextAction = mc.nextAction || null;
+
+  // Render first mode cards (step 2)
   renderModeCards("eod-mode-cards", _eodMode, (k) => {
     _eodMode = k;
     renderModeCards("eod-mode-cards", k, arguments.callee);
-    // Auto-fill need if empty
-    if (!document.getElementById("eod-need").value) {
-      const mode = MODES.find(m => m.key === k);
-      if (mode) {
-        const need = NEEDS.find(n => n.key === mode.defaultNeed);
-        if (need) document.getElementById("eod-need").value = need.label;
-      }
+    // Reveal step 3 and auto-fill HA
+    renderEodProgressiveSections();
+    // Update edge suggestions to reflect new mode
+    renderEdgeSuggestions();
+  });
+
+  // Render all sections that should be visible based on saved state
+  renderEodProgressiveSections();
+}
+
+function renderEodProgressiveSections() {
+  // Step 3 — show after first mode selected
+  const protSec = document.getElementById("eod-prot-section");
+  if (protSec) protSec.style.display = _eodMode ? "block" : "none";
+
+  if (_eodMode && !_eodProtSkipped) {
+    // Render protective mode cards (different from first mode)
+    const DYSFUNCTIONAL = MODES.filter(m => !["healthy_adult","happy_child","assertive_adult"].includes(m.key));
+    const protContainer = document.getElementById("eod-prot-mode-cards");
+    if (protContainer) {
+      protContainer.innerHTML = "";
+      const grid = document.createElement("div");
+      grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:6px";
+      DYSFUNCTIONAL.forEach(mode => {
+        const card = document.createElement("div");
+        const active = _eodProtMode === mode.key;
+        const isFirst = mode.key === _eodMode;
+        card.style.cssText = "padding:8px 10px;border-radius:6px;border:1px solid " +
+          (active ? mode.color : isFirst ? "var(--border)" : "var(--border)") +
+          ";background:" + (active ? mode.color + "18" : isFirst ? "var(--bg-input)" : "var(--bg-card)") +
+          ";cursor:" + (isFirst ? "default" : "pointer") +
+          ";transition:all 0.15s;opacity:" + (isFirst ? "0.35" : "1");
+        card.innerHTML =
+          '<div style="font-size:13px;margin-bottom:2px">' + mode.emoji + '</div>' +
+          '<div style="font-size:10px;font-weight:600;color:' + (active ? mode.color : "var(--text)") + ';line-height:1.2">' + mode.label + '</div>';
+        if (!isFirst) {
+          card.onclick = () => {
+            _eodProtMode = mode.key;
+            _eodProtSkipped = false;
+            renderEodProgressiveSections();
+          };
+        }
+        grid.appendChild(card);
+      });
+      protContainer.appendChild(grid);
     }
-    // Show HA response suggestion
-    const haEl = document.getElementById("eod-ha-response");
-    if (haEl && !haEl.value) {
-      const mode = MODES.find(m => m.key === k);
-      if (mode) haEl.placeholder = mode.healthyAdultResponse.slice(0, 80) + "...";
+  }
+
+  // Step 4 — show after first mode selected (or prot selected/skipped)
+  const needSec = document.getElementById("eod-need-section");
+  const showNeed = _eodMode && (_eodProtMode || _eodProtSkipped);
+  if (needSec) needSec.style.display = showNeed ? "block" : "none";
+
+  if (showNeed) {
+    const chipsEl = document.getElementById("eod-need-chips");
+    if (chipsEl) {
+      chipsEl.innerHTML = "";
+      EOD_NEED_OPTIONS.forEach(n => {
+        const chip = document.createElement("button");
+        const active = _eodNeedKey === n.key;
+        chip.style.cssText = "padding:6px 11px;border-radius:14px;border:1px solid " +
+          (active ? "#3D8A5E" : "var(--border)") + ";background:" +
+          (active ? "#3D8A5E22" : "none") + ";font-size:11px;color:" +
+          (active ? "#3D8A5E" : "var(--text-muted)") + ";cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s";
+        chip.innerHTML = "<span>" + n.emoji + "</span><span>" + n.label + "</span>";
+        chip.onclick = () => {
+          _eodNeedKey = n.key;
+          renderEodProgressiveSections();
+        };
+        chipsEl.appendChild(chip);
+      });
+    }
+  }
+
+  // Step 5 — show after need selected or free text filled
+  const storySec = document.getElementById("eod-story-section");
+  const showStory = showNeed && (_eodNeedKey || (document.getElementById("eod-need") && document.getElementById("eod-need").value.trim()));
+  if (storySec) storySec.style.display = showStory ? "block" : "none";
+
+  // Threat buttons styling
+  if (_eodThreat) {
+    const vBtn = document.getElementById("eod-threat-verified");
+    const aBtn = document.getElementById("eod-threat-assumed");
+    if (vBtn) { vBtn.style.background = _eodThreat==="verified"?"#3D8A5E22":"none"; vBtn.style.borderColor = _eodThreat==="verified"?"#3D8A5E":"var(--border)"; vBtn.style.color = _eodThreat==="verified"?"#3D8A5E":"var(--text-dimmer)"; }
+    if (aBtn) { aBtn.style.background = _eodThreat==="assumed"?"#C8962A22":"none"; aBtn.style.borderColor = _eodThreat==="assumed"?"#C8962A":"var(--border)"; aBtn.style.color = _eodThreat==="assumed"?"#C8962A":"var(--text-dimmer)"; }
+  }
+
+  // Render mode chain distortion chips when story section shown
+  if (showStory) {
+    const mcChipKey = _eodDistortionKey || null;
+    renderDistortionChips("mc-distortion-chips", mcChipKey, (key) => {
+      _eodDistortionKey = key;
+      renderDistortionReframe("mc-distortion-reframe", key);
+      renderDistortionChips("mc-distortion-chips", key, arguments.callee);
+      const storyEl = document.getElementById("eod-mind-story");
+      if (storyEl && storyEl.value.trim() && key !== "unsure") {
+        logTodayDistortion(key, storyEl.value.trim());
+      }
+    });
+    if (mcChipKey) renderDistortionReframe("mc-distortion-reframe", mcChipKey);
+  }
+
+  // Step 6 — show after step 5 visible (HA section)
+  const haSec = document.getElementById("eod-ha-section");
+  if (haSec) haSec.style.display = showStory ? "block" : "none";
+
+  if (showStory && _eodMode) {
+    // Auto-fill HA fields if empty
+    const ha = getEodHa(_eodMode);
+    const seesEl = document.getElementById("eod-ha-sees");
+    const saysEl = document.getElementById("eod-ha-says");
+    const doesEl = document.getElementById("eod-ha-response");
+    if (seesEl && !seesEl.value) seesEl.value = ha.sees;
+    if (saysEl && !saysEl.value) saysEl.value = ha.says;
+    if (doesEl && !doesEl.value) doesEl.value = ha.does;
+  }
+
+  // Step 7 — target healthy mode (shown with HA)
+  const targetSec = document.getElementById("eod-target-section");
+  if (targetSec) targetSec.style.display = showStory ? "block" : "none";
+
+  if (showStory) {
+    const targetContainer = document.getElementById("eod-target-mode-cards");
+    if (targetContainer) {
+      targetContainer.innerHTML = "";
+      const HEALTHY_MODES = MODES.filter(m => ["healthy_adult","happy_child","assertive_adult"].includes(m.key));
+      HEALTHY_MODES.forEach(mode => {
+        const card = document.createElement("div");
+        const active = _eodTargetMode === mode.key;
+        card.style.cssText = "padding:12px 14px;border-radius:8px;border:1px solid " +
+          (active ? mode.color : "var(--border)") + ";background:" +
+          (active ? mode.color + "18" : "var(--bg-card)") +
+          ";cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.15s";
+        card.innerHTML =
+          '<span style="font-size:20px;flex-shrink:0">' + mode.emoji + '</span>' +
+          '<div><div style="font-size:12px;font-weight:600;color:' + (active ? mode.color : "var(--text)") + ';margin-bottom:2px">' + mode.label + '</div>' +
+          '<div style="font-size:10px;color:var(--text-dimmer);line-height:1.3">' + mode.desc.slice(0,60) + "…" + '</div></div>' +
+          (active ? '<span style="margin-left:auto;font-size:14px;color:' + mode.color + '">✓</span>' : '');
+        card.onclick = () => {
+          _eodTargetMode = mode.key;
+          renderEodProgressiveSections();
+        };
+        targetContainer.appendChild(card);
+      });
+    }
+  }
+
+  // Step 8 — adult move (shown with target mode section)
+  const actionSec = document.getElementById("eod-action-section");
+  if (actionSec) actionSec.style.display = showStory ? "block" : "none";
+
+  if (showStory) {
+    const actionsEl = document.getElementById("eod-action-options");
+    if (actionsEl) {
+      actionsEl.innerHTML = "";
+      EOD_ADULT_MOVES.forEach(m => {
+        const row = document.createElement("button");
+        const active = _eodNextAction === m.key;
+        row.style.cssText = "display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid " +
+          (active ? "#C8962A" : "var(--border)") + ";background:" +
+          (active ? "#C8962A18" : "var(--bg-card)") +
+          ";cursor:pointer;text-align:left;width:100%;transition:all 0.15s";
+        row.innerHTML =
+          (active ? '<span style="color:#C8962A;font-size:13px;flex-shrink:0">✓</span>' : '<span style="color:var(--text-dimmer);font-size:11px;flex-shrink:0">○</span>') +
+          '<span style="font-size:12px;color:' + (active ? "var(--text)" : "var(--text-muted)") + '">' + m.label + '</span>';
+        row.onclick = () => {
+          _eodNextAction = m.key;
+          renderEodProgressiveSections();
+        };
+        actionsEl.appendChild(row);
+      });
+    }
+  }
+}
+
+function skipEodProtMode() {
+  _eodProtMode = null;
+  _eodProtSkipped = true;
+  renderEodProgressiveSections();
+}
+
+function renderEodDistortionSection() {
+  // Render distortion chips
+  renderDistortionChips("eod-distortion-chips", _eodDistortionKey, (key) => {
+    _eodDistortionKey = key;
+    renderDistortionReframe("eod-distortion-reframe", key);
+    renderDistortionChips("eod-distortion-chips", key, arguments.callee);
+    // Auto-log to distortion tracker
+    const thoughtEl = document.getElementById("eod-thought-text");
+    if (thoughtEl && thoughtEl.value.trim() && key !== "unsure") {
+      logTodayDistortion(key, thoughtEl.value.trim());
     }
   });
+  // Restore reframe if already selected
+  if (_eodDistortionKey) {
+    renderDistortionReframe("eod-distortion-reframe", _eodDistortionKey);
+  }
+  // Restore helpful buttons state
+  setEodThoughtHelpful(_eodThoughtHelpful);
+}
+
+function setEodThoughtHelpful(val) {
+  _eodThoughtHelpful = val;
+  const yes = document.getElementById("eod-thought-helpful-yes");
+  const no  = document.getElementById("eod-thought-helpful-no");
+  if (!yes || !no) return;
+  yes.style.background  = val === true  ? "#3D8A5E22" : "none";
+  yes.style.borderColor = val === true  ? "#3D8A5E"   : "var(--border)";
+  yes.style.color       = val === true  ? "#3D8A5E"   : "var(--text-dimmer)";
+  no.style.background   = val === false ? "#B05C5C22" : "none";
+  no.style.borderColor  = val === false ? "#B05C5C"   : "var(--border)";
+  no.style.color        = val === false ? "#B05C5C"   : "var(--text-dimmer)";
+}
+
+function setEodThreat(val) {
+  _eodThreat = val;
+  renderEodProgressiveSections();
 }
 
 function loadEodModeChain() {
@@ -9440,28 +10007,81 @@ function loadEodModeChain() {
   const r = reflections[t];
   if (!r || !r.modeChain) return;
   const mc = r.modeChain;
-  const trigEl = document.getElementById("eod-trigger");
-  const needEl = document.getElementById("eod-need");
-  const haEl   = document.getElementById("eod-ha-response");
-  if (trigEl) trigEl.value = mc.trigger || "";
-  if (needEl) needEl.value = mc.need    || "";
-  if (haEl)   haEl.value   = mc.haResponse || "";
-  _eodMode = mc.mode || null;
+
+  // Restore text fields
+  const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+  f("eod-trigger",      mc.trigger);
+  f("eod-need",         mc.need);
+  f("eod-mind-story",   mc.mindStory);
+  f("eod-ha-sees",      mc.haSees);
+  f("eod-ha-says",      mc.haSays);
+  f("eod-ha-response",  mc.haResponse);
+  f("eod-action-other", mc.nextActionOther);
+
+  // Restore state vars
+  _eodMode        = mc.mode        || null;
+  _eodProtMode    = mc.protMode    || null;
+  _eodProtSkipped = mc.protSkipped || false;
+  _eodNeedKey     = mc.needKey     || null;
+  _eodThreat      = mc.threat      || null;
+  _eodTargetMode  = mc.targetMode  || null;
+  _eodNextAction  = mc.nextAction  || null;
+  _eodDistortionKey   = mc.distortionKey   || null;
+  _eodThoughtHelpful  = mc.thoughtHelpful  !== undefined ? mc.thoughtHelpful : null;
+
+  // Restore thought text
+  const thoughtEl = document.getElementById("eod-thought-text");
+  if (thoughtEl) thoughtEl.value = mc.thoughtText || "";
+
+  // Render first mode cards
   renderModeCards("eod-mode-cards", _eodMode, (k) => {
     _eodMode = k;
     renderModeCards("eod-mode-cards", k, arguments.callee);
+    renderEodProgressiveSections();
   });
+
+  // Render all progressive sections
+  renderEodProgressiveSections();
 }
 
 function getModeChain() {
-  const trigEl = document.getElementById("eod-trigger");
-  const needEl = document.getElementById("eod-need");
-  const haEl   = document.getElementById("eod-ha-response");
-  const trigger    = trigEl ? trigEl.value.trim() : "";
-  const need       = needEl ? needEl.value.trim() : "";
-  const haResponse = haEl   ? haEl.value.trim()   : "";
+  const trigEl    = document.getElementById("eod-trigger");
+  const needEl    = document.getElementById("eod-need");
+  const storyEl   = document.getElementById("eod-mind-story");
+  const haSeesEl  = document.getElementById("eod-ha-sees");
+  const haSaysEl  = document.getElementById("eod-ha-says");
+  const haDoesEl  = document.getElementById("eod-ha-response");
+  const actionEl  = document.getElementById("eod-action-other");
+
+  const trigger    = trigEl    ? trigEl.value.trim()    : "";
+  const need       = needEl    ? needEl.value.trim()    : "";
+  const mindStory  = storyEl   ? storyEl.value.trim()   : "";
+  const haSees     = haSeesEl  ? haSeesEl.value.trim()  : "";
+  const haSays     = haSaysEl  ? haSaysEl.value.trim()  : "";
+  const haResponse = haDoesEl  ? haDoesEl.value.trim()  : "";
+  const nextActionOther = actionEl ? actionEl.value.trim() : "";
+
   if (!trigger && !_eodMode && !need && !haResponse) return null;
-  return { trigger, mode: _eodMode, need, haResponse };
+  return {
+    trigger,
+    mode:        _eodMode,
+    protMode:    _eodProtMode,
+    protSkipped: _eodProtSkipped,
+    needKey:     _eodNeedKey,
+    need,
+    mindStory,
+    threat:      _eodThreat,
+    haSees,
+    haSays,
+    haResponse,
+    targetMode:  _eodTargetMode,
+    nextAction:  _eodNextAction,
+    nextActionOther,
+    // Distortion capture
+    thoughtText:     document.getElementById("eod-thought-text") ? document.getElementById("eod-thought-text").value.trim() : "",
+    distortionKey:   _eodDistortionKey,
+    thoughtHelpful:  _eodThoughtHelpful,
+  };
 }
 
 
@@ -11390,64 +12010,97 @@ function dismissLessonCard() {
 // the Vulnerable Child's predictions about what is survivable.
 // ═════════════════════════════════════════════════════════════════════
 
+// HA_PRACTICES grouped per advisor recommendation:
+// Embodiment | Relational strength | Exposure tolerance
+// desc shortened to one-line "label — what it trained" format
 const HA_PRACTICES = [
+  // ── EMBODIMENT ──────────────────────────────────────────────────
   {
     key: "slower_speech",
     label: "Spoke slower",
     emoji: "🗣️",
-    desc: "Said what you needed to say at a pace that didn't signal anxiety. You did not rush to fill silence.",
-    why: "Speed of speech is one of the most automatic signals of nervous system state. Slowing down is not a performance trick — it trains your system to tolerate adult presence."
+    group: "Embodiment",
+    desc: "Signaled steadiness instead of alarm",
+    why: "Speed of speech is one of the most automatic signals of nervous system state. Slowing down trains your system to tolerate adult presence — not as a trick, but as a physiological rep."
   },
   {
     key: "clear_sentence",
     label: "Finished a sentence cleanly",
     emoji: "📍",
-    desc: "Completed a thought without trailing off, over-qualifying, or adding apologies at the end.",
-    why: "Clean sentences signal self-trust. Trailing off or over-qualifying signals that you expect your words to be rejected. Finishing cleanly is a rep in self-respect."
+    group: "Embodiment",
+    desc: "Stayed with my own position until the end",
+    why: "Trailing off or over-qualifying signals that you expect rejection. Finishing cleanly is a rep in self-trust — the sentence is allowed to land without being softened out of existence."
   },
+  {
+    key: "said_less",
+    label: "Said less — didn't over-explain",
+    emoji: "🤐",
+    group: "Embodiment",
+    desc: "Trusted the interaction without controlling it",
+    why: "Over-explanation is anxiety management disguised as communication. Saying less trains the system to tolerate not having managed every reaction. That tolerance is the rep."
+  },
+  // ── RELATIONAL STRENGTH ──────────────────────────────────────────
   {
     key: "direct_request",
     label: "Asked directly for what I needed",
     emoji: "🎯",
-    desc: "Named what you wanted or needed without excessive softening, framing, or preamble.",
-    why: "Compliant Surrenderer mode indirectly signals needs or suppresses them entirely. A direct request — even a small one — is Healthy Adult operating correctly."
+    group: "Relational strength",
+    desc: "Named the need without excessive softening",
+    why: "Compliant Surrenderer mode suppresses needs or signals them indirectly. A direct request — even a small one — is Healthy Adult operating correctly. The request is the rep, not whether it was granted."
   },
   {
     key: "held_boundary",
     label: "Held a boundary",
     emoji: "🧭",
-    desc: "Said no, redirected, or limited something — without excessive explanation or apology.",
-    why: "Boundaries are not walls. They are definitions of where you are. Holding one is one of the clearest Healthy Adult behaviors available."
-  },
-  {
-    key: "stayed_present",
-    label: "Stayed present under pressure",
-    emoji: "⚓",
-    desc: "Remained in a situation that felt exposing, evaluative, or uncomfortable without retreating into charm, humor, or withdrawal.",
-    why: "Tolerating exposure — staying in the room as a full adult — is the core behavioral rep this track is building. Each time you stay, the prediction about what is survivable gets updated."
+    group: "Relational strength",
+    desc: "Protected my space without excess force",
+    why: "Boundaries are definitions, not walls. Holding one without over-explaining or collapsing is one of the clearest Healthy Adult behaviors available. Each held boundary updates the prediction about what you can sustain."
   },
   {
     key: "disagreed_calmly",
     label: "Disagreed calmly",
     emoji: "💬",
-    desc: "Held a different position from someone else without escalating, capitulating, or over-explaining.",
-    why: "Disagreement without aggression or collapse is Assertive Adult in action. It requires believing that your view is allowed to exist even when someone else's differs."
+    group: "Relational strength",
+    desc: "Held a different view without escalating or giving in",
+    why: "Disagreement without aggression or collapse is Assertive Adult in action. It requires believing that your view is allowed to exist even when someone else's differs. The calm is the training."
+  },
+  // ── EXPOSURE TOLERANCE ───────────────────────────────────────────
+  {
+    key: "stayed_present",
+    label: "Stayed present under pressure",
+    emoji: "⚓",
+    group: "Exposure tolerance",
+    desc: "Remained in the room without retreating",
+    why: "Tolerating exposure — staying present as a full adult in an uncomfortable situation — is the core rep this track builds. Each time you stay, the nervous system's prediction about what is survivable gets updated."
   },
   {
     key: "acted_while_afraid",
     label: "Acted while feeling insecure",
     emoji: "🏃",
-    desc: "Did something that felt threatening or exposing — without waiting to feel solid first.",
-    why: "ACT is explicit: confidence is built by acting while insecure, not by resolving insecurity before acting. This rep is the most direct path to durable groundedness."
-  },
-  {
-    key: "said_less",
-    label: "Said less when I wanted to over-explain",
-    emoji: "🤐",
-    desc: "Stopped talking before you had convinced everyone. Let a silence exist without filling it.",
-    why: "Over-explanation is often anxiety management disguised as communication. Saying less signals that you trust the interaction enough not to control it completely."
+    group: "Exposure tolerance",
+    desc: "Trained action over self-protection",
+    why: "Confidence is built by acting while insecure, not by resolving insecurity before acting. This is the most direct path to durable groundedness — the feeling follows the rep, not the other way around."
   }
 ];
+
+// Group lookup for rendering
+const HA_PRACTICE_GROUPS = [
+  { key: "Embodiment",         color: "#4A90A4", emoji: "🗣️" },
+  { key: "Relational strength",color: "#3D8A5E", emoji: "🤝" },
+  { key: "Exposure tolerance", color: "#C8962A", emoji: "⚓" }
+];
+
+// Mode → suggested reps (advisor recommendation D)
+const HA_MODE_SUGGESTIONS = {
+  angry_child:           ["stayed_present","disagreed_calmly","clear_sentence","held_boundary"],
+  compensatory_child:    ["said_less","direct_request","acted_while_afraid","slower_speech"],
+  vulnerable_child:      ["stayed_present","acted_while_afraid","clear_sentence"],
+  punitive_parent:       ["said_less","clear_sentence","slower_speech"],
+  demanding_parent:      ["said_less","clear_sentence","acted_while_afraid"],
+  detached_protector:    ["stayed_present","acted_while_afraid","direct_request"],
+  compliant_surrenderer: ["direct_request","held_boundary","disagreed_calmly"],
+  overcompensator:       ["slower_speech","said_less","clear_sentence"],
+};
 
 // ── Storage for HA track logs ──────────────────────────────────────────────
 const HA_SK = "yd2-ha-track";
@@ -11482,7 +12135,7 @@ function renderHaPracticeGrid() {
   const container = document.getElementById("ha-practice-grid");
   if (!container) return;
 
-  // Show embodiment lines above the grid — nervous system training
+  // Show context-based embodiment lines (mode-aware)
   const embodimentEl = document.getElementById("ha-embodiment-lines");
   if (embodimentEl) renderEmbodimentLines(embodimentEl);
 
@@ -11494,36 +12147,78 @@ function renderHaPracticeGrid() {
   const repInput = document.getElementById("ha-rep-note");
   if (repInput) repInput.value = entry.rep || "";
 
+  // Get today's mode for adaptive suggestions
+  const todayMode = (moodData[today()] || {}).mode || null;
+  const suggestedKeys = todayMode ? (HA_MODE_SUGGESTIONS[todayMode] || []) : [];
+
   container.innerHTML = "";
-  HA_PRACTICES.forEach(p => {
-    const active = _haSelected.has(p.key);
-    const btn = document.createElement("button");
-    btn.style.cssText = "padding:8px 10px;border-radius:6px;border:1px solid " +
-      (active ? "#3D8A5E" : "var(--border)") + ";background:" +
-      (active ? "#3D8A5E18" : "var(--bg-input)") +
-      ";cursor:pointer;text-align:left;transition:all 0.15s;position:relative";
-    btn.innerHTML =
-      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">' +
-      '<span style="font-size:12px">' + p.emoji + '</span>' +
-      '<span style="font-size:10px;font-weight:600;color:' + (active ? "#3D8A5E" : "var(--text)") + ';line-height:1.2">' + p.label + '</span>' +
-      (active ? '<span style="font-size:10px;color:#3D8A5E;margin-left:auto">✓</span>' : '') +
-      '</div>' +
-      '<div style="font-size:9px;color:var(--text-dimmer);line-height:1.3">' + p.desc.slice(0, 55) + '…</div>';
-    btn.onclick = () => {
-      if (_haSelected.has(p.key)) {
-        _haSelected.delete(p.key);
-      } else {
-        if (_haSelected.size >= 3) {
-          showToast("Pick 1–2 practices. Less is more effective.", 3000);
-          return;
+
+  // ── Adaptive suggestion header ─────────────────────────────────────────────
+  if (suggestedKeys.length && todayMode) {
+    const modeObj = MODES.find(m => m.key === todayMode);
+    const suggestEl = document.createElement("div");
+    suggestEl.style.cssText = "margin-bottom:10px;padding:8px 10px;background:var(--bg-input);border-radius:6px;border-left:3px solid " + (modeObj ? modeObj.color : "var(--accent)");
+    suggestEl.innerHTML =
+      '<div class="mono" style="font-size:8px;color:' + (modeObj ? modeObj.color : "var(--accent)") + ';letter-spacing:1px;margin-bottom:4px">' +
+      (modeObj ? modeObj.emoji + " " + modeObj.label.toUpperCase() : "YOUR MODE") + ' — SUGGESTED REPS</div>' +
+      '<div style="font-size:10px;color:var(--text-dimmer);line-height:1.4">Based on your check-in, these reps are most relevant today. Tap to log one.</div>';
+    container.appendChild(suggestEl);
+  }
+
+  // ── Grouped display ────────────────────────────────────────────────────────
+  HA_PRACTICE_GROUPS.forEach(group => {
+    const groupPractices = HA_PRACTICES.filter(p => p.group === group.key);
+    if (!groupPractices.length) return;
+
+    // Group row: compact horizontal header then cards
+    const groupWrap = document.createElement("div");
+    groupWrap.style.cssText = "margin-top:8px";
+
+    const groupHeader = document.createElement("div");
+    groupHeader.style.cssText = "display:flex;align-items:center;gap:5px;margin-bottom:4px";
+    groupHeader.innerHTML =
+      '<span style="font-size:9px">' + group.emoji + '</span>' +
+      '<span class="mono" style="font-size:7px;color:' + group.color + ';letter-spacing:1px">' + group.key.toUpperCase() + '</span>' +
+      '<div style="flex:1;height:1px;background:' + group.color + '22"></div>';
+    groupWrap.appendChild(groupHeader);
+
+    // Practice cards — 3 per row
+    const groupGrid = document.createElement("div");
+    groupGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px";
+
+    groupPractices.forEach(p => {
+      const active = _haSelected.has(p.key);
+      const suggested = suggestedKeys.includes(p.key);
+      const btn = document.createElement("button");
+      btn.style.cssText = "padding:5px 6px;border-radius:5px;border:1px solid " +
+        (active ? group.color : suggested ? group.color + "66" : "var(--border)") +
+        ";background:" + (active ? group.color + "18" : suggested ? group.color + "08" : "var(--bg-input)") +
+        ";cursor:pointer;text-align:left;transition:all 0.15s";
+      btn.innerHTML =
+        '<div style="display:flex;align-items:center;gap:3px;margin-bottom:2px">' +
+        '<span style="font-size:10px">' + p.emoji + '</span>' +
+        (active ? '<span style="font-size:8px;color:' + group.color + '">✓</span>' :
+          suggested ? '<span style="font-size:7px;color:' + group.color + ';opacity:0.7">★</span>' : '') +
+        '</div>' +
+        '<div style="font-size:8px;font-weight:600;color:' + (active ? group.color : "var(--text)") + ';line-height:1.2;margin-bottom:1px">' + p.label + '</div>' +
+        '<div style="font-size:7px;color:' + (active ? group.color + "bb" : "var(--text-dimmer)") + ';line-height:1.25">' + p.desc + '</div>';
+      btn.onclick = () => {
+        if (_haSelected.has(p.key)) {
+          _haSelected.delete(p.key);
+        } else {
+          if (_haSelected.size >= 3) {
+            showToast("Pick 1–2 reps. Less is more effective.", 3000);
+            return;
+          }
+          _haSelected.add(p.key);
+          showHaPracticeWhy(p);
         }
-        _haSelected.add(p.key);
-        // Show the WHY briefly
-        showHaPracticeWhy(p);
-      }
-      renderHaPracticeGrid();
-    };
-    container.appendChild(btn);
+        renderHaPracticeGrid();
+      };
+      groupGrid.appendChild(btn);
+    });
+    groupWrap.appendChild(groupGrid);
+    container.appendChild(groupWrap);
   });
 }
 
@@ -11642,20 +12337,16 @@ function getValuesDriftStats(days) {
 
 // ── Render daily values check-in (in renderToday) ────────────────────────
 function renderTodayValuesCheckin() {
-  const container = document.getElementById("today-values-checkin");
+  const container = document.getElementById("reflect-values-checkin");
   if (!container || !myValues || !myValues.length) {
-    if (container) container.innerHTML = "";
+    if (container) container.innerHTML = '<div style="font-size:11px;color:var(--text-dimmer);font-style:italic;padding:8px 0">Add your values in Focus → My Values to use this check-in.</div>';
     return;
   }
 
   const entry = getTodayValuesEntry();
 
   container.innerHTML =
-    '<div style="background:var(--bg-card);border:1px solid var(--border);border-left:3px solid #C8962A;border-radius:6px;padding:12px 14px;margin-bottom:14px">' +
-    '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">' +
-    '<div class="mono" style="font-size:8px;color:#C8962A;letter-spacing:1px">⭐ DID YOU ACT ON YOUR VALUES TODAY?</div>' +
-    '<button class="info-btn" onclick="openInfoModal(\'values_act\')"><span class="info-btn-circle">?</span></button>' +
-    '</div>' +
+    '<div style="padding:2px 0 8px">' +
     '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">' +
     'Not "did you feel motivated?" — <em>Did you act from a value when it was uncomfortable?</em> That is the ACT question.' +
     '</div>' +
@@ -11726,6 +12417,16 @@ function setValueDifficulty(level) {
   const hard = level === "hard" ? _valEnacted : [];
   saveTodayValuesEntry(_valEnacted, easy, hard, note);
   renderTodayValuesCheckin();
+}
+
+function toggleReflectValues() {
+  const body = document.getElementById("reflect-values-body");
+  const chev = document.getElementById("reflect-values-chevron");
+  if (!body) return;
+  const open = body.style.display !== "none";
+  body.style.display = open ? "none" : "block";
+  if (chev) chev.style.transform = open ? "" : "rotate(180deg)";
+  if (!open) renderTodayValuesCheckin();
 }
 
 // ── Values drift panel for Progress tab ──────────────────────────────────
@@ -11846,15 +12547,21 @@ function renderTriggerCaptures() {
       '<div class="mono" style="font-size:8px;color:#E8A020;letter-spacing:1px">CAPTURE ' + (i+1) + '</div>' +
       '<button onclick="deleteTriggerCapture(' + i + ')" style="background:none;border:none;color:var(--text-dimmer);font-size:14px;cursor:pointer;padding:0;line-height:1">&times;</button>' +
       '</div>' +
-      _tcField("Trigger", "tc-trigger-" + i, cap.trigger, "What happened — what activated the shift?") +
-      _tcField("What I really felt", "tc-felt-" + i, cap.felt, "Exposed / ashamed / judged / lesser than / pressured...") +
-      _tcField("How I compensated", "tc-comp-" + i, cap.compensated, "Joked / became lighter / got vague / charmed / shrank...") +
-      _tcField("What it cost", "tc-cost-" + i, cap.cost, "Lost the direct moment / avoided the decision / gave ground...");
-    // Auto-save on blur
+      _tcField("Trigger", "tc-trigger-" + i, cap.trigger, "What happened — what activated the shift?", null) +
+      _tcField("What I really felt", "tc-felt-" + i, cap.felt, "", "felt") +
+      _tcField("How I compensated", "tc-comp-" + i, cap.compensated, "", "compensated") +
+      _tcField("What it cost", "tc-cost-" + i, cap.cost, "", "cost");
+    // Auto-save on blur/change for both text inputs and custom inputs
     card.querySelectorAll && setTimeout(() => {
-      ["trigger","felt","compensated","cost"].forEach(field => {
-        const el = document.getElementById("tc-" + field + "-" + i);
-        if (el) el.onblur = () => saveTriggerField(i, field, el.value.trim());
+      // Trigger field (plain text)
+      const trigEl = document.getElementById("tc-trigger-" + i);
+      if (trigEl) trigEl.onblur = () => saveTriggerField(i, "trigger", trigEl.value.trim());
+      // Dropdown fields: save custom text on blur
+      ["felt","compensated","cost"].forEach(field => {
+        const customEl = document.getElementById("tc-" + field + "-" + i);
+        if (customEl) customEl.onblur = () => {
+          if (customEl.style.display !== "none") saveTriggerField(i, field, customEl.value.trim());
+        };
       });
     }, 50);
     list.appendChild(card);
@@ -11864,11 +12571,93 @@ function renderTriggerCaptures() {
   if (addBtn) addBtn.style.display = captures.length >= 3 ? "none" : "block";
 }
 
-function _tcField(label, id, value, placeholder) {
-  return '<div style="margin-bottom:7px">' +
-    '<div class="mono" style="font-size:8px;color:var(--text-dimmer);letter-spacing:0.5px;margin-bottom:3px">' + label.toUpperCase() + '</div>' +
-    '<input type="text" id="' + id + '" value="' + (value||"").replace(/"/g,"&quot;") + '" placeholder="' + placeholder + '" ' +
-    'style="width:100%;padding:6px 9px;font-size:11px;box-sizing:border-box;border-radius:4px;border:1px solid var(--border);background:var(--bg-card);color:var(--text)" /></div>';
+// Dropdown options for each trigger capture field
+const TC_OPTIONS = {
+  felt: [
+    "Exposed / seen",
+    "Judged / evaluated",
+    "Ashamed of myself",
+    "Lesser than someone",
+    "Pressured / squeezed",
+    "Unsafe / threatened",
+    "Ignored / dismissed",
+    "Behind / not enough",
+    "Rejected",
+    "Overwhelmed"
+  ],
+  compensated: [
+    "Joked / made it light",
+    "Became vague / unclear",
+    "Charmed my way through",
+    "Shrank / got quiet",
+    "Over-explained / rambled",
+    "Got busy with something else",
+    "Agreed when I didn't mean it",
+    "Performed confidence I didn't feel",
+    "Withdrew / went cold",
+    "Became boyish / softened"
+  ],
+  cost: [
+    "Lost the direct moment",
+    "Avoided the decision",
+    "Gave up ground I shouldn't have",
+    "Left the conversation incomplete",
+    "Said yes when I meant no",
+    "Missed a chance to be direct",
+    "Felt hollow / not myself",
+    "The other person got the wrong read",
+    "Had to clean it up later",
+    "Nothing — I noticed and interrupted it"
+  ]
+};
+
+function _tcField(label, id, value, placeholder, fieldType) {
+  const options = fieldType ? TC_OPTIONS[fieldType] : null;
+  if (!options) {
+    // Trigger field: plain text input
+    return '<div style="margin-bottom:8px">' +
+      '<div class="mono" style="font-size:8px;color:var(--text-dimmer);letter-spacing:0.5px;margin-bottom:4px">' + label.toUpperCase() + '</div>' +
+      '<input type="text" id="' + id + '" value="' + (value||"").replace(/"/g,"&quot;") + '" placeholder="' + (placeholder||"") + '" ' +
+      'style="width:100%;padding:7px 10px;font-size:12px;box-sizing:border-box;border-radius:5px;border:1px solid var(--border);background:var(--bg-card);color:var(--text)" /></div>';
+  }
+  // Dropdown field: select + optional custom text
+  const hasCustom = value && !options.includes(value);
+  const selectVal = hasCustom ? "__custom__" : (value || "");
+  let html = '<div style="margin-bottom:8px">' +
+    '<div class="mono" style="font-size:8px;color:var(--text-dimmer);letter-spacing:0.5px;margin-bottom:4px">' + label.toUpperCase() + '</div>' +
+    '<select id="' + id + '-select" data-fieldid="' + id + '" onchange="_tcSelectChange(this.dataset.fieldid)" ' +
+    'style="width:100%;padding:7px 10px;font-size:12px;box-sizing:border-box;border-radius:5px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;appearance:auto">' +
+    '<option value="">— pick one —</option>';
+  options.forEach(opt => {
+    html += '<option value="' + opt.replace(/"/g,"&quot;") + '"' + (selectVal === opt ? " selected" : "") + '>' + opt + '</option>';
+  });
+  html += '<option value="__custom__"' + (hasCustom ? " selected" : "") + '>Write my own...</option>';
+  html += '</select>';
+  // Custom text input — shown when "write my own" selected
+  html += '<input type="text" id="' + id + '" placeholder="Write your own..." ' +
+    'value="' + (hasCustom ? (value||"").replace(/"/g,"&quot;") : "") + '" ' +
+    'style="width:100%;padding:7px 10px;font-size:12px;box-sizing:border-box;border-radius:5px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);margin-top:5px;display:' + (hasCustom ? "block" : "none") + '" />';
+  html += '</div>';
+  return html;
+}
+
+function _tcSelectChange(baseId) {
+  const select = document.getElementById(baseId + "-select");
+  const input  = document.getElementById(baseId);
+  if (!select || !input) return;
+  if (select.value === "__custom__") {
+    input.style.display = "block";
+    input.focus();
+    input.value = "";
+  } else {
+    input.style.display = "none";
+    input.value = select.value;
+    // Auto-save the selection
+    const parts = baseId.split("-");
+    const field = parts[1]; // felt / compensated / cost
+    const index = parseInt(parts[2]);
+    saveTriggerField(index, field, select.value);
+  }
 }
 
 function saveTriggerField(index, field, value) {
@@ -12033,25 +12822,121 @@ function getWeeklyInterruptionStats() {
 // Shown as a "say these out loud" prompt in the HA track section
 // ════════════════════════════════════════════════════════════════════
 
+// Static lines (fallback / morning ritual)
 const HA_EMBODIMENT_LINES = [
   "I do not need to shrink here.",
   "I can stay warm and still take space.",
   "Discomfort is not a command."
 ];
 
+// Mode-specific lines — advisor recommendation 2A
+// Show 1-3 context-based lines based on today's mode
+const HA_EMBODIMENT_BY_MODE = {
+  angry_child: [
+    "I do not need to harden before I understand.",
+    "I can stay direct without rushing to accusation.",
+    "Discomfort is not a command."
+  ],
+  punitive_parent: [
+    "I do not heal by turning against myself.",
+    "Missing a step is not the end of the day.",
+    "I can re-enter without punishment."
+  ],
+  compensatory_child: [
+    "I do not need charm to earn my place.",
+    "I can stay warm and still take space.",
+    "I choose the direct move."
+  ],
+  vulnerable_child: [
+    "I do not need to shrink here.",
+    "Discomfort is not danger.",
+    "The fear is information — not a verdict."
+  ],
+  detached_protector: [
+    "I have not disappeared. I am here.",
+    "Two minutes of contact is enough.",
+    "Returning is not starting over."
+  ],
+  demanding_parent: [
+    "Good enough is real.",
+    "I can stop when done — not when perfect.",
+    "The bar does not have to keep moving."
+  ],
+  compliant_surrenderer: [
+    "My needs are allowed to exist.",
+    "Clarity is not unkindness.",
+    "One honest sentence is enough."
+  ],
+  overcompensator: [
+    "I can protect myself without becoming rigid.",
+    "Steadiness is not the same as hardness.",
+    "I can stay grounded without taking over."
+  ],
+  happy_child: [
+    "This aliveness is real. Stay in it.",
+    "I do not need to earn rest.",
+    "Play is not avoidance when it is genuine."
+  ],
+  healthy_adult: [
+    "I am already here. This is the mode.",
+    "One honest step from this place.",
+    "Discomfort is not a command."
+  ],
+  assertive_adult: [
+    "I can say what is true without performing it.",
+    "My view is allowed to exist.",
+    "Clarity is respectful — not hostile."
+  ]
+};
+
+let _savedEmbodimentLine = null; // for "save to morning ritual"
+
 function renderEmbodimentLines(container) {
   if (!container) return;
-  let html = '<div style="margin-bottom:12px;padding:10px 12px;background:#3D8A5E0d;border-left:3px solid #3D8A5E;border-radius:5px">' +
-    '<div class="mono" style="font-size:8px;color:#3D8A5E;letter-spacing:1px;margin-bottom:8px">SAY THESE OUT LOUD — EMBODIMENT REP</div>' +
-    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-style:italic">Not as affirmations. As nervous system training. Slow, low, steady.</div>';
-  HA_EMBODIMENT_LINES.forEach(line => {
-    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #3D8A5E22">' +
-      '<span style="font-size:10px;color:#3D8A5E;flex-shrink:0">▶</span>' +
+
+  // Get today's mode for context-based lines
+  const todayMode = (moodData[today()] || {}).mode || null;
+  const lines = todayMode && HA_EMBODIMENT_BY_MODE[todayMode]
+    ? HA_EMBODIMENT_BY_MODE[todayMode]
+    : HA_EMBODIMENT_LINES;
+  const modeObj = todayMode ? MODES.find(m => m.key === todayMode) : null;
+  const headerColor = modeObj ? modeObj.color : "#3D8A5E";
+  const modeLabel = modeObj ? " — for " + modeObj.label : "";
+
+  let html = '<div style="margin-bottom:12px;padding:10px 12px;background:#3D8A5E0d;border-left:3px solid ' + headerColor + ';border-radius:5px">' +
+    '<div class="mono" style="font-size:8px;color:' + headerColor + ';letter-spacing:1px;margin-bottom:6px">SAY THESE OUT LOUD' + modeLabel.toUpperCase() + '</div>' +
+    '<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;font-style:italic">Not as affirmations. As nervous system training. Slow, low, steady.</div>';
+
+  lines.forEach((line, i) => {
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid ' + headerColor + '18">' +
+      '<div style="display:flex;align-items:center;gap:8px;flex:1">' +
+      '<span style="font-size:10px;color:' + headerColor + ';flex-shrink:0">▶</span>' +
       '<span style="font-size:12px;color:var(--text);font-style:italic;line-height:1.4">&ldquo;' + line + '&rdquo;</span>' +
+      '</div>' +
+      '<button onclick="saveEmbodimentLineToMorning(' + JSON.stringify(line) + ')" ' +
+      'title="Save to tomorrow morning ritual" ' +
+      'style="background:none;border:none;color:var(--text-dimmer);font-size:11px;cursor:pointer;padding:0 4px;flex-shrink:0;opacity:0.5;transition:opacity 0.2s" ' +
+      '>&#x1F305;</button>' +
       '</div>';
   });
+
   html += '</div>';
   container.innerHTML = html;
+}
+
+// Save a line to tomorrow's morning ritual (advisor 2B)
+const SAVED_MORNING_LINES_SK = "yd2-saved-morning-lines";
+
+function saveEmbodimentLineToMorning(line) {
+  const all = JSON.parse(localStorage.getItem(SAVED_MORNING_LINES_SK) || "[]");
+  if (!all.includes(line)) all.push(line);
+  if (all.length > 5) all.shift(); // keep last 5
+  localStorage.setItem(SAVED_MORNING_LINES_SK, JSON.stringify(all));
+  showToast("🌅 Saved to tomorrow's morning ritual", 2500);
+}
+
+function getSavedMorningLines() {
+  try { return JSON.parse(localStorage.getItem(SAVED_MORNING_LINES_SK) || "[]"); } catch(e) { return []; }
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -12145,9 +13030,11 @@ const INCANTATION = [
   "When someone stronger appears, I do not need to become smaller to survive the comparison.",
   "I choose the adult move, even when the child in me feels exposed.",
   "I protect the child in me by leading him, not by hiding him.",
+  "I provide safety, direction, stability, energy, and presence for my family — and that begins with how I lead myself today.",
   "I do not heal by hating where I am. I meet what is actually here, and I move from there.",
   "The real man is whoever shows up honestly in the next hour.",
-  "Small honest steps rebuild a life. I owe myself loyalty now."
+  "Small honest steps rebuild a life. I owe myself loyalty now.",
+  "Everything happening to me is happening for my growth. I do not need to resist what is here — I can meet it, and move through it."
 ];
 
 const MORNING_SK = "yd2-morning-ritual";
@@ -12185,18 +13072,39 @@ function openMorningRitual() {
   const dateLabel = document.getElementById("morning-date-label");
   if (dateLabel) dateLabel.textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}).toUpperCase();
 
+  // Show saved embodiment lines from last night (if any)
+  const savedLines = getSavedMorningLines();
+  const savedLinesEl = document.getElementById("morning-saved-lines");
+  if (savedLinesEl) {
+    if (savedLines.length) {
+      savedLinesEl.innerHTML =
+        '<div style="margin-bottom:16px;padding:10px 12px;background:#3D8A5E0d;border-left:3px solid #3D8A5E;border-radius:6px">' +
+        '<div class="mono" style="font-size:8px;color:#3D8A5E;letter-spacing:1px;margin-bottom:8px">FROM LAST NIGHT — SAY THESE FIRST</div>' +
+        savedLines.map(line =>
+          '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #3D8A5E22">' +
+          '<span style="color:#3D8A5E;font-size:10px">▶</span>' +
+          '<span style="font-size:13px;color:var(--text-heading);font-style:italic;font-family:serif">&ldquo;' + line + '&rdquo;</span>' +
+          '</div>'
+        ).join("") +
+        '<button onclick="clearSavedMorningLines()" style="margin-top:8px;background:none;border:none;font-size:9px;color:var(--text-dimmer);cursor:pointer;padding:0">\u00d7 clear saved lines</button>' +
+        '</div>';
+    } else {
+      savedLinesEl.innerHTML = "";
+    }
+  }
+
   // Render incantation lines
   const container = document.getElementById("morning-incantation-lines");
   if (container) {
     container.innerHTML = "";
-    INCANTATION.forEach((line, i) => {
-      const isKey = [0,1,5,9,10].includes(i); // emphasis: catchup, disappeared, comparison, real man, loyalty
+    // Render as two coherent prose paragraphs — no row numbers
+    const _activeLines = getIncantation();
+    const _group1 = _activeLines.slice(0, Math.ceil(_activeLines.length / 2)).join(" ");
+    const _group2 = _activeLines.slice(Math.ceil(_activeLines.length / 2)).join(" ");
+    [_group1, _group2].forEach((_para, _gi) => {
       const div = document.createElement("div");
-      div.style.cssText = "padding:11px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px";
-      div.innerHTML =
-        '<span style="font-size:10px;color:var(--text-dimmer);font-family:\'DM Mono\',monospace;flex-shrink:0;margin-top:4px;min-width:18px;opacity:0.4">' + String(i+1).padStart(2,"0") + '</span>' +
-        '<div style="font-size:' + (isKey ? "15px" : "14px") + ';color:' + (isKey ? "var(--text-heading)" : "var(--text-muted)") + ';line-height:1.7;font-family:\'Playfair Display\',serif;font-style:italic;font-weight:' + (isKey ? "500" : "400") + '">' +
-        '“' + line + '”</div>';
+      div.style.cssText = "padding:14px 0;" + (_gi === 0 ? "border-bottom:1px solid var(--border);margin-bottom:14px" : "");
+      div.innerHTML = '<div style="font-size:15px;color:var(--text-heading);line-height:1.85;font-family:serif;font-style:italic;font-weight:400">' + _para + '</div>';
       container.appendChild(div);
     });
   }
@@ -12291,9 +13199,59 @@ function getWeeklyAdultActionStats() {
 }
 
 // ── Incantation access button — available anytime in Today ────────────────
+function clearSavedMorningLines() {
+  localStorage.removeItem(SAVED_MORNING_LINES_SK);
+  openMorningRitual(); // re-render
+}
+
 function openIncantationReader() {
   // Re-open the morning ritual in read-only mode (no action required)
   openMorningRitual();
+}
+
+// ── Morning ritual custom text editor ────────────────────────────────────────
+const MORNING_RITUAL_CUSTOM_SK = "yd2-morning-ritual-custom";
+
+function getIncantation() {
+  try {
+    const custom = localStorage.getItem(MORNING_RITUAL_CUSTOM_SK);
+    if (custom) {
+      const lines = JSON.parse(custom);
+      if (Array.isArray(lines) && lines.length) return lines;
+    }
+  } catch(e) {}
+  return INCANTATION;
+}
+
+function openMorningRitualEditor() {
+  const overlay = document.getElementById("morning-editor-overlay");
+  if (!overlay) return;
+  overlay.style.display = "flex";
+  const ta = document.getElementById("morning-editor-textarea");
+  if (ta) ta.value = getIncantation().join("\n");
+}
+
+function closeMorningRitualEditor() {
+  const overlay = document.getElementById("morning-editor-overlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+function saveMorningRitualEdit() {
+  const ta = document.getElementById("morning-editor-textarea");
+  if (!ta) return;
+  const lines = ta.value.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+  if (!lines.length) { showToast("Add at least one line"); return; }
+  localStorage.setItem(MORNING_RITUAL_CUSTOM_SK, JSON.stringify(lines));
+  closeMorningRitualEditor();
+  openMorningRitual(); // re-render with new lines
+  showToast("Morning ritual updated ✓");
+}
+
+function resetMorningRitualToDefault() {
+  localStorage.removeItem(MORNING_RITUAL_CUSTOM_SK);
+  const ta = document.getElementById("morning-editor-textarea");
+  if (ta) ta.value = INCANTATION.join("\n");
+  showToast("Reset to default");
 }
 
 
@@ -12406,6 +13364,1010 @@ function renderShutdownActivities(container) {
   container.appendChild(wrap);
 }
 
+
+// ═════════════════════════════════════════════════════════════════════
+// EVENT CHAIN PROCESSOR
+// Expert-advised redesign: 8-step therapeutic flow
+// Separate from EOD. Multiple entries per day. Each stored with timestamp.
+// Steps:
+//   1. Trigger
+//   2. First reaction (single mode — dysfunctional only)
+//   3. Protective mode next (optional, different from step 2)
+//   4. Unmet need (guided chips + free text)
+//   5. Mind story (ACT — what did your mind tell you?)
+//   6. Healthy Adult: SEES / SAYS / DOES (3 structured fields)
+//   7. Target healthy mode next time
+//   8. One concrete adult move next time (behavioral options)
+// ═════════════════════════════════════════════════════════════════════
+
+const EC_SK = "yd2-event-chains";
+
+function loadEventChains() {
+  try { return JSON.parse(localStorage.getItem(EC_SK) || "{}"); } catch(e) { return {}; }
+}
+function saveEventChains(data) {
+  // Prune to 60 days
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
+  const ck = cutoff.toISOString().split("T")[0];
+  Object.keys(data).forEach(k => { if (k < ck) delete data[k]; });
+  localStorage.setItem(EC_SK, JSON.stringify(data));
+}
+
+function getTodayChains() {
+  return loadEventChains()[today()] || [];
+}
+
+// ── Event chain state ─────────────────────────────────────────────────────────
+let _ecStep = 0;
+let _ecData = {};       // current chain being built
+let _ecEditId = null;   // if editing an existing chain
+
+const EC_STEPS = [
+  { id:"trigger",    label:"What triggered it?",                    sub:"The external event — what happened right before the shift?" },
+  { id:"first_mode", label:"What hit first?",                       sub:"Your immediate reaction — the first internal state that activated." },
+  { id:"prot_mode",  label:"What protected you next?",              sub:"The mode that came after — how your system coped. Skip if it was just one state." },
+  { id:"need",       label:"What did that part need?",              sub:"Underneath the reaction was an unmet need. What was it?" },
+  { id:"mind_story", label:"What story did your mind tell?",        sub:"The interpretation — what your mind concluded about what happened." },
+  { id:"ha",         label:"Healthy Adult response",                sub:"What the grounded part of you sees, says, and would do." },
+  { id:"target_mode",label:"Which healthy mode next time?",         sub:"Where you want to move toward — not where you were." },
+  { id:"next_action",label:"One concrete adult move next time",     sub:"Specific and behavioral. Something your hands or mouth can actually do." }
+];
+
+// ── Guided need options (structured from NEEDS + plain additions) ─────────────
+const EC_NEED_OPTIONS = [
+  { key:"fairness",      label:"Fairness",             emoji:"⚖️" },
+  { key:"honesty",       label:"Honesty",              emoji:"🪞" },
+  { key:"reliability",   label:"Reliability",          emoji:"🔒" },
+  { key:"respect",       label:"Respect",              emoji:"🫡" },
+  { key:"reassurance",   label:"Reassurance",          emoji:"🤝" },
+  { key:"protection",    label:"Protection from harm", emoji:"🛡️" },
+  { key:"realistic_expectations", label:"Realistic bar", emoji:"📏" },
+  { key:"rest",          label:"Rest / space",         emoji:"😴" },
+  { key:"structure",     label:"Structure / clarity",  emoji:"🗂️" },
+  { key:"to_be_heard",   label:"To be heard",          emoji:"👂" },
+  { key:"to_slow_down",  label:"To slow down",         emoji:"🐢" },
+  { key:"autonomy",      label:"Autonomy / control",   emoji:"🗺️" },
+  { key:"connection",    label:"Connection",           emoji:"🫂" },
+  { key:"safety",        label:"Safety / no threat",   emoji:"🏠" },
+  { key:"validation",    label:"Validation",           emoji:"✓" },
+  { key:"competence",    label:"To feel capable",      emoji:"⚙️" },
+];
+
+// ── Behavioral next-move options ──────────────────────────────────────────────
+const EC_ADULT_MOVES = [
+  { key:"ask_question",   label:"Ask one clarifying question before reacting" },
+  { key:"slow_down",      label:"Slow down — pause before responding" },
+  { key:"state_directly", label:"State the concern directly and calmly" },
+  { key:"verify_facts",   label:"Verify facts first, then respond" },
+  { key:"leave_briefly",  label:"Leave the situation for 30 seconds" },
+  { key:"write_first",    label:"Write it out before speaking" },
+  { key:"name_feeling",   label:"Name what I'm feeling out loud" },
+  { key:"set_limit",      label:"Set a clear limit without over-explaining" },
+  { key:"stay_present",   label:"Stay in the room without retreating" },
+  { key:"disagree_calmly",label:"Disagree calmly and hold the position" },
+];
+
+// ── HA structured text by mode ────────────────────────────────────────────────
+const HA_STRUCTURED = {
+  vulnerable_child: {
+    sees: "I felt exposed and scared — this part was bracing for failure.",
+    says: "You are not broken. The fear is information, not a verdict.",
+    does: "Take one tiny action — not to silence the fear, but to move alongside it."
+  },
+  demanding_parent: {
+    sees: "Impossible standards were active — the bar kept moving.",
+    says: "Good enough is real. Define done before you start.",
+    does: "Write one specific done-definition. Lock it. Stop when you reach it."
+  },
+  detached_protector: {
+    sees: "Something felt threatening and the system checked out.",
+    says: "Numbness is protection, not laziness. What was it protecting from?",
+    does: "Two minutes of contact with the thing. No decision to continue — just touch it."
+  },
+  punitive_parent: {
+    sees: "The inner critic was attacking — not motivating.",
+    says: "Stop. That voice is not helpful and it is not the truth.",
+    does: "Name the attack out loud. Then redirect to one concrete action."
+  },
+  angry_child: {
+    sees: "Anger was signaling a perceived violation or unfairness.",
+    says: "The anger is real. I do not need to accuse before I verify.",
+    does: "Pause, ask directly, check facts, then respond firmly from values."
+  },
+  compliant_surrenderer: {
+    sees: "Self-erasure was active — needs were suppressed to keep the peace.",
+    says: "My needs are real. Compliance that erases me is not peace.",
+    does: "Say one honest sentence — without over-explaining or apologizing."
+  },
+  overcompensator: {
+    sees: "I was armoring up — performing strength to cover something vulnerable.",
+    says: "The armor was a solution once. Check what it costs now.",
+    does: "Ask: what am I protecting? Set it down for ten minutes."
+  },
+  compensatory_child: {
+    sees: "Lightness turned on as protection — something exposed me.",
+    says: "I do not need to stay light to stay safe.",
+    does: "Name what exposed me. Then ask: what would the grounded version of me do?"
+  },
+  angry_child: {
+    sees: "Frustration was signaling something important felt violated.",
+    says: "The anger is a signal. Read it before obeying it.",
+    does: "Name the legitimate need underneath. Act from that, not from the heat."
+  }
+};
+
+function getHaStructured(modeKey) {
+  const base = HA_STRUCTURED[modeKey];
+  if (base) return base;
+  const modeObj = MODES.find(m => m.key === modeKey);
+  if (!modeObj) return { sees: "", says: "", does: "" };
+  // Parse healthyAdultResponse into sees/says/does
+  const har = modeObj.healthyAdultResponse;
+  return {
+    sees: "This mode was running: " + modeObj.label + ".",
+    says: har.slice(0, har.indexOf(".") + 1) || har.slice(0, 80),
+    does: har.slice(har.indexOf(".") + 1).trim().slice(0, 100) || "Take one grounded action."
+  };
+}
+
+// ── Open / close ──────────────────────────────────────────────────────────────
+function openEventChain(editId) {
+  _ecStep = 0;
+  _ecEditId = editId || null;
+  _ecData = {};
+
+  if (editId) {
+    // Load existing chain for editing
+    const chains = getTodayChains();
+    const existing = chains.find(c => c.id === editId);
+    if (existing) _ecData = Object.assign({}, existing);
+  }
+
+  document.getElementById("event-chain-overlay").style.display = "flex";
+  ecRender();
+}
+
+function closeEventChain() {
+  document.getElementById("event-chain-overlay").style.display = "none";
+  // Refresh today list in Reflect
+  renderEcTodayList();
+}
+
+function ecStep(dir) {
+  ecCollect(_ecStep);
+  const next = _ecStep + dir;
+  if (next < 0) return;
+  if (next >= EC_STEPS.length) {
+    ecSave();
+    closeEventChain();
+    return;
+  }
+  _ecStep = next;
+  ecRender();
+}
+
+// ── Collect current step data ─────────────────────────────────────────────────
+function ecCollect(stepIdx) {
+  const step = EC_STEPS[stepIdx];
+  if (!step) return;
+  const id = step.id;
+
+  if (id === "trigger") {
+    const el = document.getElementById("ec-trigger-input");
+    if (el) _ecData.trigger = el.value.trim();
+  }
+  else if (id === "first_mode") {
+    // Collected via mode card clicks into _ecData.firstMode
+  }
+  else if (id === "prot_mode") {
+    // Collected via mode card clicks into _ecData.protMode
+  }
+  else if (id === "need") {
+    const noteEl = document.getElementById("ec-need-note");
+    if (noteEl && noteEl.value.trim()) _ecData.needNote = noteEl.value.trim();
+    // needKey collected via chip clicks
+  }
+  else if (id === "mind_story") {
+    const el = document.getElementById("ec-mind-story-input");
+    if (el) _ecData.mindStory = el.value.trim();
+  }
+  else if (id === "ha") {
+    const sees = document.getElementById("ec-ha-sees");
+    const says = document.getElementById("ec-ha-says");
+    const does = document.getElementById("ec-ha-does");
+    if (sees) _ecData.haSees = sees.value.trim();
+    if (says) _ecData.haSays = says.value.trim();
+    if (does) _ecData.haDoes = does.value.trim();
+  }
+  else if (id === "target_mode") {
+    // Collected via mode card clicks into _ecData.targetMode
+  }
+  else if (id === "next_action") {
+    const other = document.getElementById("ec-action-other");
+    if (other && other.value.trim()) _ecData.nextActionNote = other.value.trim();
+  }
+}
+
+// ── Render current step ───────────────────────────────────────────────────────
+function ecRender() {
+  const step = EC_STEPS[_ecStep];
+  const total = EC_STEPS.length;
+  const pct = Math.round((_ecStep / (total-1)) * 100);
+
+  document.getElementById("ec-progress-bar").style.width = Math.max(12, pct) + "%";
+  document.getElementById("ec-step-counter").textContent = "STEP " + (_ecStep+1) + " / " + total;
+  document.getElementById("ec-step-label").textContent = step.label;
+
+  const back = document.getElementById("ec-back-btn");
+  const next = document.getElementById("ec-next-btn");
+  if (back) back.style.display = _ecStep > 0 ? "block" : "none";
+  if (next) next.textContent = _ecStep === total-1 ? "Save ✓" : "Next →";
+
+  const content = document.getElementById("ec-content");
+  content.innerHTML = "";
+
+  // Sub-label
+  const sub = document.createElement("div");
+  sub.style.cssText = "font-size:12px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;padding:10px 12px;background:var(--bg-card);border-radius:6px;border-left:3px solid #7A5FA8";
+  sub.textContent = step.sub;
+  content.appendChild(sub);
+
+  const fns = {
+    trigger:     ecRenderTrigger,
+    first_mode:  () => ecRenderModeSelect("first_mode", "What hit first?", "Pick the immediate first reaction — the first mode that activated.", "firstMode", true),
+    prot_mode:   () => ecRenderModeSelect("prot_mode", "What came next?", "The mode that protected you — how your system coped after the first reaction. Skip if there was only one state.", "protMode", false),
+    need:        ecRenderNeed,
+    mind_story:  ecRenderMindStory,
+    ha:          ecRenderHA,
+    target_mode: ecRenderTargetMode,
+    next_action: ecRenderNextAction
+  };
+  if (fns[step.id]) fns[step.id]();
+}
+
+// ── Step renderers ────────────────────────────────────────────────────────────
+
+function ecRenderTrigger() {
+  const content = document.getElementById("ec-content");
+  const wrap = document.createElement("div");
+  wrap.innerHTML =
+    '<div class="mono" style="font-size:9px;color:#C8962A;letter-spacing:1px;margin-bottom:8px">THE TRIGGER</div>' +
+    '<textarea id="ec-trigger-input" rows="3" placeholder="e.g. Got a message that felt dismissive / Missed a deadline / Someone was late / A comparison was made..." ' +
+    'style="width:100%;padding:12px;font-size:13px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:\'Inter\',sans-serif;line-height:1.5"></textarea>' +
+    '<div style="font-size:11px;color:var(--text-dimmer);margin-top:8px;line-height:1.5">Name the external event — what actually happened, not how you felt about it. One or two sentences is enough.</div>';
+  content.appendChild(wrap);
+  const el = document.getElementById("ec-trigger-input");
+  if (el) {
+    el.value = _ecData.trigger || "";
+    setTimeout(() => el.focus(), 100);
+  }
+}
+
+function ecRenderModeSelect(stepId, title, sub, dataKey, isFirst) {
+  const content = document.getElementById("ec-content");
+  const saved = _ecData[dataKey] || null;
+
+  // Only dysfunctional modes for first/protective selection
+  const DYSFUNCTIONAL = MODES.filter(m => !["healthy_adult","happy_child","assertive_adult"].includes(m.key));
+  const skip = !isFirst;
+
+  if (skip) {
+    const skipBtn = document.createElement("button");
+    skipBtn.style.cssText = "width:100%;padding:10px;border-radius:8px;border:1px dashed var(--border);background:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dimmer);cursor:pointer;margin-bottom:14px";
+    skipBtn.textContent = "Skip — only one mode was active";
+    skipBtn.onclick = () => {
+      _ecData[dataKey] = null;
+      ecStep(1);
+    };
+    content.appendChild(skipBtn);
+  }
+
+  const grid = document.createElement("div");
+  grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:8px";
+
+  DYSFUNCTIONAL.forEach(mode => {
+    const card = document.createElement("div");
+    const active = saved === mode.key;
+    const isComp = mode.key === "compensatory_child";
+    card.style.cssText = "padding:10px;border-radius:8px;border:" +
+      (isComp ? "1px dashed " : "1px solid ") +
+      (active ? mode.color : "var(--border)") +
+      ";background:" + (active ? mode.color + "18" : "var(--bg-card)") +
+      ";cursor:pointer;transition:all 0.15s;user-select:none";
+    card.innerHTML =
+      '<div style="font-size:16px;margin-bottom:4px">' + mode.emoji + '</div>' +
+      '<div style="font-size:11px;font-weight:600;color:' + (active ? mode.color : "var(--text)") + ';line-height:1.2;margin-bottom:4px">' + mode.label + '</div>' +
+      '<div style="font-size:9px;color:var(--text-dimmer);line-height:1.3">' + mode.desc.slice(0, 50) + '…</div>' +
+      (active ? '<div style="font-size:10px;color:' + mode.color + ';margin-top:4px;font-weight:700">✓ selected</div>' : '');
+    card.onclick = () => {
+      _ecData[dataKey] = mode.key;
+      // Auto-fill HA on first mode selection
+      if (dataKey === "firstMode" && !_ecData.haSees) {
+        const ha = getHaStructured(mode.key);
+        _ecData.haSees = ha.sees;
+        _ecData.haSays = ha.says;
+        _ecData.haDoes = ha.does;
+      }
+      ecRenderModeSelect(stepId, title, sub, dataKey, isFirst);
+    };
+    grid.appendChild(card);
+  });
+  content.appendChild(grid);
+}
+
+function ecRenderNeed() {
+  const content = document.getElementById("ec-content");
+  const saved = _ecData.needKey || null;
+  const savedNote = _ecData.needNote || "";
+
+  const wrap = document.createElement("div");
+  wrap.innerHTML = '<div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:1px;margin-bottom:10px">WHAT DID THAT PART NEED?</div>';
+
+  // Chip grid
+  const chips = document.createElement("div");
+  chips.style.cssText = "display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px";
+  EC_NEED_OPTIONS.forEach(n => {
+    const chip = document.createElement("button");
+    const active = saved === n.key;
+    chip.style.cssText = "padding:7px 12px;border-radius:16px;border:1px solid " +
+      (active ? "#3D8A5E" : "var(--border)") + ";background:" +
+      (active ? "#3D8A5E22" : "none") + ";font-size:11px;color:" +
+      (active ? "#3D8A5E" : "var(--text-muted)") + ";cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.15s";
+    chip.innerHTML = '<span>' + n.emoji + '</span><span>' + n.label + '</span>';
+    chip.onclick = () => {
+      _ecData.needKey = n.key;
+      _ecData.needLabel = n.label;
+      ecRenderNeed();
+    };
+    chips.appendChild(chip);
+  });
+  wrap.appendChild(chips);
+
+  // Free text
+  const noteWrap = document.createElement("div");
+  noteWrap.innerHTML =
+    '<div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:5px">ADD YOUR OWN WORDS (OPTIONAL)</div>' +
+    '<input type="text" id="ec-need-note" placeholder="e.g. To not be lied to / To feel like it matters..." ' +
+    'value="' + savedNote.replace(/"/g,"&quot;") + '" ' +
+    'style="width:100%;padding:10px 12px;font-size:12px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text)" />';
+  wrap.appendChild(noteWrap);
+  content.appendChild(wrap);
+}
+
+function ecRenderMindStory() {
+  const content = document.getElementById("ec-content");
+  const saved = _ecData.mindStory || "";
+
+  const wrap = document.createElement("div");
+  wrap.innerHTML =
+    '<div class="mono" style="font-size:9px;color:#4A90A4;letter-spacing:1px;margin-bottom:8px">THE MIND\'S INTERPRETATION</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">What conclusions did your mind jump to? The story it told you about what this event meant. Write it exactly as it sounded inside.</div>' +
+    '<div style="font-size:11px;color:var(--text-dimmer);margin-bottom:10px;font-style:italic">Examples: "He\'s doing this on purpose." / "I\'m being screwed over." / "No one takes me seriously." / "I\'m failing again."</div>' +
+    '<textarea id="ec-mind-story-input" rows="4" placeholder="Write the exact story your mind told — raw, not sanitised..." ' +
+    'style="width:100%;padding:12px;font-size:13px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:\'Inter\',sans-serif;line-height:1.5">' +
+    saved.replace(/</g,"&lt;") + '</textarea>' +
+    '<div style="margin-top:10px;padding:8px 10px;background:#4A90A40d;border-left:2px solid #4A90A4;border-radius:5px;font-size:10px;color:var(--text-dimmer);line-height:1.5">' +
+    '<strong style="color:#4A90A4">ACT note:</strong> This story is your mind\'s output — not a fact. You\'ll work with it in the next step. For now, just name it clearly.' +
+    '</div>';
+  content.appendChild(wrap);
+  setTimeout(() => {
+    const el = document.getElementById("ec-mind-story-input");
+    if (el) el.focus();
+  }, 100);
+}
+
+function ecRenderHA() {
+  const content = document.getElementById("ec-content");
+  const firstModeKey = _ecData.firstMode || _ecData.protMode || null;
+  const ha = firstModeKey ? getHaStructured(firstModeKey) : { sees:"", says:"", does:"" };
+
+  const savedSees = _ecData.haSees || ha.sees;
+  const savedSays = _ecData.haSays || ha.says;
+  const savedDoes = _ecData.haDoes || ha.does;
+
+  const wrap = document.createElement("div");
+
+  // Mind story echo
+  if (_ecData.mindStory) {
+    wrap.innerHTML +=
+      '<div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;border-left:3px solid #4A90A4;margin-bottom:14px">' +
+      '<div class="mono" style="font-size:8px;color:#4A90A4;letter-spacing:1px;margin-bottom:4px">YOUR MIND\'S STORY</div>' +
+      '<div style="font-size:12px;color:var(--text-muted);font-style:italic">"' + _ecData.mindStory.replace(/</g,"&lt;") + '"</div>' +
+      '</div>';
+  }
+
+  // Three HA fields
+  const haField = (id, label, color, placeholder, savedVal) =>
+    '<div style="margin-bottom:12px">' +
+    '<div class="mono" style="font-size:9px;color:' + color + ';letter-spacing:1px;margin-bottom:5px">' + label + '</div>' +
+    '<textarea id="' + id + '" rows="2" placeholder="' + placeholder + '" ' +
+    'style="width:100%;padding:10px 12px;font-size:12px;box-sizing:border-box;border-radius:6px;border:1px solid ' + color + '44;background:var(--bg-input);color:var(--text);resize:none;font-family:\'Inter\',sans-serif;line-height:1.5">' +
+    (savedVal||"").replace(/</g,"&lt;") + '</textarea></div>';
+
+  wrap.innerHTML += haField("ec-ha-sees", "HEALTHY ADULT SEES:", "#7A5FA8",
+    "What is actually happening here — without the mind story...", savedSees);
+  wrap.innerHTML += haField("ec-ha-says", "HEALTHY ADULT SAYS:", "#4A90A4",
+    "What does the grounded part of you say to the activated part...", savedSays);
+  wrap.innerHTML += haField("ec-ha-does", "HEALTHY ADULT DOES NEXT TIME:", "#3D8A5E",
+    "One concrete action — not a resolution, a behavioral move...", savedDoes);
+
+  content.appendChild(wrap);
+}
+
+function ecRenderTargetMode() {
+  const content = document.getElementById("ec-content");
+  const saved = _ecData.targetMode || null;
+
+  const HEALTHY_MODES = MODES.filter(m => ["healthy_adult","happy_child","assertive_adult"].includes(m.key));
+
+  const wrap = document.createElement("div");
+  wrap.innerHTML = '<div class="mono" style="font-size:9px;color:#3D8A5E;letter-spacing:1px;margin-bottom:12px">WHICH HEALTHY MODE DO YOU WANT TO MOVE TOWARD?</div>';
+
+  const grid = document.createElement("div");
+  grid.style.cssText = "display:flex;flex-direction:column;gap:8px";
+
+  HEALTHY_MODES.forEach(mode => {
+    const card = document.createElement("div");
+    const active = saved === mode.key;
+    card.style.cssText = "padding:14px 16px;border-radius:8px;border:1px solid " +
+      (active ? mode.color : "var(--border)") + ";background:" +
+      (active ? mode.color + "18" : "var(--bg-card)") +
+      ";cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:12px";
+    card.innerHTML =
+      '<span style="font-size:22px;flex-shrink:0">' + mode.emoji + '</span>' +
+      '<div style="flex:1">' +
+      '<div style="font-size:13px;font-weight:600;color:' + (active ? mode.color : "var(--text)") + ';margin-bottom:3px">' + mode.label + '</div>' +
+      '<div style="font-size:11px;color:var(--text-dimmer);line-height:1.4">' + mode.desc.slice(0, 70) + '…</div>' +
+      '</div>' +
+      (active ? '<span style="font-size:16px;color:' + mode.color + '">✓</span>' : '');
+    card.onclick = () => {
+      _ecData.targetMode = mode.key;
+      ecRenderTargetMode();
+    };
+    grid.appendChild(card);
+  });
+
+  wrap.appendChild(grid);
+  content.appendChild(wrap);
+}
+
+function ecRenderNextAction() {
+  const content = document.getElementById("ec-content");
+  const saved = _ecData.nextAction || null;
+  const savedNote = _ecData.nextActionNote || "";
+
+  const wrap = document.createElement("div");
+  wrap.innerHTML = '<div class="mono" style="font-size:9px;color:#C8962A;letter-spacing:1px;margin-bottom:10px">ONE CONCRETE ADULT MOVE</div>';
+
+  const options = document.createElement("div");
+  options.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-bottom:14px";
+
+  EC_ADULT_MOVES.forEach(m => {
+    const row = document.createElement("button");
+    const active = saved === m.key;
+    row.style.cssText = "display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;border:1px solid " +
+      (active ? "#C8962A" : "var(--border)") + ";background:" +
+      (active ? "#C8962A18" : "var(--bg-card)") +
+      ";cursor:pointer;text-align:left;width:100%;transition:all 0.15s";
+    row.innerHTML =
+      (active ? '<span style="color:#C8962A;font-size:14px;flex-shrink:0">✓</span>' : '<span style="color:var(--text-dimmer);font-size:12px;flex-shrink:0">○</span>') +
+      '<span style="font-size:12px;color:' + (active ? "var(--text)" : "var(--text-muted)") + '">' + m.label + '</span>';
+    row.onclick = () => {
+      _ecData.nextAction = m.key;
+      _ecData.nextActionLabel = m.label;
+      ecRenderNextAction();
+    };
+    options.appendChild(row);
+  });
+  wrap.appendChild(options);
+
+  // Free text option
+  const noteWrap = document.createElement("div");
+  noteWrap.innerHTML =
+    '<div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:5px">OR WRITE YOUR OWN</div>' +
+    '<input type="text" id="ec-action-other" placeholder="e.g. Take three breaths before I say anything..." ' +
+    'value="' + savedNote.replace(/"/g,"&quot;") + '" ' +
+    'style="width:100%;padding:10px 12px;font-size:12px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text)" />';
+  wrap.appendChild(noteWrap);
+  content.appendChild(wrap);
+}
+
+// ── Save the completed event chain ────────────────────────────────────────────
+function ecSave() {
+  ecCollect(_ecStep);
+
+  const all = loadEventChains();
+  const t = today();
+  if (!all[t]) all[t] = [];
+
+  const entry = Object.assign({}, _ecData, {
+    id: _ecEditId || ("ec" + Date.now()),
+    savedAt: new Date().toISOString(),
+    date: t,
+    time: new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})
+  });
+
+  if (_ecEditId) {
+    const idx = all[t].findIndex(c => c.id === _ecEditId);
+    if (idx >= 0) all[t][idx] = entry;
+    else all[t].push(entry);
+  } else {
+    all[t].push(entry);
+  }
+
+  saveEventChains(all);
+
+  // Also store in reflections modeChain for backward compat with weekly/monthly
+  const firstMode = entry.firstMode || entry.protMode || null;
+  if (firstMode && reflections[t]) {
+    reflections[t].modeChain = {
+      trigger: entry.trigger,
+      mode: firstMode,
+      need: entry.needLabel || entry.needNote || "",
+      haResponse: entry.haDoes || entry.haSays || ""
+    };
+    sv(SK.refs, reflections);
+  }
+
+  // Run Meaning Engine
+  if (firstMode) {
+    runAndStoreInterpretation("eod", { mode: firstMode, need: entry.needKey, trigger: entry.trigger });
+  }
+
+  showToast("Event processed ✓ — " + (entry.trigger ? entry.trigger.slice(0,30) + "..." : "saved"));
+  renderEcTodayList();
+}
+
+// ── Render today's processed events in Reflect tab ───────────────────────────
+function renderEcTodayList() {
+  const wrap = document.getElementById("ec-today-list-wrap");
+  if (!wrap) return;
+
+  const chains = getTodayChains();
+  if (!chains.length) { wrap.innerHTML = ""; return; }
+
+  let html = '<div style="margin-bottom:6px">' +
+    '<div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:1px;margin-bottom:8px">TODAY\'S PROCESSED EVENTS (' + chains.length + ')</div>';
+
+  chains.slice().reverse().forEach(chain => {
+    const firstModeObj = chain.firstMode ? MODES.find(m => m.key === chain.firstMode) : null;
+    const protModeObj  = chain.protMode  ? MODES.find(m => m.key === chain.protMode)  : null;
+    const targetObj    = chain.targetMode ? MODES.find(m => m.key === chain.targetMode) : null;
+
+    html +=
+      '<div style="background:var(--bg-card);border:1px solid var(--border);border-left:3px solid ' + (firstModeObj ? firstModeObj.color : "#7A5FA8") + ';border-radius:6px;padding:10px 12px;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+      '<div class="mono" style="font-size:8px;color:var(--text-dimmer)">' + chain.time + '</div>' +
+      '<div style="display:flex;gap:6px">' +
+      '<button onclick="openEventChain(\'' + chain.id + '\')" style="background:none;border:1px solid var(--border);border-radius:10px;padding:3px 8px;font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text-dimmer);cursor:pointer">edit</button>' +
+      '<button onclick="deleteEventChain(\'' + chain.id + '\')" style="background:none;border:none;color:var(--text-dimmer);font-size:14px;cursor:pointer;padding:0;line-height:1">&times;</button>' +
+      '</div></div>' +
+
+      // Trigger
+      (chain.trigger ? '<div style="font-size:12px;color:var(--text);margin-bottom:6px;line-height:1.4">' + esc(chain.trigger.slice(0,100)) + (chain.trigger.length>100?"...":"") + '</div>' : "") +
+
+      // Mode sequence
+      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">' +
+      (firstModeObj ? '<span style="font-size:10px;color:' + firstModeObj.color + ';border:1px solid ' + firstModeObj.color + '33;border-radius:10px;padding:2px 8px">' + firstModeObj.emoji + " " + firstModeObj.label + '</span>' : "") +
+      (protModeObj  ? '<span style="font-size:10px;color:var(--text-dimmer)">→</span><span style="font-size:10px;color:' + protModeObj.color + ';border:1px solid ' + protModeObj.color + '33;border-radius:10px;padding:2px 8px">' + protModeObj.emoji + " " + protModeObj.label + '</span>' : "") +
+      (targetObj    ? '<span style="font-size:10px;color:var(--text-dimmer)">→ next time:</span><span style="font-size:10px;color:' + targetObj.color + ';border:1px solid ' + targetObj.color + '33;border-radius:10px;padding:2px 8px">' + targetObj.emoji + " " + targetObj.label + '</span>' : "") +
+      '</div>' +
+
+      // HA does
+      (chain.haDoes ? '<div style="font-size:11px;color:#3D8A5E;font-style:italic;border-top:1px solid var(--border);padding-top:5px;margin-top:4px">→ ' + esc(chain.haDoes.slice(0,100)) + '</div>' : "") +
+      '</div>';
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function deleteEventChain(id) {
+  const all = loadEventChains();
+  const t = today();
+  if (!all[t]) return;
+  all[t] = all[t].filter(c => c.id !== id);
+  saveEventChains(all);
+  renderEcTodayList();
+}
+
+// ── Weekly event chain stats (feed into weekly/monthly) ───────────────────────
+function getWeeklyEventChainStats() {
+  const all = loadEventChains();
+  const wk = getWeekKey();
+  const weekChains = Object.entries(all)
+    .filter(([d]) => d >= wk)
+    .flatMap(([,arr]) => arr);
+
+  const modeCounts = {}, needCounts = {}, targetCounts = {};
+  weekChains.forEach(c => {
+    if (c.firstMode) modeCounts[c.firstMode] = (modeCounts[c.firstMode]||0)+1;
+    if (c.protMode)  modeCounts[c.protMode]  = (modeCounts[c.protMode]||0)+0.5;
+    if (c.needKey)   needCounts[c.needKey]   = (needCounts[c.needKey]||0)+1;
+    if (c.targetMode) targetCounts[c.targetMode] = (targetCounts[c.targetMode]||0)+1;
+  });
+
+  return {
+    total: weekChains.length,
+    modeCounts,
+    needCounts,
+    targetCounts,
+    chains: weekChains
+  };
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// TOMORROW'S EDGE — Smart suggestions
+// Full sequence-based suggestions from advisor document
+// Keyed by "firstMode|protMode" or "firstMode" alone
+// Each entry: [regulate, communicate/boundary, act/re-enter]
+// ════════════════════════════════════════════════════════════════════
+
+const EDGE_SUGGESTIONS_BY_SEQUENCE = {
+  // Scared → Numb
+  "vulnerable_child|detached_protector": [
+    "Tomorrow, when I feel small, I will stay with the task for two more minutes before leaving it.",
+    "Tomorrow, when I feel overwhelmed, I will make the task smaller instead of disappearing from it.",
+    "Tomorrow, when I want to check out, I will stand up and do one visible action first."
+  ],
+  // Scared → Pleasing
+  "vulnerable_child|compliant_surrenderer": [
+    "Tomorrow, when I feel small, I will say what I actually need in one sentence.",
+    "Tomorrow, when I feel pressured by someone else, I will not abandon my need immediately.",
+    "Tomorrow, when I feel lesser than, I will hold my position for one extra beat."
+  ],
+  // Scared → Charming
+  "vulnerable_child|compensatory_child": [
+    "Tomorrow, when I feel exposed, I will stay direct instead of becoming funny.",
+    "Tomorrow, when I feel pressure to stay likable, I will choose clarity over charm.",
+    "Tomorrow, when I start becoming boyish, I will slow down and stay adult."
+  ],
+  // Scared → Armored
+  "vulnerable_child|overcompensator": [
+    "Tomorrow, when I feel exposed, I will stay steady before I harden.",
+    "Tomorrow, when I feel unsafe, I will choose firmness without force.",
+    "Tomorrow, when I feel exposed, I will protect myself without becoming rigid."
+  ],
+  // Frustrated → Armored
+  "angry_child|overcompensator": [
+    "Tomorrow, when I feel hot with frustration, I will slow down before reacting.",
+    "Tomorrow, when I feel treated unfairly, I will ask directly what happened.",
+    "Tomorrow, when I feel suspicious, I will verify before accusing."
+  ],
+  // Frustrated → Charming
+  "angry_child|compensatory_child": [
+    "Tomorrow, when I feel frustrated, I will say the direct thing instead of making it light.",
+    "Tomorrow, when I feel wronged, I will name it calmly instead of hiding inside warmth.",
+    "Tomorrow, when I want to joke past irritation, I will say what bothered me first."
+  ],
+  // Demanding → Numb
+  "demanding_parent|detached_protector": [
+    "Tomorrow, when it feels like it has to be perfect, I will start badly on purpose.",
+    "Tomorrow, when the standard gets impossible, I will define the minimum viable version.",
+    "Tomorrow, when I want to wait until I can do it properly, I will do the rough version first."
+  ],
+  // Demanding → Attacking self
+  "demanding_parent|punitive_parent": [
+    "Tomorrow, when I fall short, I will correct without attacking myself.",
+    "Tomorrow, when I feel behind, I will not turn pressure into self-contempt.",
+    "Tomorrow, when the day is imperfect, I will refuse to make myself the enemy."
+  ],
+  // Attacking self → Numb
+  "punitive_parent|detached_protector": [
+    "Tomorrow, when I start attacking myself, I will stop and do one reset action.",
+    "Tomorrow, when shame tells me to disappear, I will stay with one small task instead.",
+    "Tomorrow, when self-attack starts, I will speak to myself like someone worth helping."
+  ],
+  // Attacking self → Pleasing
+  "punitive_parent|compliant_surrenderer": [
+    "Tomorrow, when I feel ashamed, I will not hand over my position so quickly.",
+    "Tomorrow, when shame pushes me to please, I will ask what is true for me first.",
+    "Tomorrow, when I start apologizing for existing, I will come back to clarity."
+  ],
+  // Charming → Disconnection
+  "compensatory_child|detached_protector": [
+    "Tomorrow, when I want to keep things light, I will first check what I am hiding.",
+    "Tomorrow, when I feel myself becoming charming, I will ask whether I am avoiding something real.",
+    "Tomorrow, when I want to smooth everything over, I will leave one truth intact."
+  ],
+  // Armored → Escalation
+  "overcompensator|angry_child": [
+    "Tomorrow, when I feel the urge to control everything, I will focus on one clean boundary instead.",
+    "Tomorrow, when I feel myself escalating, I will lower my speed before my volume.",
+    "Tomorrow, when I feel defensive, I will not mistake force for safety."
+  ],
+  // Pleasing → Resentment
+  "compliant_surrenderer|angry_child": [
+    "Tomorrow, when I feel pressure to agree, I will pause before saying yes.",
+    "Tomorrow, when I want to avoid discomfort through compliance, I will choose clarity instead.",
+    "Tomorrow, when I want to avoid tension, I will not create later resentment."
+  ],
+  // Numb alone
+  "detached_protector": [
+    "Tomorrow, when I notice myself drifting, I will interrupt it within five minutes.",
+    "Tomorrow, when I feel flat, I will do one body-based reset before disappearing further.",
+    "Tomorrow, when I catch myself delaying, I will return before the spiral hardens."
+  ],
+};
+
+// Fallbacks by single mode (if no sequence or no prot mode)
+const EDGE_SUGGESTIONS_BY_MODE = {
+  angry_child: [
+    "Tomorrow, when I feel hot with frustration, I will slow down before reacting.",
+    "Tomorrow, when I feel treated unfairly, I will ask directly what happened.",
+    "Tomorrow, when anger rises fast, I will ask one clear question before taking a position."
+  ],
+  vulnerable_child: [
+    "Tomorrow, when I feel exposed, I will name the first step instead of going blank.",
+    "Tomorrow, when I feel judged, I will stay present long enough to finish one clear move.",
+    "Tomorrow, when I feel anxious, I will reduce the task before I abandon it."
+  ],
+  punitive_parent: [
+    "Tomorrow, when I hear the critic get louder, I will lower the demand before continuing.",
+    "Tomorrow, when I feel defective for struggling, I will choose structure instead of shame.",
+    "Tomorrow, when I miss the ideal, I will re-enter instead of punishing myself."
+  ],
+  demanding_parent: [
+    "Tomorrow, when pressure rises, I will choose progress over ideal conditions.",
+    "Tomorrow, when perfection pressure hits, I will shrink the scope before I leave the task.",
+    "Tomorrow, when I feel behind, I will stop trying to fix everything at once."
+  ],
+  compensatory_child: [
+    "Tomorrow, when I feel exposed, I will stay direct instead of becoming funny.",
+    "Tomorrow, when I feel small, I will let myself be simple instead of performative.",
+    "Tomorrow, when I feel the urge to diffuse the moment, I will remain present and direct."
+  ],
+  compliant_surrenderer: [
+    "Tomorrow, when I want to please, I will ask myself what my real position is first.",
+    "Tomorrow, when I feel dependent on approval, I will choose clarity over appeasement.",
+    "Tomorrow, when I start shrinking, I will slow down and stay with my own view."
+  ],
+  overcompensator: [
+    "Tomorrow, when I feel threatened, I will ask what is true before I take control.",
+    "Tomorrow, when I want to dominate the moment, I will check what I am protecting first.",
+    "Tomorrow, when my body gets rigid, I will soften the armor but keep the boundary."
+  ],
+  detached_protector: [
+    "Tomorrow, when I feel flat, I will do one body-based reset before disappearing further.",
+    "Tomorrow, when I go blank, I will choose one visible task instead of waiting to feel ready.",
+    "Tomorrow, when I lose contact with the day, I will come back through action, not analysis."
+  ],
+};
+
+// Target mode fallbacks
+const EDGE_SUGGESTIONS_BY_TARGET = {
+  healthy_adult: [
+    "Tomorrow, when I feel activated, I will slow down and stay in my body.",
+    "Tomorrow, when I feel pressure, I will remain with one simple action.",
+    "Tomorrow, when I start leaving myself, I will come back through one grounded step."
+  ],
+  assertive_adult: [
+    "Tomorrow, when I feel tension, I will say the direct thing without over-explaining.",
+    "Tomorrow, when I feel pressure from someone else, I will protect my position calmly.",
+    "Tomorrow, when I want to soften too much, I will keep one boundary intact."
+  ],
+  happy_child: [
+    "Tomorrow, when I notice I am too tight, I will loosen without leaving myself.",
+    "Tomorrow, when I get overly serious, I will allow some ease without losing direction.",
+    "Tomorrow, when I feel trapped in pressure, I will allow lightness without escape."
+  ],
+};
+
+function getEdgeSuggestions() {
+  // Read mode chain state
+  const mc = getModeChain() || {};
+  const firstMode  = mc.mode      || (moodData[today()] || {}).mode || null;
+  const protMode   = mc.protMode  || null;
+  const targetMode = mc.targetMode || null;
+
+  // 1. Try sequence key
+  if (firstMode && protMode) {
+    const seqKey = firstMode + "|" + protMode;
+    if (EDGE_SUGGESTIONS_BY_SEQUENCE[seqKey]) return EDGE_SUGGESTIONS_BY_SEQUENCE[seqKey];
+  }
+
+  // 2. Try single mode key
+  if (firstMode && EDGE_SUGGESTIONS_BY_SEQUENCE[firstMode]) return EDGE_SUGGESTIONS_BY_SEQUENCE[firstMode];
+  if (firstMode && EDGE_SUGGESTIONS_BY_MODE[firstMode]) return EDGE_SUGGESTIONS_BY_MODE[firstMode];
+
+  // 3. Try target mode
+  if (targetMode && EDGE_SUGGESTIONS_BY_TARGET[targetMode]) return EDGE_SUGGESTIONS_BY_TARGET[targetMode];
+
+  // 4. Generic fallback
+  return [
+    "Tomorrow, when I feel exposed, I will slow down before reacting.",
+    "Tomorrow, when pressure rises, I will choose one grounded action.",
+    "Tomorrow, when I feel the urge to escape, I will stay for two more minutes."
+  ];
+}
+
+function renderEdgeSuggestions() {
+  const wrap = document.getElementById("edge-suggestions-wrap");
+  if (!wrap) return;
+  const suggestions = getEdgeSuggestions();
+  // Store on window so onclick can look up by index — avoids all quote escaping issues
+  window._edgeSuggestions = suggestions;
+  wrap.innerHTML =
+    '<div class="mono" style="font-size:8px;color:#E8A020;letter-spacing:1px;margin-bottom:7px">SUGGESTED COMPLETIONS — tap to use:</div>' +
+    suggestions.map((s, i) =>
+      '<button data-idx="' + i + '" onclick="useEdgeSuggestion(window._edgeSuggestions[+this.dataset.idx])" ' +
+      'style="display:block;width:100%;text-align:left;padding:8px 10px;margin-bottom:5px;border-radius:6px;border:1px solid #E8A02033;background:none;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:\'Inter\',sans-serif;line-height:1.4;transition:all 0.15s" ' +
+      'onmouseover="this.style.borderColor=\'#E8A020\';this.style.color=\'var(--text)\'" ' +
+      'onmouseout="this.style.borderColor=\'#E8A02033\';this.style.color=\'var(--text-muted)\'">' +
+      s + '</button>'
+    ).join("") +
+    '<div style="font-size:9px;color:var(--text-dimmer);margin-top:2px;font-style:italic">Or write your own in the field above.</div>';
+}
+
+function useEdgeSuggestion(text) {
+  if (!text) return;
+  const el = document.getElementById("tomorrow-edge-input");
+  if (el) {
+    el.value = text;
+    saveTomorrowEdge(text);
+    showToast("Edge saved ✓", 1500);
+  }
+}
+
+
+// ═════════════════════════════════════════════════════════════════════
+// COGNITIVE DISTORTION SYSTEM
+// CBT-based distortion classification for EOD thought capture
+// and mode chain mind story field.
+// ═════════════════════════════════════════════════════════════════════
+
+const DISTORTION_TYPES = [
+  { key:"all_or_nothing",  label:"All-or-nothing",    emoji:"⚫",  color:"#B05C5C",
+    example:"\"If I can't do it perfectly, there's no point starting.\"",
+    reframe:"One imperfect step is more than zero. Progress is not binary." },
+  { key:"catastrophising",  label:"Catastrophising",  emoji:"🌋",  color:"#D4622A",
+    example:"\"If I mess this up, everything falls apart.\"",
+    reframe:"What is the realistic worst case — and could you handle it?" },
+  { key:"mind_reading",    label:"Mind reading",       emoji:"🔮",  color:"#7A5FA8",
+    example:"\"They think I'm incompetent.\"",
+    reframe:"You are reading a prediction as a fact. What do you actually know?" },
+  { key:"should",          label:"Should statements",  emoji:"📏",  color:"#C8962A",
+    example:"\"By my age I should have this figured out.\"",
+    reframe:"Should by whose standard? Replace 'should' with 'I want to' and see if it still holds." },
+  { key:"emotional_reason",label:"Emotional reasoning",emoji:"💢",  color:"#B05C5C",
+    example:"\"I feel overwhelmed so it must be impossible.\"",
+    reframe:"Feelings are information about your internal state — not about external facts." },
+  { key:"labelling",       label:"Labelling",          emoji:"🏷️",  color:"#7A5FA8",
+    example:"\"I'm lazy.\" / \"I'm broken.\"",
+    reframe:"You are describing a moment, not a permanent identity. What specifically happened?" },
+  { key:"magnification",   label:"Magnification",      emoji:"🔬",  color:"#C8962A",
+    example:"\"This one mistake cancels out everything I did well.\"",
+    reframe:"Does this mistake actually erase the rest? Or is the critic selecting evidence?" },
+  { key:"fortune_telling",  label:"Fortune telling",   emoji:"🃏",  color:"#4A90A4",
+    example:"\"I'll never get better at managing my time.\"",
+    reframe:"Predictions are not facts. What evidence actually supports this?" },
+  { key:"personalising",   label:"Personalising",      emoji:"🎯",  color:"#D4622A",
+    example:"\"The meeting went badly because of me.\"",
+    reframe:"How much of this was actually in your control? What else contributed?" },
+  { key:"discounting",     label:"Discounting positives",emoji:"✂️",color:"#3D8A5E",
+    example:"\"That doesn't count — it was easy.\"",
+    reframe:"If a friend did what you just did, would you dismiss it the same way?" },
+  { key:"rsd",             label:"Rejection sensitivity",emoji:"📡",color:"#6B8E9F",
+    example:"\"They didn't reply — they're annoyed at me.\"",
+    reframe:"Is this a fact or a fear? What would you tell someone you love who thought this?" },
+  { key:"avoidance_story", label:"Avoidance story",    emoji:"🚪",  color:"#8B6E4E",
+    example:"\"I'll do it when I feel more ready.\"",
+    reframe:"Ready is a feeling that follows action — not a prerequisite for it." },
+];
+
+// Storage for EOD distortion log
+const DISTORTION_SK = "yd2-distortions";
+
+function loadDistortionLog() {
+  try { return JSON.parse(localStorage.getItem(DISTORTION_SK) || "{}"); } catch(e) { return {}; }
+}
+
+function saveDistortionLog(data) {
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
+  const ck = cutoff.toISOString().split("T")[0];
+  Object.keys(data).forEach(k => { if (k < ck) delete data[k]; });
+  localStorage.setItem(DISTORTION_SK, JSON.stringify(data));
+}
+
+function logTodayDistortion(typeKey, thought) {
+  const all = loadDistortionLog();
+  const t = today();
+  if (!all[t]) all[t] = [];
+  all[t].push({ typeKey, thought: thought || "", loggedAt: new Date().toISOString() });
+  saveDistortionLog(all);
+}
+
+function getWeeklyDistortionStats() {
+  const all = loadDistortionLog();
+  const wk = getWeekKey();
+  const weekEntries = Object.entries(all)
+    .filter(([d]) => d >= wk)
+    .flatMap(([,arr]) => arr);
+  const typeCounts = {};
+  weekEntries.forEach(e => {
+    typeCounts[e.typeKey] = (typeCounts[e.typeKey] || 0) + 1;
+  });
+  const topType = Object.entries(typeCounts).sort((a,b)=>b[1]-a[1])[0];
+  return {
+    total: weekEntries.length,
+    typeCounts,
+    topType: topType ? topType[0] : null,
+    topTypeLabel: topType ? (DISTORTION_TYPES.find(d=>d.key===topType[0])||{label:topType[0]}).label : null
+  };
+}
+
+// ── Render distortion type chips ─────────────────────────────────────────────
+function renderDistortionChips(containerId, selectedKey, onSelect) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "display:flex;flex-wrap:wrap;gap:5px";
+  DISTORTION_TYPES.forEach(d => {
+    const chip = document.createElement("button");
+    const active = selectedKey === d.key;
+    chip.style.cssText = "padding:5px 9px;border-radius:12px;border:1px solid " +
+      (active ? d.color : "var(--border)") + ";background:" +
+      (active ? d.color + "18" : "none") + ";font-size:10px;color:" +
+      (active ? d.color : "var(--text-dimmer)") + ";cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s";
+    chip.innerHTML = "<span>" + d.emoji + "</span><span>" + d.label + "</span>";
+    chip.onclick = () => onSelect(d.key);
+    wrap.appendChild(chip);
+  });
+  // "Not sure" option
+  const unsure = document.createElement("button");
+  const unsureActive = selectedKey === "unsure";
+  unsure.style.cssText = "padding:5px 9px;border-radius:12px;border:1px solid " +
+    (unsureActive ? "var(--accent)" : "var(--border)") + ";background:none;font-size:10px;color:var(--text-dimmer);cursor:pointer;transition:all 0.15s";
+  unsure.textContent = "Not sure";
+  unsure.onclick = () => onSelect("unsure");
+  wrap.appendChild(unsure);
+  container.appendChild(wrap);
+}
+
+// ── Render reframe hint after distortion selected ─────────────────────────────
+function renderDistortionReframe(containerId, typeKey) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!typeKey || typeKey === "unsure") { container.innerHTML = ""; return; }
+  const dt = DISTORTION_TYPES.find(d => d.key === typeKey);
+  if (!dt) { container.innerHTML = ""; return; }
+  container.innerHTML =
+    '<div style="margin-top:8px;padding:8px 10px;background:' + dt.color + '0d;border-left:2px solid ' + dt.color + ';border-radius:5px">' +
+    '<div class="mono" style="font-size:8px;color:' + dt.color + ';letter-spacing:1px;margin-bottom:4px">' + dt.emoji + ' ' + dt.label.toUpperCase() + ' — REFRAME</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-bottom:5px">' + dt.example + '</div>' +
+    '<div style="font-size:11px;color:var(--text);line-height:1.5">→ ' + dt.reframe + '</div>' +
+    '</div>';
+}
+
+
+// ── Carry-to-task floating bubble ────────────────────────────────────────────
+function openCarryTaskBubble() {
+  const bubble = document.getElementById("carry-task-bubble");
+  if (!bubble) return;
+  bubble.style.display = "block";
+  setTimeout(() => {
+    const inp = document.getElementById("carry-task-input");
+    if (inp) { inp.value = ""; inp.focus(); }
+  }, 80);
+}
+
+function closeCarryTaskBubble() {
+  const bubble = document.getElementById("carry-task-bubble");
+  if (bubble) bubble.style.display = "none";
+}
+
+function saveCarryTask() {
+  const inp = document.getElementById("carry-task-input");
+  if (!inp || !inp.value.trim()) { showToast("Write the task first"); return; }
+  const text = inp.value.trim();
+  // Add to focus tasks (reuse existing addTask function)
+  addTask(text, today(), true);
+  closeCarryTaskBubble();
+  showToast("Task added to Focus ✓ — " + text.slice(0, 30), 2500);
+}
+
 // ===================== NAVIGATION =====================
 function showPage(name) {
   // Save scroll position of current page before switching
@@ -12429,7 +14391,7 @@ function showPage(name) {
   const topbarHf = document.querySelector('[onclick="logHyperfocus()"][title="Hyperfocus flag"]');
   if (topbarHf && name === "today") topbarHf.style.display = "none";
   if (name === "focus") { renderFocus(); }
-  if (name === "progress") { renderProgress(); renderHabitsManage(); renderTimeSenseInProgress(); renderContextSwitchSection(document.getElementById("context-switch-section")); renderSchemaPatterns(); renderValuesDriftPanel(); }
+  if (name === "progress") { renderProgress(); renderHabitsManage(); renderTimeSenseInProgress(); renderContextSwitchSection(document.getElementById("context-switch-section")); renderSchemaPatterns(); if (getSettings().showValuesAct !== false) renderValuesDriftPanel(); else { const vdp = document.getElementById("values-drift-panel"); const vdpWrap = vdp ? vdp.closest("div[style*='margin-bottom:20px']") : null; if (vdpWrap) vdpWrap.style.display = "none"; } }
   if (name === "projects") { renderProjectsList(); }
   if (name === "capture") { renderTagRow(); renderFilterRow(); renderEntriesList(); renderBrainDumps(); updateLoginUI(); }
   // Restore scroll position for this tab (after render so content exists)
@@ -12446,11 +14408,22 @@ function showPage(name) {
       new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" }).toUpperCase();
     renderReflectionsList();
     renderMoodPicker();
+    // Reset EOD mode chain state vars before re-render
+    _eodMode = null; _eodProtMode = null; _eodProtSkipped = false;
+    _eodNeedKey = null; _eodThreat = null; _eodTargetMode = null; _eodNextAction = null;
+    _eodDistortionKey = null; _eodThoughtHelpful = null;
     renderCheckinMode();
     renderEodModeCards();
     loadEodModeChain();
     renderHaPracticeGrid();
     loadTomorrowEdgeField();
+    renderEdgeSuggestions();
+    renderTodayValuesCheckin();
+    // Show/hide values check-in block based on setting
+    const _rvw = document.getElementById("reflect-values-wrap");
+    if (_rvw) _rvw.style.display = getSettings().showValuesAct !== false ? "" : "none";
+    renderEcTodayList();
+    renderEodDistortionSection();
     // Auto-open trigger capture if compensatory_child was logged today
     const todayModeNow = (moodData[today()] || {}).mode;
     if (todayModeNow === "compensatory_child") {
@@ -12966,12 +14939,16 @@ if (getAccount() && getSettings().autoSync !== false) setTimeout(() => pullAllFr
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <button class="info-btn" onclick="openInfoModal('morning_ritual')"><span class="info-btn-circle">?</span></button>
+      <button onclick="openMorningRitualEditor()" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);cursor:pointer;letter-spacing:0.5px">edit ✏</button>
       <button onclick="closeMorningRitual(true)" style="background:none;border:none;color:var(--text-dimmer);font-size:13px;font-family:'DM Mono',monospace;cursor:pointer;padding:4px 8px;border:1px solid var(--border);border-radius:12px">skip →</button>
     </div>
   </div>
 
   <!-- Scrollable content -->
   <div style="flex:1;overflow-y:auto;padding:20px 22px">
+
+    <!-- Saved embodiment lines from last night -->
+    <div id="morning-saved-lines"></div>
 
     <!-- Incantation lines -->
     <div style="margin-bottom:24px">
@@ -13010,6 +14987,75 @@ if (getAccount() && getSettings().autoSync !== false) setTimeout(() => pullAllFr
     </div>
   </div>
 
+</div>
+
+
+<!-- ===== CARRY-TO-TASK FLOATING BUBBLE ===== -->
+<div id="carry-task-bubble" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:300;background:var(--bg-card);border:1px solid #4A90A4;border-radius:12px;padding:16px 18px;width:88%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+  <div class="mono" style="font-size:8px;color:#4A90A4;letter-spacing:1px;margin-bottom:8px">＋ ADD TO FOCUS TASKS</div>
+  <input type="text" id="carry-task-input"
+    placeholder="What do you want to carry into tomorrow as a task?"
+    style="width:100%;padding:10px 12px;font-size:13px;box-sizing:border-box;border-radius:7px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);margin-bottom:10px"
+    onkeydown="if(event.key==='Enter')saveCarryTask()" />
+  <div style="display:flex;gap:8px">
+    <button onclick="saveCarryTask()" style="flex:1;padding:10px;border-radius:8px;border:none;background:#4A90A4;color:#fff;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;font-weight:600">Save to tasks ✓</button>
+    <button onclick="closeCarryTaskBubble()" style="padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);cursor:pointer">Cancel</button>
+  </div>
+</div>
+
+<!-- ===== EVENT CHAIN PROCESSOR OVERLAY ===== -->
+<!-- Separate from EOD. Can be opened multiple times per day.       -->
+<!-- 8-step therapeutic flow based on advisor recommendations.      -->
+<div id="event-chain-overlay" style="display:none;position:fixed;inset:0;z-index:450;background:var(--bg);flex-direction:column;overflow:hidden">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div>
+      <div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:2px;margin-bottom:3px">🧩 PROCESS AN EVENT</div>
+      <div id="ec-step-label" class="serif" style="font-size:15px;color:var(--text-heading);font-weight:500"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="mono" id="ec-step-counter" style="font-size:9px;color:var(--text-dimmer)"></div>
+      <button onclick="closeEventChain()" style="background:none;border:none;color:var(--text-dimmer);font-size:18px;cursor:pointer;padding:0;line-height:1">×</button>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div style="height:3px;background:var(--border);flex-shrink:0">
+    <div id="ec-progress-bar" style="height:100%;background:#7A5FA8;transition:width 0.3s;width:12%"></div>
+  </div>
+
+  <!-- Step content (scrollable) -->
+  <div id="ec-content" style="flex:1;overflow-y:auto;padding:20px 20px 100px"></div>
+
+  <!-- Footer nav -->
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 18px;background:var(--bg);border-top:1px solid var(--border);display:flex;gap:10px">
+    <button id="ec-back-btn" onclick="ecStep(-1)"
+      style="padding:11px 20px;border-radius:8px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);cursor:pointer;display:none">← Back</button>
+    <button id="ec-next-btn" onclick="ecStep(1)"
+      style="flex:1;padding:11px;border-radius:8px;border:none;background:#7A5FA8;color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;font-weight:600">Next →</button>
+  </div>
+
+</div>
+
+<!-- ===== MORNING RITUAL EDITOR ===== -->
+<div id="morning-editor-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:var(--bg);border-radius:10px;width:100%;max-width:520px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:2px">EDIT MORNING RITUAL</div>
+      <button onclick="closeMorningRitualEditor()" style="background:none;border:none;color:var(--text-dimmer);font-size:18px;cursor:pointer;line-height:1;padding:0 4px">×</button>
+    </div>
+    <div style="padding:16px 18px;flex:1;overflow-y:auto">
+      <div style="font-size:11px;color:var(--text-dimmer);margin-bottom:12px;line-height:1.5">One line per affirmation. Drag to reorder is not supported — edit order by cutting and pasting lines. Changes are saved immediately.</div>
+      <textarea id="morning-editor-textarea"
+        style="width:100%;height:340px;padding:12px;font-size:13px;font-family:'Inter',sans-serif;line-height:1.7;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:vertical;outline:none"
+        placeholder="One line per affirmation..."></textarea>
+    </div>
+    <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0">
+      <button onclick="resetMorningRitualToDefault()" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:6px;background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dimmer);cursor:pointer">Reset to default</button>
+      <button onclick="saveMorningRitualEdit()" style="flex:2;padding:10px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;letter-spacing:0.5px">Save changes</button>
+    </div>
+  </div>
 </div>
 
 </body>
