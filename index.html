@@ -288,6 +288,10 @@
             <span class="mono" style="font-size:10px;color:var(--text-muted)">Dump</span>
             <span onclick="event.stopPropagation();openInfoModal('braindump')" style="width:13px;height:13px;border-radius:50%;border:1px solid var(--text-dimmer);color:var(--text-dimmer);font-size:8px;font-family:'DM Mono',monospace;display:inline-flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;margin-left:2px">?</span>
           </button>
+          <button onclick="openEpModal()" style="display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:5px 11px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+            <span style="font-size:13px">🔄</span>
+            <span class="mono" style="font-size:10px;color:var(--text-muted)">Process</span>
+          </button>
           <div style="display:flex;align-items:center;gap:7px">
             <span class="sync-dot" id="sync-dot" style="background:#555;width:6px;height:6px;border-radius:50%;flex-shrink:0"></span>
             <span id="sync-text" class="mono" style="font-size:9px;color:var(--text-dimmer)">Not synced</span>
@@ -444,70 +448,110 @@
         <div id="bullets-release" class="bullet-list" data-symbol="🌙" data-color="#7A5FA8"></div>
         <button class="add-bullet-btn" onclick="addBullet('release')">add point</button>
       </div>
-      <!-- ═══ ADLERIAN CHAIN — 4-step daily reflection ═══ -->
-      <div class="reflection-block" style="border-left:3px solid #4A90A4;padding-left:14px">
+      <!-- MODE CHAIN — full redesign per expert advisor recommendations -->
+      <div class="reflection-block" style="border-left:3px solid #7A5FA8;padding-left:14px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
-          <div class="reflection-label" style="color:#4A90A4;margin:0">&#9654; TODAY'S MOVEMENT</div>
+          <div class="reflection-label" style="color:#7A5FA8;margin:0">🧩 TODAY'S MODE CHAIN</div>
           <button class="info-btn" onclick="openInfoModal('mode_chain')"><span class="info-btn-circle">?</span></button>
         </div>
 
-        <!-- Step 1 -->
-        <div class="mono" style="font-size:9px;color:#4A90A4;margin-bottom:4px;letter-spacing:1px">1 &#8212; WHAT HAPPENED?</div>
-        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px;font-style:italic">The situation, stripped of interpretation. Just the facts.</div>
-        <input type="text" id="ac-situation"
-          placeholder="What actually occurred &#8212; who, what, when..."
-          style="margin-bottom:14px;padding:8px 10px;font-size:12px;width:100%;box-sizing:border-box"
-          oninput="saveAdlerChain()" onblur="saveAdlerChain()" />
+        <!-- Step 1: Trigger -->
+        <div class="mono" style="font-size:9px;color:#C8962A;margin-bottom:4px;letter-spacing:1px">1 — WHAT TRIGGERED IT?</div>
+        <input type="text" id="eod-trigger"
+          placeholder="The external event — what actually happened..."
+          style="margin-bottom:14px;padding:8px 10px;font-size:12px" />
 
-        <!-- Step 2 -->
-        <div id="ac-step2" style="display:none">
-          <div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:4px;letter-spacing:1px">2 &#8212; WHAT DID I TELL MYSELF?</div>
-          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px;font-style:italic">The private logic &#8212; the story or belief that activated. Write it raw.</div>
-          <textarea id="ac-private-logic" rows="2"
-            placeholder="&#8220;I knew they didn&#39;t respect me.&#8221; / &#8220;I have to handle this alone.&#8221;"
-            style="width:100%;padding:8px 10px;font-size:12px;box-sizing:border-box;border-radius:5px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:'Inter',sans-serif;line-height:1.5;margin-bottom:14px"
-            oninput="saveAdlerChain()" onblur="saveAdlerChain()"></textarea>
+        <!-- Step 2: What hit first -->
+        <div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:4px;letter-spacing:1px">2 — WHAT HIT FIRST?</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">Your immediate first reaction — the first internal state that activated.</div>
+        <div id="eod-mode-cards" style="margin-bottom:14px"></div>
+
+        <!-- Step 3: What protected you next -->
+        <div id="eod-prot-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:4px;letter-spacing:1px">3 — WHAT PROTECTED YOU NEXT?</div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">The coping mode that came after. Skip if there was only one state.</div>
+          <button onclick="skipEodProtMode()"
+            style="width:100%;padding:8px;border-radius:8px;border:1px dashed var(--border);background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dimmer);cursor:pointer;margin-bottom:8px">
+            Skip — only one mode was active
+          </button>
+          <div id="eod-prot-mode-cards"></div>
         </div>
 
-        <!-- Step 3 -->
-        <div id="ac-step3" style="display:none">
-          <div class="mono" style="font-size:9px;color:#C8962A;margin-bottom:4px;letter-spacing:1px">3 &#8212; WHAT WAS THE GOAL OF MY RESPONSE?</div>
-          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">All behavior serves a purpose. What was mine moving toward?</div>
-          <div id="ac-goal-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-          <input type="text" id="ac-goal-other"
-            placeholder="Or name it in your own words..."
-            style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box;margin-bottom:14px"
-            onblur="saveAdlerChain()" />
+        <!-- Step 4: Structured need chips -->
+        <div id="eod-need-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:4px;letter-spacing:1px">4 — WHAT DID THAT PART NEED?</div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">Pick the closest one — then add your own words if needed.</div>
+          <div id="eod-need-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+          <input type="text" id="eod-need" placeholder="Add your own words if needed..."
+            style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box" />
         </div>
 
-        <!-- Step 4 -->
-        <div id="ac-step4" style="display:none">
-          <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:4px;letter-spacing:1px">4 &#8212; WHAT DO I CHOOSE?</div>
-          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;font-style:italic">One concrete move toward others or your own goals. Not a resolution &#8212; a behavior.</div>
-          <input type="text" id="ac-choice"
-            placeholder="Tomorrow, I will... / Next time, I will..."
-            style="padding:8px 10px;font-size:12px;width:100%;box-sizing:border-box;border-left:2px solid #3D8A5E;border-radius:0 5px 5px 0;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-input);color:var(--text);margin-bottom:6px"
-            onblur="saveAdlerChain()" />
-          <div id="ac-social-interest-note" style="display:none;font-size:10px;color:#3D8A5E;background:#3D8A5E0d;border-radius:5px;padding:7px 10px;line-height:1.5;margin-top:6px;border-left:2px solid #3D8A5E"></div>
-        </div>
+        <!-- Step 5: Mind story + distortion classification -->
+        <div id="eod-story-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#4A90A4;margin-bottom:4px;letter-spacing:1px">5 — WHAT STORY DID YOUR MIND TELL?</div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px;font-style:italic">"He's lying." / "I'm being screwed over." / "I always fail at this." — write it raw.</div>
+          <textarea id="eod-mind-story" rows="2"
+            placeholder="The exact story — not sanitised..."
+            style="width:100%;padding:8px 10px;font-size:12px;box-sizing:border-box;border-radius:5px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:'Inter',sans-serif;line-height:1.5"></textarea>
 
-        <!-- Legacy stubs — keep all old EOD chain IDs for diagnostic + data compat -->
-        <div style="display:none">
-          <input id="eod-trigger" /><div id="eod-mode-cards"></div>
-          <div id="eod-prot-section"><div id="eod-prot-mode-cards"></div></div>
-          <div id="eod-need-section"><div id="eod-need-chips"></div><input id="eod-need" /></div>
-          <div id="eod-story-section"><textarea id="eod-mind-story"></textarea>
-            <div id="mc-distortion-chips"></div><div id="mc-distortion-reframe"></div>
-            <button id="eod-threat-verified"></button><button id="eod-threat-assumed"></button></div>
-          <div id="eod-ha-section">
-            <input id="eod-ha-sees" /><input id="eod-ha-says" /><input id="eod-ha-response" />
+          <!-- Distortion type chips for mind story -->
+          <div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:1px;margin-top:10px;margin-bottom:6px">WHICH DISTORTION PATTERN? <span style="color:var(--text-dimmer);font-weight:400">(optional)</span></div>
+          <div id="mc-distortion-chips" style="margin-bottom:8px"></div>
+          <div id="mc-distortion-reframe"></div>
+
+          <!-- Was the threat verified or assumed -->
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+            <div style="font-size:10px;color:var(--text-dimmer);flex-shrink:0">Threat was:</div>
+            <button id="eod-threat-verified" onclick="setEodThreat('verified')"
+              style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);cursor:pointer">
+              ✓ Verified fact
+            </button>
+            <button id="eod-threat-assumed" onclick="setEodThreat('assumed')"
+              style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:none;font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);cursor:pointer">
+              ? Assumed / interpreted
+            </button>
           </div>
-          <div id="eod-target-section"><div id="eod-target-mode-cards"></div></div>
-          <div id="eod-action-section"><div id="eod-action-options"></div><input id="eod-action-other" /></div>
         </div>
-      </div>
 
-                <!-- Tomorrow's edge — Phase 5 non-negotiable -->
+        <!-- Step 6: Healthy Adult SEES / SAYS / DOES -->
+        <div id="eod-ha-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:10px;letter-spacing:1px">6 — HEALTHY ADULT RESPONSE</div>
+          <div style="margin-bottom:8px">
+            <div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:1px;margin-bottom:4px">HEALTHY ADULT SEES:</div>
+            <input type="text" id="eod-ha-sees"
+              placeholder="What is actually happening — without the mind story..."
+              style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box;border-left:2px solid #7A5FA8;border-radius:0 5px 5px 0;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-input);color:var(--text)" />
+          </div>
+          <div style="margin-bottom:8px">
+            <div class="mono" style="font-size:8px;color:#4A90A4;letter-spacing:1px;margin-bottom:4px">HEALTHY ADULT SAYS:</div>
+            <input type="text" id="eod-ha-says"
+              placeholder="What the grounded part says to the activated part..."
+              style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box;border-left:2px solid #4A90A4;border-radius:0 5px 5px 0;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-input);color:var(--text)" />
+          </div>
+          <div>
+            <div class="mono" style="font-size:8px;color:#3D8A5E;letter-spacing:1px;margin-bottom:4px">HEALTHY ADULT DOES NEXT TIME:</div>
+            <input type="text" id="eod-ha-response"
+              placeholder="One concrete action — behavioral, not a resolution..."
+              style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box;border-left:2px solid #3D8A5E;border-radius:0 5px 5px 0;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-input);color:var(--text)" />
+          </div>
+        </div>
+
+        <!-- Step 7: Target healthy mode -->
+        <div id="eod-target-section" style="display:none;margin-bottom:14px">
+          <div class="mono" style="font-size:9px;color:#3D8A5E;margin-bottom:8px;letter-spacing:1px">7 — WHICH HEALTHY MODE NEXT TIME?</div>
+          <div id="eod-target-mode-cards" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+
+        <!-- Step 8: One concrete adult move -->
+        <div id="eod-action-section" style="display:none;margin-bottom:4px">
+          <div class="mono" style="font-size:9px;color:#C8962A;margin-bottom:8px;letter-spacing:1px">8 — NEXT TIME, THE FIRST ADULT MOVE:</div>
+          <div id="eod-action-options" style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px"></div>
+          <input type="text" id="eod-action-other"
+            placeholder="Or write your own..."
+            style="padding:7px 10px;font-size:12px;width:100%;box-sizing:border-box" />
+        </div>
+
+        <!-- Tomorrow's edge — Phase 5 non-negotiable -->
         <div style="margin-top:4px;margin-bottom:10px;padding:10px 12px;background:#E8A0200d;border-left:2px solid #E8A020;border-radius:5px">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
             <div class="mono" style="font-size:9px;color:#E8A020;letter-spacing:1px">TOMORROW&#39;S EDGE</div>
@@ -618,18 +662,6 @@
           <div class="reflection-label" style="color:#4A90A4">→ WHAT I WANT TO DO DIFFERENTLY</div>
           <div id="wbullets-differently" class="bullet-list" data-symbol="→" data-color="#4A90A4"></div>
           <button class="add-bullet-btn" onclick="addBullet('differently','','weekly')">add point</button>
-        </div>
-        <div class="reflection-block" style="border-left:3px solid #4A90A4;padding-left:14px">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-            <div class="mono" style="font-size:9px;color:#4A90A4;letter-spacing:2px">⚡ MOVEMENT THIS WEEK</div>
-            <button class="info-btn" onclick="openInfoModal('weekly_modes')"><span class="info-btn-circle">?</span></button>
-          </div>
-          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:10px;line-height:1.5">Not how you felt — where you were moving. Toward others, toward your goals, toward avoidance?</div>
-          <div id="weekly-courage-summary" style="margin-bottom:10px"></div>
-          <div class="mono" style="font-size:9px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:5px">WHAT WAS I MOVING TOWARD THIS WEEK?</div>
-          <textarea id="weekly-movement-text" rows="2"
-            style="resize:none;font-size:13px;color:var(--text);font-style:italic"
-            placeholder="Contribution, connection, avoidance, control — name it honestly."></textarea>
         </div>
         <div class="reflection-block">
           <div class="reflection-label" style="color:#C8962A">◎ FOCUS FOR NEXT WEEK</div>
@@ -810,13 +842,6 @@
           <span style="font-size:12px">🚫</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Don't Do</span>
         </button>
       </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="openListModal('avoidanceGoals')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:12px">🚪</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Moving Away From</span>
-        </button>
-        <button onclick="openListModal('directionGoals')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:none;border:1px solid var(--border);border-radius:16px;padding:7px 10px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:12px">🌱</span><span class="mono" style="font-size:9px;color:var(--text-muted)">Moving Toward</span>
-        </button>
       <button onclick="openBodyDouble()" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid #7A5FA8;border-radius:16px;padding:8px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#7A5FA811'" onmouseout="this.style.background='none'">
         <span style="font-size:13px">🫂</span>
         <span class="mono" style="font-size:9px;color:#7A5FA8;letter-spacing:1px">WORK WITH ME</span>
@@ -1895,7 +1920,7 @@ async function syncRowToPage(pageName, rowHtml) {
 
 
 // ===================== DATA =====================
-const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals", projects:"yd2-projects", avoidanceGoals:"yd2-limiting-beliefs", directionGoals:"yd2-empowering-beliefs" };
+const SK = { hist:"yd2-history", caps:"yd2-captures", refs:"yd2-reflections", habits:"yd2-habits", collapsed:"yd2-collapsed", tasks:"yd2-tasks", mood:"yd2-mood", weekly:"yd2-weekly", dump:"yd2-dump", nottodo:"yd2-nottodo", journal:"yd2-journal", values:"yd2-values", goals:"yd2-goals", projects:"yd2-projects", avoidanceGoals:"yd2-limiting-beliefs", directionGoals:"yd2-empowering-beliefs", epLog:"yd2-ep-log" };
 
 // ── HTML escape helper (prevents XSS in innerHTML) ───────────────────────────
 const esc = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -1964,7 +1989,7 @@ const TAGS = [
 
 let history2 = {}, captures = [], reflections = {}, habits = [];
 let checked = {}, collapsedSections = {}, activeTag = "thought", filterTag = "all", progView = "week", newHabitSection = "MORNING";
-let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {}, myValues = [], myGoals = [], projects = [], avoidanceGoals = [], directionGoals = [];
+let moodData = {}, weeklyReviews = {}, brainDumps = [], notTodos = [], journalEntries = {}, myValues = [], myGoals = [], projects = [], avoidanceGoals = [], directionGoals = [], epLog = [];
 
 let tasks = [];
 
@@ -2003,6 +2028,7 @@ function loadAll() {
   myGoals = ld(SK.goals, []);
   avoidanceGoals = ld(SK.avoidanceGoals, []);
   directionGoals = ld(SK.directionGoals, []);
+  epLog = ld(SK.epLog, []);
   projects = ld(SK.projects, []);
   loadDopamine();
   loadBdSessions();
@@ -4793,7 +4819,6 @@ function renderWeeklyPage() {
   });
 
   renderWeeklyPastList();
-  renderWeeklyCourageSummary();
 }
 
 function getWeeklyBullets(field) {
@@ -4823,26 +4848,21 @@ async function saveWeeklyReview() {
   const key = getWeekKey();
   const stats = computeWeekStats();
   const winsInput = document.getElementById("wins-inventory-input");
-  const movementTextEl = document.getElementById("weekly-movement-text");
   const ifthenIfEl   = document.getElementById("ifthen-weekly-if");
   const ifthenThenEl = document.getElementById("ifthen-weekly-then");
   const weeklyIfthen = (ifthenIfEl && ifthenIfEl.value.trim() && ifthenThenEl && ifthenThenEl.value.trim())
     ? { if: ifthenIfEl.value.trim(), then: ifthenThenEl.value.trim() }
     : null;
   if (weeklyIfthen) saveIfthenPlan({ if: weeklyIfthen.if, then: weeklyIfthen.then, source: "weekly", date: today() });
-
-  // Capture Adlerian courage/engagement summary at save time
-  const weeklyModeSummary = (stats.dominantMode || stats.dominantCourage) ? {
-    dominantMode:        stats.dominantMode,
-    dominantCourage:     stats.dominantCourage,
-    dominantEngagement:  stats.dominantEngagement,
-    topNeed:             stats.topNeed,
-    topUrge:             stats.topUrge,
-    modeCheckinDays:     stats.modeCheckinDays,
-    courageCheckinDays:  stats.courageCheckinDays || 0,
-    dominantStuckMode:   stats.dominantStuckMode,
+  // Capture the week's Schema-ACT summary at save time
+  const weeklyModeSummary = stats.dominantMode ? {
+    dominantMode:       stats.dominantMode,
+    topNeed:            stats.topNeed,
+    topUrge:            stats.topUrge,
+    modeCheckinDays:    stats.modeCheckinDays,
+    dominantStuckMode:  stats.dominantStuckMode,
     dominantFrictionMode: stats.dominantFrictionMode,
-    modeCounts:          stats.modeCounts
+    modeCounts:         stats.modeCounts
   } : null;
 
   const review = {
@@ -4853,7 +4873,6 @@ async function saveWeeklyReview() {
     drained:       getWeeklyBullets("drained"),
     differently:   getWeeklyBullets("differently"),
     focus:         getWeeklyBullets("focus"),
-    movementText:  movementTextEl ? movementTextEl.value.trim() : "",
     nottodoBreak:  _weeklyNottodoBreak,
     wins:          winsInput ? winsInput.value.trim() : "",
     ifthen:        weeklyIfthen,
@@ -4870,21 +4889,6 @@ async function saveWeeklyReview() {
   if (getAccount()) {
     await syncWeeklyPageToOneNote(review);
   }
-}
-
-function renderWeeklyCourageSummary() {
-  const el = document.getElementById("weekly-courage-summary");
-  if (!el) return;
-  const stats = computeWeekStats();
-  if (!stats.dominantCourage && !stats.courageCheckinDays) { el.innerHTML = ""; return; }
-  const cObj = typeof COURAGE_STATES !== "undefined" ? COURAGE_STATES.find(s => s.key === stats.dominantCourage) : null;
-  const eObj = stats.dominantEngagement && typeof ENGAGEMENT_STATES !== "undefined" ? ENGAGEMENT_STATES.find(s => s.key === stats.dominantEngagement) : null;
-  if (!cObj) { el.innerHTML = ""; return; }
-  el.innerHTML =
-    '<div style="padding:8px 10px;background:' + cObj.color + '0d;border-left:2px solid ' + cObj.color + ';border-radius:4px;font-size:11px;color:var(--text-muted)">' +
-    '<span style="color:' + cObj.color + '">' + cObj.emoji + ' ' + cObj.label + '</span>' +
-    (eObj ? ' · <span style="color:' + eObj.color + '">' + eObj.emoji + ' ' + eObj.label + '</span>' : '') +
-    ' — dominant this week (' + (stats.courageCheckinDays||0) + ' check-ins)</div>';
 }
 
 async function getOrCreateSection(nbId, sectionName, token) {
@@ -4945,39 +4949,22 @@ function renderWeeklyPastList() {
     const ifthenHtml = r.ifthen
       ? `<div style="margin-bottom:10px"><div class="mono" style="font-size:9px;color:#3d8b8b;margin-bottom:4px">⚡ IF–THEN PLAN</div><div style="font-size:12px;color:var(--text-muted)"><span style="color:var(--text-dimmer)">If</span> ${r.ifthen.if} <span style="color:#3d8b8b">→ then</span> ${r.ifthen.then}</div></div>`
       : "";
-    // Movement / courage summary in past weekly reviews
+    // Mode summary in past weekly reviews
     let pastModeHtml = "";
-    if (r.modeSummary) {
+    if (r.modeSummary && (r.modeSummary.dominantMode || r.modeSummary.topNeed)) {
       const ms = r.modeSummary;
-      // Adlerian data (new)
-      if (ms.dominantCourage) {
-        const cObj = typeof COURAGE_STATES !== "undefined" ? COURAGE_STATES.find(s => s.key === ms.dominantCourage) : null;
-        const eObj = ms.dominantEngagement && typeof ENGAGEMENT_STATES !== "undefined" ? ENGAGEMENT_STATES.find(s => s.key === ms.dominantEngagement) : null;
-        pastModeHtml = '<div style="margin-bottom:10px;padding:8px 10px;background:#4A90A40d;border-radius:5px;border-left:3px solid #4A90A4">' +
-          '<div class="mono" style="font-size:9px;color:#4A90A4;margin-bottom:6px;letter-spacing:1px">⚡ MOVEMENT PATTERN</div>' +
-          (cObj ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:' + cObj.color + '">' + cObj.emoji + ' ' + cObj.label + '</span>' +
-            (eObj ? ' · <span style="color:' + eObj.color + '">' + eObj.emoji + ' ' + eObj.label + '</span>' : '') +
-            ' (' + (ms.courageCheckinDays||0) + ' days)</div>' : '') +
-          '</div>';
-      } else if (ms.dominantMode) {
-        // Legacy mode data
-        const dModeObj = MODES.find(m => m.key === ms.dominantMode);
-        const tNeedObj = ms.topNeed ? NEEDS.find(n => n.key === ms.topNeed) : null;
-        const sModeObj = ms.dominantStuckMode ? MODES.find(m => m.key === ms.dominantStuckMode) : null;
-        pastModeHtml = '<div style="margin-bottom:10px;padding:8px 10px;background:#7A5FA80d;border-radius:5px;border-left:3px solid #7A5FA8">' +
-          '<div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:6px;letter-spacing:1px">🧩 MODE PATTERNS</div>' +
-          (dModeObj ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:' + dModeObj.color + '">' + dModeObj.emoji + ' ' + dModeObj.label + '</span> (' + (ms.modeCheckinDays||0) + ' days)</div>' : '') +
-          (tNeedObj ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">' + tNeedObj.emoji + ' Need: ' + tNeedObj.label + '</div>' : '') +
-          (sModeObj && sModeObj.key !== ms.dominantMode ? '<div style="font-size:11px;color:var(--text-muted)"><span style="color:' + sModeObj.color + '">' + sModeObj.emoji + '</span> Stuck: ' + sModeObj.label + '</div>' : '') +
-          '</div>';
-      }
+      const dModeObj = ms.dominantMode ? MODES.find(m => m.key === ms.dominantMode) : null;
+      const tNeedObj = ms.topNeed ? NEEDS.find(n => n.key === ms.topNeed) : null;
+      const sModeObj = ms.dominantStuckMode ? MODES.find(m => m.key === ms.dominantStuckMode) : null;
+      pastModeHtml = '<div style="margin-bottom:10px;padding:8px 10px;background:#7A5FA80d;border-radius:5px;border-left:3px solid #7A5FA8">' +
+        '<div class="mono" style="font-size:9px;color:#7A5FA8;margin-bottom:6px;letter-spacing:1px">🧩 MODE PATTERNS</div>' +
+        (dModeObj ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:' + dModeObj.color + '">' + dModeObj.emoji + ' ' + dModeObj.label + '</span> (' + (ms.modeCheckinDays||0) + ' days)</div>' : '') +
+        (tNeedObj ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">' + tNeedObj.emoji + ' Need: ' + tNeedObj.label + '</div>' : '') +
+        (sModeObj && sModeObj.key !== ms.dominantMode ? '<div style="font-size:11px;color:var(--text-muted)"><span style="color:' + sModeObj.color + '">' + sModeObj.emoji + '</span> Stuck: ' + sModeObj.label + '</div>' : '') +
+        '</div>';
     }
-    // Movement text
-    const movementHtml = r.movementText
-      ? `<div style="margin-bottom:10px"><div class="mono" style="font-size:9px;color:#4A90A4;margin-bottom:4px">⚡ MOVEMENT THIS WEEK</div><div style="font-size:13px;color:var(--text-muted);font-style:italic">"${r.movementText}"</div></div>`
-      : "";
     // EOD reflection section in weekly past (backward compat — weekly uses well/drained/differently/focus)
-    detail.innerHTML = sec("✦","WENT WELL",r.well) + sec("✕","DRAINED ME",r.drained) + sec("→","DO DIFFERENTLY",r.differently) + sec("◎","FOCUS NEXT WEEK",r.focus) + movementHtml + nottodoHtml + pastModeHtml + winsHtml + ifthenHtml;
+    detail.innerHTML = sec("✦","WENT WELL",r.well) + sec("✕","DRAINED ME",r.drained) + sec("→","DO DIFFERENTLY",r.differently) + sec("◎","FOCUS NEXT WEEK",r.focus) + nottodoHtml + pastModeHtml + winsHtml + ifthenHtml;
     card.appendChild(header); card.appendChild(summary); card.appendChild(detail);
     card.addEventListener("click", () => {
       const open = detail.style.display !== "none";
@@ -4990,6 +4977,118 @@ function renderWeeklyPastList() {
 }
 
 // ===================== BRAIN DUMP =====================
+// ── Emotional Processing ──────────────────────────────────────────────────────
+const EP_PAGE_NAME = "Emotional Processing Log";
+
+function openEpModal() {
+  const el = document.getElementById("ep-overlay");
+  if (el) el.style.display = "flex";
+  // Clear form
+  ["ep-situation","ep-thought","ep-emotion","ep-intensity","ep-behavior","ep-result"].forEach(id => {
+    const f = document.getElementById(id); if (f) f.value = "";
+  });
+  const hw = document.getElementById("ep-history-wrap");
+  if (hw) hw.style.display = "none";
+}
+
+function closeEpModal() {
+  const el = document.getElementById("ep-overlay");
+  if (el) el.style.display = "none";
+}
+
+function getEpField(id) {
+  const el = document.getElementById(id); return el ? el.value.trim() : "";
+}
+
+async function saveEpEntry() {
+  const situation = getEpField("ep-situation");
+  const thought   = getEpField("ep-thought");
+  const emotion   = getEpField("ep-emotion");
+  const intensity = getEpField("ep-intensity");
+  const behavior  = getEpField("ep-behavior");
+  const result    = getEpField("ep-result");
+
+  if (!situation && !thought) { showToast("Add at least a situation and thought"); return; }
+
+  const entry = {
+    id: "ep-" + Date.now(),
+    date: today(),
+    time: new Date().toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit" }),
+    situation, thought, emotion, intensity, behavior, result
+  };
+
+  epLog.unshift(entry);
+  sv(SK.epLog, epLog);
+  showToast("Saved ✓");
+
+  // Build table row for OneNote
+  const esc = s => String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const rowHtml =
+    `<tr>` +
+    `<td style="padding:6px 10px;border:1px solid #ddd;font-size:12px;color:#555;white-space:nowrap">${entry.date} ${entry.time}</td>` +
+    `<td style="padding:6px 10px;border:1px solid #ddd;font-size:13px">${esc(situation)}</td>` +
+    `<td style="padding:6px 10px;border:1px solid #ddd;font-size:13px">${esc(thought)}</td>` +
+    `<td style="padding:6px 10px;border:1px solid #ddd;font-size:13px">${esc(emotion)}${intensity ? " (" + intensity + "/10)" : ""}</td>` +
+    `<td style="padding:6px 10px;border:1px solid #ddd;font-size:13px">${esc(behavior)}</td>` +
+    `<td style="padding:6px 10px;border:1px solid #ddd;font-size:13px">${esc(result)}</td>` +
+    `</tr>`;
+
+  // Sync to OneNote
+  try {
+    await syncEpToOneNote(rowHtml);
+  } catch(e) {
+    console.warn("EP OneNote sync failed:", e);
+    showToast("Saved locally — OneNote sync failed");
+  }
+
+  // Clear form and refresh history
+  ["ep-situation","ep-thought","ep-emotion","ep-intensity","ep-behavior","ep-result"].forEach(id => {
+    const f = document.getElementById(id); if (f) f.value = "";
+  });
+  renderEpHistory();
+}
+
+async function syncEpToOneNote(rowHtml) {
+  const token = await getToken();
+  const nbId  = await getOrCreateNotebook(token);
+  const secId = await getOrCreateSection(nbId, "Processing", token);
+
+  // Header row for the table
+  const headerHtml =
+    `<tr style="background-color:#7A5FA8">` +
+    `<th style="padding:8px 10px;border:1px solid #ddd;color:#fff;font-size:12px;font-family:sans-serif;white-space:nowrap">Date / Time</th>` +
+    `<th style="padding:8px 10px;border:1px solid #ddd;color:#fff;font-size:12px;font-family:sans-serif">Situation</th>` +
+    `<th style="padding:8px 10px;border:1px solid #ddd;color:#fff;font-size:12px;font-family:sans-serif">Thought</th>` +
+    `<th style="padding:8px 10px;border:1px solid #ddd;color:#fff;font-size:12px;font-family:sans-serif">Emotion</th>` +
+    `<th style="padding:8px 10px;border:1px solid #ddd;color:#fff;font-size:12px;font-family:sans-serif">Behavior</th>` +
+    `<th style="padding:8px 10px;border:1px solid #ddd;color:#fff;font-size:12px;font-family:sans-serif">Result</th>` +
+    `</tr>`;
+
+  const { id: pageId, isNew } = await getOrCreatePage(secId, EP_PAGE_NAME, headerHtml + rowHtml, token);
+  if (!isNew) await appendRowToPage(pageId, rowHtml, token);
+  setSyncStatus("synced", "Synced");
+  showToast("Synced to OneNote ✓");
+}
+
+function renderEpHistory() {
+  const wrap = document.getElementById("ep-history-wrap");
+  const list = document.getElementById("ep-history-list");
+  if (!wrap || !list) return;
+  if (!epLog.length) { wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+
+  list.innerHTML = epLog.slice(0, 10).map(e =>
+    `<div style="padding:10px 12px;background:var(--bg-input);border-radius:6px;border-left:3px solid #7A5FA8">
+      <div class="mono" style="font-size:8px;color:var(--text-dimmer);margin-bottom:5px">${e.date} ${e.time || ""}</div>
+      ${e.situation ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:#4A90A4">Situation:</span> ${e.situation}</div>` : ""}
+      ${e.thought   ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:#7A5FA8">Thought:</span> ${e.thought}</div>` : ""}
+      ${e.emotion   ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:#B05C5C">Emotion:</span> ${e.emotion}${e.intensity ? " — " + e.intensity + "/10" : ""}</div>` : ""}
+      ${e.behavior  ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px"><span style="color:#C8962A">Behavior:</span> ${e.behavior}</div>` : ""}
+      ${e.result    ? `<div style="font-size:11px;color:var(--text-muted)"><span style="color:#3D8A5E">Result:</span> ${e.result}</div>` : ""}
+    </div>`
+  ).join("");
+}
+
 function openBrainDump() {
   document.getElementById("braindump-overlay").classList.add("open");
   renderBrainDumps();
@@ -5213,27 +5312,21 @@ async function runFullSync() {
 let currentListType = null; // 'values', 'goals', or 'nottodo'
 
 const LIST_CONFIG = {
-  values:         { title:"My Values",              emoji:"⭐", pageName:"My Values",         color:"#C8962A", infoKey:null,      placeholder:"Add a value..." },
-  goals:          { title:"My Goals",               emoji:"🎯", pageName:"My Goals",          color:"#4A90A4", infoKey:"goals",   placeholder:"Add a goal..." },
-  nottodo:        { title:"Things I Don't Do",      emoji:"🚫", pageName:"Things I don't do", color:"#B05C5C", infoKey:"nottodo", placeholder:"Add a commitment..." },
-  avoidanceGoals: { title:"What I Move Away From",  emoji:"🚪", pageName:"Avoidance Goals",   color:"#7A5FA8", infoKey:null,      placeholder:"What am I avoiding — and what goal does that serve?..." },
-  directionGoals: { title:"What I'm Moving Toward", emoji:"🌱", pageName:"Direction Goals",   color:"#3D8A5E", infoKey:null,      placeholder:"What am I actively building toward?..." }
+  values:  { title:"My Values",        emoji:"⭐", pageName:"My Values",        color:"#C8962A", infoKey:null    },
+  goals:   { title:"My Goals",         emoji:"🎯", pageName:"My Goals",         color:"#4A90A4", infoKey:"goals" },
+  nottodo: { title:"Things I Don't Do",emoji:"🚫", pageName:"Things I don't do",color:"#B05C5C", infoKey:"nottodo" }
 };
 
 function getListData(type) {
-  if (type === "values")         return myValues;
-  if (type === "goals")          return myGoals;
-  if (type === "nottodo")        return notTodos;
-  if (type === "avoidanceGoals") return avoidanceGoals;
-  if (type === "directionGoals") return directionGoals;
+  if (type === "values")  return myValues;
+  if (type === "goals")   return myGoals;
+  if (type === "nottodo") return notTodos;
   return [];
 }
 function setListData(type, data) {
-  if (type === "values")         { myValues        = data; sv(SK.values,         data); }
-  if (type === "goals")          { myGoals         = data; sv(SK.goals,          data); }
-  if (type === "nottodo")        { notTodos        = data; sv(SK.nottodo,        data); }
-  if (type === "avoidanceGoals") { avoidanceGoals  = data; sv(SK.avoidanceGoals, data); }
-  if (type === "directionGoals") { directionGoals  = data; sv(SK.directionGoals, data); }
+  if (type === "values")  { myValues = data;  sv(SK.values,  data); }
+  if (type === "goals")   { myGoals  = data;  sv(SK.goals,   data); }
+  if (type === "nottodo") { notTodos = data;  sv(SK.nottodo, data); }
 }
 
 function openListModal(type) {
@@ -5241,8 +5334,6 @@ function openListModal(type) {
   const cfg = LIST_CONFIG[type];
   document.getElementById("list-modal-emoji").textContent = cfg.emoji;
   document.getElementById("list-modal-title").textContent = cfg.title;
-  const inputEl = document.getElementById("list-modal-input");
-  if (inputEl) inputEl.placeholder = cfg.placeholder || "Add new item...";
   // Reset title link
   const titleLink = document.getElementById("list-modal-title-link");
   if (titleLink) {
@@ -6064,6 +6155,7 @@ async function handleImportFile(event) {
     if (data.projects)       sv(SK.projects,       data.projects);
     if (data.avoidanceGoals) sv(SK.avoidanceGoals, data.avoidanceGoals);
     if (data.directionGoals) sv(SK.directionGoals, data.directionGoals);
+    if (data.epLog)          sv(SK.epLog,          data.epLog);
     // ADHD tracking data
     if (data.bdSessions)    sv("yd2-bd-sessions",    data.bdSessions);
     if (data.dopamineLog)   sv("yd2-dopamine",        data.dopamineLog);
@@ -6107,6 +6199,7 @@ function exportAllData() {
     projects:       ld(SK.projects, []),
     avoidanceGoals: ld(SK.avoidanceGoals, []),
     directionGoals: ld(SK.directionGoals, []),
+    epLog:          ld(SK.epLog, []),
     // ADHD tracking data
     bdSessions:    ld("yd2-bd-sessions", []),
     dopamineLog:   ld("yd2-dopamine", []),
@@ -9687,7 +9780,7 @@ let _eodDistortionKey = null;   // selected distortion type
 let _eodThoughtHelpful = null;  // true/false/null
 let _eodProtSkipped = false; // user skipped step 3
 let _eodNeedKey = null;      // selected need chip key
-let _eodThreat = null;       // "genuine" | "discouraged" | null (stored as courageCheck)
+let _eodThreat = null;       // "verified" | "assumed" | null
 let _eodTargetMode = null;   // target healthy mode (step 7)
 let _eodNextAction = null;   // behavioral move (step 8)
 
@@ -9759,7 +9852,7 @@ function renderEodModeCards() {
   _eodProtMode  = mc.protMode  || null;
   _eodProtSkipped = mc.protSkipped || false;
   _eodNeedKey   = mc.needKey   || null;
-  _eodThreat    = mc.courageCheck || mc.threat || null; // support legacy "threat" field
+  _eodThreat    = mc.threat    || null;
   _eodTargetMode = mc.targetMode || null;
   _eodNextAction = mc.nextAction || null;
 
@@ -9844,13 +9937,12 @@ function renderEodProgressiveSections() {
   const showStory = showNeed && (_eodNeedKey || (document.getElementById("eod-need") && document.getElementById("eod-need").value.trim()));
   if (storySec) storySec.style.display = showStory ? "block" : "none";
 
-  // Courage-check button styling
+  // Threat buttons styling
   if (_eodThreat) {
     const vBtn = document.getElementById("eod-threat-verified");
     const aBtn = document.getElementById("eod-threat-assumed");
-    const genuineColor = "#3D8A5E"; const discColor = "#C8962A";
-    if (vBtn) { vBtn.style.background = _eodThreat==="genuine"     ? genuineColor+"22":"none"; vBtn.style.borderColor = _eodThreat==="genuine"     ? genuineColor:"var(--border)"; vBtn.style.color = _eodThreat==="genuine"     ? genuineColor:"var(--text-dimmer)"; }
-    if (aBtn) { aBtn.style.background = _eodThreat==="discouraged" ? discColor+"22":"none";    aBtn.style.borderColor = _eodThreat==="discouraged" ? discColor:"var(--border)";    aBtn.style.color = _eodThreat==="discouraged" ? discColor:"var(--text-dimmer)"; }
+    if (vBtn) { vBtn.style.background = _eodThreat==="verified"?"#3D8A5E22":"none"; vBtn.style.borderColor = _eodThreat==="verified"?"#3D8A5E":"var(--border)"; vBtn.style.color = _eodThreat==="verified"?"#3D8A5E":"var(--text-dimmer)"; }
+    if (aBtn) { aBtn.style.background = _eodThreat==="assumed"?"#C8962A22":"none"; aBtn.style.borderColor = _eodThreat==="assumed"?"#C8962A":"var(--border)"; aBtn.style.color = _eodThreat==="assumed"?"#C8962A":"var(--text-dimmer)"; }
   }
 
   // Render mode chain distortion chips when story section shown
@@ -9980,18 +10072,10 @@ function setEodThoughtHelpful(val) {
   no.style.color        = val === false ? "#B05C5C"   : "var(--text-dimmer)";
 }
 
-function setEodCourageCheck(val) {
-  _eodThreat = val; // reuse variable; stored as courageCheck in modeChain
-  const vBtn = document.getElementById("eod-threat-verified");
-  const aBtn = document.getElementById("eod-threat-assumed");
-  const genuineColor = "#3D8A5E"; const discColor = "#C8962A";
-  if (vBtn) { vBtn.style.background = val === "genuine"     ? genuineColor + "22" : "none"; vBtn.style.color = val === "genuine"     ? genuineColor : "var(--text-dimmer)"; vBtn.style.borderColor = val === "genuine"     ? genuineColor : "var(--border)"; }
-  if (aBtn) { aBtn.style.background = val === "discouraged" ? discColor    + "22" : "none"; aBtn.style.color = val === "discouraged" ? discColor    : "var(--text-dimmer)"; aBtn.style.borderColor = val === "discouraged" ? discColor    : "var(--border)"; }
+function setEodThreat(val) {
+  _eodThreat = val;
   renderEodProgressiveSections();
 }
-
-// Legacy alias so any remaining internal calls don't break
-function setEodThreat(val) { setEodCourageCheck(val); }
 
 function loadEodModeChain() {
   const t = today();
@@ -10014,7 +10098,7 @@ function loadEodModeChain() {
   _eodProtMode    = mc.protMode    || null;
   _eodProtSkipped = mc.protSkipped || false;
   _eodNeedKey     = mc.needKey     || null;
-  _eodThreat      = mc.courageCheck || mc.threat || null;
+  _eodThreat      = mc.threat      || null;
   _eodTargetMode  = mc.targetMode  || null;
   _eodNextAction  = mc.nextAction  || null;
   _eodDistortionKey   = mc.distortionKey   || null;
@@ -10061,7 +10145,7 @@ function getModeChain() {
     needKey:     _eodNeedKey,
     need,
     mindStory,
-    courageCheck:    _eodThreat,
+    threat:      _eodThreat,
     haSees,
     haSays,
     haResponse,
@@ -10076,99 +10160,6 @@ function getModeChain() {
 }
 
 
-// ── Adlerian 4-step chain ─────────────────────────────────────────────────────
-const AC_GOAL_OPTIONS = [
-  { key:"avoidance",    emoji:"🚪", label:"Avoid discomfort",      color:"#7A5FA8" },
-  { key:"control",      emoji:"🎛",  label:"Regain control",        color:"#7A5FA8" },
-  { key:"superiority",  emoji:"⬆",  label:"Feel superior / right", color:"#B05C5C" },
-  { key:"attention",    emoji:"👁",  label:"Be seen / noticed",     color:"#C8962A" },
-  { key:"revenge",      emoji:"⚡",  label:"Retaliate",             color:"#B05C5C" },
-  { key:"protection",   emoji:"🛡",  label:"Protect myself",        color:"#4A90A4" },
-  { key:"connection",   emoji:"🤝",  label:"Connect / belong",      color:"#3D8A5E" },
-  { key:"contribution", emoji:"🌱",  label:"Contribute / be useful",color:"#3D8A5E" }
-];
-
-const AC_SOCIAL_NOTES = {
-  avoidance:    "Avoidance protects the moment but shrinks the life. What would moving toward this look like?",
-  control:      "The need for control often signals a deeper fear. What are you actually afraid of losing?",
-  superiority:  "Superiority is inferiority in disguise. What would equality in this situation look like?",
-  attention:    "Needing to be seen is human. Can you offer something first, before needing acknowledgment?",
-  revenge:      "Retaliation ties you to the person you want to be free from. What would release look like?",
-  protection:   "Self-protection is wise — but walls also keep out connection. What is the minimum you actually need?",
-  connection:   "Moving toward connection is courage. What one small step toward the other person is possible?",
-  contribution: "This is social interest in action. What can you contribute today?"
-};
-
-let _acGoalKey = null;
-
-function renderAdlerChain() {
-  const t = today();
-  const r = reflections[t] || {};
-  const ac = r.adlerChain || {};
-  const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
-  f("ac-situation",   ac.situation   || "");
-  f("ac-private-logic", ac.privateLogic || "");
-  f("ac-goal-other",  ac.goalOther   || "");
-  f("ac-choice",      ac.choice      || "");
-  _acGoalKey = ac.goalKey || null;
-  _renderAdlerGoalChips();
-  _updateAdlerSteps();
-}
-
-function _renderAdlerGoalChips() {
-  const el = document.getElementById("ac-goal-chips");
-  if (!el) return;
-  el.innerHTML = "";
-  AC_GOAL_OPTIONS.forEach(g => {
-    const active = _acGoalKey === g.key;
-    const btn = document.createElement("button");
-    btn.style.cssText = "padding:6px 10px;border-radius:14px;border:1px solid " +
-      (active ? g.color : "var(--border)") + ";background:" + (active ? g.color+"22" : "none") +
-      ";font-size:11px;color:" + (active ? g.color : "var(--text-muted)") +
-      ";cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.15s";
-    btn.innerHTML = "<span>" + g.emoji + "</span><span>" + g.label + "</span>";
-    btn.onclick = () => { _acGoalKey = g.key; _renderAdlerGoalChips(); _updateAdlerSocialNote(); saveAdlerChain(); };
-    el.appendChild(btn);
-  });
-}
-
-function _updateAdlerSteps() {
-  const situEl  = document.getElementById("ac-situation");
-  const logicEl = document.getElementById("ac-private-logic");
-  const hasSitu  = situEl  && situEl.value.trim().length  > 0;
-  const hasLogic = logicEl && logicEl.value.trim().length > 0;
-  const goalOtEl = document.getElementById("ac-goal-other");
-  const hasGoal  = _acGoalKey || (goalOtEl && goalOtEl.value.trim());
-  const s2 = document.getElementById("ac-step2");
-  const s3 = document.getElementById("ac-step3");
-  const s4 = document.getElementById("ac-step4");
-  if (s2) s2.style.display = hasSitu  ? "block" : "none";
-  if (s3) s3.style.display = hasLogic ? "block" : "none";
-  if (s4) s4.style.display = hasGoal  ? "block" : "none";
-  _updateAdlerSocialNote();
-}
-
-function _updateAdlerSocialNote() {
-  const el = document.getElementById("ac-social-interest-note");
-  if (!el) return;
-  if (_acGoalKey && AC_SOCIAL_NOTES[_acGoalKey]) {
-    el.style.display = "block";
-    el.textContent   = AC_SOCIAL_NOTES[_acGoalKey];
-  } else { el.style.display = "none"; }
-}
-
-function saveAdlerChain() {
-  const t = today();
-  const g = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
-  const situation = g("ac-situation"), privateLogic = g("ac-private-logic"),
-        goalOther = g("ac-goal-other"), choice = g("ac-choice");
-  if (!situation && !privateLogic && !_acGoalKey && !choice) { _updateAdlerSteps(); return; }
-  if (!reflections[t]) reflections[t] = {};
-  reflections[t].adlerChain = { situation, privateLogic, goalKey: _acGoalKey, goalOther, choice };
-  sv(SK.refs, reflections);
-  _updateAdlerSteps();
-}
-
 // ===================== SCHEMA PATTERN INTELLIGENCE (Phase 5) =====================
 // Aggregates all Schema-ACT data across Phases 1-4 into actionable insights.
 // Rendered in the Progress tab below skip patterns.
@@ -10176,33 +10167,6 @@ function saveAdlerChain() {
 function renderSchemaPatterns() {
   const el = document.getElementById("schema-patterns-section");
   if (!el) return;
-
-  // ── Collect Adlerian courage/engagement data ────────────────────────────────
-  const allCourage = [];
-  const allEngagement = [];
-  const allAdlerChains = [];
-  Object.entries(moodData).sort().forEach(([date, m]) => {
-    if (m.courage)    allCourage.push({ date, courage: m.courage });
-    if (m.engagement) allEngagement.push({ date, engagement: m.engagement });
-  });
-  Object.entries(reflections).sort().forEach(([date, r]) => {
-    if (r.adlerChain && (r.adlerChain.situation || r.adlerChain.goalKey)) {
-      allAdlerChains.push({ date, ...r.adlerChain });
-    }
-  });
-
-  const courageCounts = {};
-  allCourage.forEach(e => { courageCounts[e.courage] = (courageCounts[e.courage]||0)+1; });
-  const engagementCounts = {};
-  allEngagement.forEach(e => { engagementCounts[e.engagement] = (engagementCounts[e.engagement]||0)+1; });
-  const goalCounts = {};
-  allAdlerChains.forEach(e => { if (e.goalKey) goalCounts[e.goalKey] = (goalCounts[e.goalKey]||0)+1; });
-
-  const totalCourageEntries = Object.values(courageCounts).reduce((a,b)=>a+b,0);
-  const sortedCourage    = Object.entries(courageCounts).sort((a,b)=>b[1]-a[1]);
-  const sortedGoals      = Object.entries(goalCounts).sort((a,b)=>b[1]-a[1]);
-  const dominantCourageKey = sortedCourage[0]?.[0] || null;
-  const hasAdlerianData = totalCourageEntries >= 2 || allAdlerChains.length >= 2;
 
   // ── Collect all data ────────────────────────────────────────────────────────
   // 1. Check-in modes from moodData
@@ -10317,7 +10281,7 @@ function renderSchemaPatterns() {
   const peakBucket = Object.entries(hourBuckets).sort((a,b)=>b[1]-a[1])[0];
 
   // ── Enough data check ───────────────────────────────────────────────────────
-  const hasEnoughData = hasAdlerianData || totalModeEntries >= 3 || modeChains.length >= 2 || stuckEntries.length >= 2;
+  const hasEnoughData = totalModeEntries >= 3 || modeChains.length >= 2 || stuckEntries.length >= 2;
 
   el.innerHTML = "";
 
@@ -10326,7 +10290,7 @@ function renderSchemaPatterns() {
   header.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:12px";
   header.innerHTML =
     '<div style="display:flex;align-items:center;gap:6px">' +
-    '<div class="section-label" style="margin:0">⚡ MOVEMENT PATTERNS</div>' +
+    '<div class="section-label" style="margin:0">🧩 SCHEMA PATTERNS</div>' +
     '<button class="info-btn" onclick="openInfoModal(\'schema_patterns\')"><span class="info-btn-circle">?</span></button>' +
     '</div>';
   el.appendChild(header);
@@ -10335,49 +10299,12 @@ function renderSchemaPatterns() {
     const empty = document.createElement("div");
     empty.style.cssText = "background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:16px;font-size:12px;color:var(--text-dimmer);line-height:1.6;font-style:italic;text-align:center";
     empty.innerHTML = "Patterns build as you use the app.<br>" +
-      "<span style='font-size:11px'>Check in on the Reflect tab, log stuck moments, and complete weekly reviews. After a few days the picture emerges.</span>";
+      "<span style='font-size:11px'>Check in with a mode on Reflect, log stuck moments, and complete weekly reviews. After a few days the picture emerges.</span>";
     el.appendChild(empty);
     return;
   }
 
-  // ── Panel 0: Adlerian courage distribution (new data) ──────────────────────
-  if (hasAdlerianData && sortedCourage.length) {
-    const panel = _schemaPanel("Courage Pattern",
-      "How you've been showing up across check-ins — from discouraged to moving.",
-      "#4A90A4");
-    let barsHtml = "";
-    const totalC = totalCourageEntries || 1;
-    sortedCourage.forEach(([key, count]) => {
-      const cObj = typeof COURAGE_STATES !== "undefined" ? COURAGE_STATES.find(s=>s.key===key) : null;
-      if (!cObj) return;
-      const pct = Math.round(count/totalC*100);
-      barsHtml +=
-        '<div style="margin-bottom:8px">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">' +
-        '<span style="font-size:12px;color:var(--text)">' + cObj.emoji + " " + cObj.label + '</span>' +
-        '<span class="mono" style="font-size:9px;color:' + cObj.color + '">' + pct + '%</span>' +
-        '</div>' +
-        '<div style="height:6px;background:var(--border);border-radius:3px">' +
-        '<div style="height:100%;width:' + pct + '%;background:' + cObj.color + ';border-radius:3px;transition:width 0.4s"></div>' +
-        '</div></div>';
-    });
-    if (sortedGoals.length) {
-      const AC_GOAL_LABELS = { avoidance:"Avoid discomfort", control:"Regain control", superiority:"Feel superior/right", attention:"Be seen/noticed", revenge:"Retaliate", protection:"Protect myself", connection:"Connect/belong", contribution:"Contribute/be useful" };
-      barsHtml += '<div class="mono" style="font-size:8px;color:var(--text-dimmer);letter-spacing:1px;margin-top:10px;margin-bottom:6px">TOP GOALS OF YOUR RESPONSES</div>';
-      sortedGoals.slice(0,4).forEach(([key, count]) => {
-        const label = AC_GOAL_LABELS[key] || key;
-        const isContrib = key === "contribution" || key === "connection";
-        const color = isContrib ? "#3D8A5E" : "#C8962A";
-        barsHtml += '<div style="font-size:11px;color:var(--text-muted);padding:4px 0;border-bottom:1px solid var(--border)">' +
-          (isContrib ? "🌱" : "🚪") + " " + label +
-          ' <span style="color:' + color + ';font-size:10px">×' + count + '</span></div>';
-      });
-    }
-    panel.querySelector(".schema-panel-body").innerHTML = barsHtml;
-    el.appendChild(panel);
-  }
-
-  // ── Panel 1: Mode signature (legacy data) ───────────────────────────────────
+  // ── Panel 1: Mode signature ─────────────────────────────────────────────────
   if (sortedModes.length) {
     const panel = _schemaPanel("Your Mode Signature",
       "How you distribute across modes across all check-ins, stuck moments, and skips.",
@@ -12250,15 +12177,6 @@ const HA_MODE_SUGGESTIONS = {
   overcompensator:       ["slower_speech","said_less","clear_sentence"],
 };
 
-// Adlerian courage-state suggestions — replace mode suggestions for new entries
-const AC_COURAGE_SUGGESTIONS = {
-  crushed:     ["stayed_present","finished_sentence_cleanly"],
-  discouraged: ["stayed_present","acted_while_afraid","direct_request"],
-  holding:     ["clear_sentence","acted_while_afraid","said_less"],
-  grounded:    ["direct_request","held_boundary","disagreed_calmly"],
-  moving:      ["held_boundary","disagreed_calmly","acted_while_afraid","direct_request"]
-};
-
 // ── Storage for HA track logs ──────────────────────────────────────────────
 const HA_SK = "yd2-ha-track";
 
@@ -12304,36 +12222,20 @@ function renderHaPracticeGrid() {
   const repInput = document.getElementById("ha-rep-note");
   if (repInput) repInput.value = entry.rep || "";
 
-  // Get today's state — courage first (Adlerian), legacy mode as fallback
-  const todayEntry = moodData[today()] || {};
-  const todayCourage = todayEntry.courage || null;
-  const todayMode    = todayEntry.mode    || null;
-
-  let suggestedKeys = [];
-  let suggestionLabel = "";
-  let suggestionColor = "#4A90A4";
-
-  if (todayCourage && AC_COURAGE_SUGGESTIONS[todayCourage]) {
-    suggestedKeys = AC_COURAGE_SUGGESTIONS[todayCourage];
-    const cObj = typeof COURAGE_STATES !== "undefined" ? COURAGE_STATES.find(s => s.key === todayCourage) : null;
-    suggestionLabel = cObj ? cObj.emoji + " " + cObj.label.toUpperCase() + " — SUGGESTED REPS" : "SUGGESTED REPS";
-    suggestionColor = cObj ? cObj.color : "#4A90A4";
-  } else if (todayMode && HA_MODE_SUGGESTIONS[todayMode]) {
-    suggestedKeys = HA_MODE_SUGGESTIONS[todayMode];
-    const modeObj = typeof MODES !== "undefined" ? MODES.find(m => m.key === todayMode) : null;
-    suggestionLabel = modeObj ? modeObj.emoji + " " + modeObj.label.toUpperCase() + " — SUGGESTED REPS" : "SUGGESTED REPS";
-    suggestionColor = modeObj ? modeObj.color : "#7A5FA8";
-  }
+  // Get today's mode for adaptive suggestions
+  const todayMode = (moodData[today()] || {}).mode || null;
+  const suggestedKeys = todayMode ? (HA_MODE_SUGGESTIONS[todayMode] || []) : [];
 
   container.innerHTML = "";
 
   // ── Adaptive suggestion header ─────────────────────────────────────────────
-  if (suggestedKeys.length) {
+  if (suggestedKeys.length && todayMode) {
+    const modeObj = MODES.find(m => m.key === todayMode);
     const suggestEl = document.createElement("div");
-    suggestEl.style.cssText = "margin-bottom:10px;padding:8px 10px;background:var(--bg-input);border-radius:6px;border-left:3px solid " + suggestionColor;
+    suggestEl.style.cssText = "margin-bottom:10px;padding:8px 10px;background:var(--bg-input);border-radius:6px;border-left:3px solid " + (modeObj ? modeObj.color : "var(--accent)");
     suggestEl.innerHTML =
-      '<div class="mono" style="font-size:8px;color:' + suggestionColor + ';letter-spacing:1px;margin-bottom:4px">' +
-      suggestionLabel + '</div>' +
+      '<div class="mono" style="font-size:8px;color:' + (modeObj ? modeObj.color : "var(--accent)") + ';letter-spacing:1px;margin-bottom:4px">' +
+      (modeObj ? modeObj.emoji + " " + modeObj.label.toUpperCase() : "YOUR MODE") + ' — SUGGESTED REPS</div>' +
       '<div style="font-size:10px;color:var(--text-dimmer);line-height:1.4">Based on your check-in, these reps are most relevant today. Tap to log one.</div>';
     container.appendChild(suggestEl);
   }
@@ -12986,94 +12888,68 @@ function getWeeklyInterruptionStats() {
 
 // Static lines (fallback / morning ritual)
 const HA_EMBODIMENT_LINES = [
-  "I name what I need, then I move toward it.",
-  "I say the true thing, directly, without softening it past recognition.",
-  "I take the first step before I feel ready."
+  "I do not need to shrink here.",
+  "I can stay warm and still take space.",
+  "Discomfort is not a command."
 ];
 
-// Courage-state lines — keyed off Adlerian courage state, not mode
+// Mode-specific lines — advisor recommendation 2A
+// Show 1-3 context-based lines based on today's mode
 const HA_EMBODIMENT_BY_MODE = {
-  // Legacy mode keys kept for backward compat — map to neutral courage lines
   angry_child: [
-    "I say what I mean — once, clearly, without escalating.",
-    "I stay in the room and state my position.",
-    "I name the boundary without performing the anger."
+    "I do not need to harden before I understand.",
+    "I can stay direct without rushing to accusation.",
+    "Discomfort is not a command."
   ],
   punitive_parent: [
-    "I re-enter without ceremony — the work is just the next step.",
-    "I put one thing on the board today and count it.",
-    "I treat myself the way I would treat someone I am trying to help."
+    "I do not heal by turning against myself.",
+    "Missing a step is not the end of the day.",
+    "I can re-enter without punishment."
   ],
   compensatory_child: [
-    "I stay in my own register — no charm, no performance.",
-    "I say what I actually want, without packaging it for acceptance.",
-    "I take up the space I am entitled to, no more and no less."
+    "I do not need charm to earn my place.",
+    "I can stay warm and still take space.",
+    "I choose the direct move."
   ],
   vulnerable_child: [
-    "I name the fear out loud to one person I trust.",
-    "I make one request — not a hint, a request.",
-    "I stay in the difficult moment for two more minutes before leaving."
+    "I do not need to shrink here.",
+    "Discomfort is not danger.",
+    "The fear is information — not a verdict."
   ],
   detached_protector: [
-    "I initiate one exchange — message, call, or direct question.",
-    "I say something true about where I actually am.",
-    "I do one thing that puts me in contact with another person's reality."
+    "I have not disappeared. I am here.",
+    "Two minutes of contact is enough.",
+    "Returning is not starting over."
   ],
   demanding_parent: [
-    "I finish when the work is done — not when it is perfect.",
-    "I let someone else's contribution stand without revising it.",
-    "I define done before I start."
+    "Good enough is real.",
+    "I can stop when done — not when perfect.",
+    "The bar does not have to keep moving."
   ],
   compliant_surrenderer: [
-    "I say no once today — cleanly, without a paragraph of explanation.",
-    "I name what I want before asking what the other person wants.",
-    "I take a position and hold it through the first pushback."
+    "My needs are allowed to exist.",
+    "Clarity is not unkindness.",
+    "One honest sentence is enough."
   ],
   overcompensator: [
-    "I let the other person finish before I respond.",
-    "I ask one question I do not already know the answer to.",
-    "I make room for a view that is not mine."
+    "I can protect myself without becoming rigid.",
+    "Steadiness is not the same as hardness.",
+    "I can stay grounded without taking over."
   ],
   happy_child: [
-    "I bring the aliveness into something that matters.",
-    "I spend this energy on a contribution, not just a pleasure.",
-    "I stay engaged until the thing is finished."
+    "This aliveness is real. Stay in it.",
+    "I do not need to earn rest.",
+    "Play is not avoidance when it is genuine."
   ],
   healthy_adult: [
-    "I do the next right thing — not the comfortable thing.",
-    "I tell the truth in the first sentence.",
-    "I move toward the person or situation I have been avoiding."
+    "I am already here. This is the mode.",
+    "One honest step from this place.",
+    "Discomfort is not a command."
   ],
   assertive_adult: [
-    "I state my view without apologizing for having it.",
-    "I hold the position through the discomfort.",
-    "I name the disagreement directly rather than letting it rot."
-  ],
-  // Adlerian courage keys
-  crushed: [
-    "I do one small thing for someone else today.",
-    "I name what is actually happening — out loud or on paper.",
-    "I stay present for five more minutes before I leave the situation."
-  ],
-  discouraged: [
-    "I take the first step before I feel ready.",
-    "I make contact with one person today — not to vent, to contribute.",
-    "I name what I am avoiding and take one step toward it."
-  ],
-  holding: [
-    "I say the true thing without softening it into vagueness.",
-    "I put one thing on the board and count it as real.",
-    "I initiate — I do not wait to be invited."
-  ],
-  grounded: [
-    "I move toward the hard thing while the footing is under me.",
-    "I offer something useful to someone else today.",
-    "I name what I want and ask for it directly."
-  ],
-  moving: [
-    "I use this momentum for something beyond myself.",
-    "I finish what I started.",
-    "I bring one other person into what I am building."
+    "I can say what is true without performing it.",
+    "My view is allowed to exist.",
+    "Clarity is respectful — not hostile."
   ]
 };
 
@@ -13082,26 +12958,18 @@ let _savedEmbodimentLine = null; // for "save to morning ritual"
 function renderEmbodimentLines(container) {
   if (!container) return;
 
-  // Key off Adlerian courage state first; fall back to legacy mode key
-  const t = today();
-  const todayMoodEntry = moodData[t] || {};
-  const courageKey = todayMoodEntry.courage || null;
-  const todayMode  = todayMoodEntry.mode    || null;
-
-  const lookupKey = courageKey || todayMode;
-  const lines = lookupKey && HA_EMBODIMENT_BY_MODE[lookupKey]
-    ? HA_EMBODIMENT_BY_MODE[lookupKey]
+  // Get today's mode for context-based lines
+  const todayMode = (moodData[today()] || {}).mode || null;
+  const lines = todayMode && HA_EMBODIMENT_BY_MODE[todayMode]
+    ? HA_EMBODIMENT_BY_MODE[todayMode]
     : HA_EMBODIMENT_LINES;
-
-  // Header color from courage state or mode
-  const cObj = courageKey ? (typeof COURAGE_STATES !== "undefined" ? COURAGE_STATES.find(s => s.key === courageKey) : null) : null;
-  const modeObj = (!courageKey && todayMode) ? (typeof MODES !== "undefined" ? MODES.find(m => m.key === todayMode) : null) : null;
-  const headerColor = (cObj && cObj.color) || (modeObj && modeObj.color) || "#3D8A5E";
-  const stateLabel  = cObj ? " — " + cObj.label : (modeObj ? " — " + modeObj.label : "");
+  const modeObj = todayMode ? MODES.find(m => m.key === todayMode) : null;
+  const headerColor = modeObj ? modeObj.color : "#3D8A5E";
+  const modeLabel = modeObj ? " — for " + modeObj.label : "";
 
   let html = '<div style="margin-bottom:12px;padding:10px 12px;background:#3D8A5E0d;border-left:3px solid ' + headerColor + ';border-radius:5px">' +
-    '<div class="mono" style="font-size:8px;color:' + headerColor + ';letter-spacing:1px;margin-bottom:6px">REHEARSE THE COURAGEOUS ACT' + stateLabel.toUpperCase() + '</div>' +
-    '<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;font-style:italic">Say it as if you mean it — because you are about to do it.</div>';
+    '<div class="mono" style="font-size:8px;color:' + headerColor + ';letter-spacing:1px;margin-bottom:6px">SAY THESE OUT LOUD' + modeLabel.toUpperCase() + '</div>' +
+    '<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;font-style:italic">Not as affirmations. As nervous system training. Slow, low, steady.</div>';
 
   lines.forEach((line, i) => {
     html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid ' + headerColor + '18">' +
@@ -13218,12 +13086,17 @@ function computeWeeklyNonNegStats() {
 // ═════════════════════════════════════════════════════════════════════
 
 const INCANTATION = [
-  "I do not need to catch up today. I need to move — one useful step, taken with courage.",
-  "Discouragement is not the same as inability. When I feel flat or lost, it means I’ve temporarily lost sight of where I’m heading, not that something is broken in me that needs managing. There is no separate wounded part to protect — there is one person, me, deciding what to make of this morning.",
-  "I do not measure myself against anyone. Comparison on the ladder of better-or-worse is a trap; the only question that matters is whether my next act moves me toward the people I belong to and the life I’m building with them. When someone stronger or more capable appears, that changes nothing about my own task.",
-  "I lead by contributing, not by proving. I provide safety, direction, and stability for my family not because I’ve earned the right through some internal victory, but because contribution is how a life gets its worth. That starts with the first honest thing I do today.",
-  "I don’t need favorable circumstances to act well. Whatever is in front of me — discomfort, uncertainty, a hard conversation — is material I get to use, not a sentence handed down to me. I decide its meaning by what I do with it.",
-  "Courage is not the absence of inferiority feelings. It’s acting anyway, in the direction of contribution, one small honest step at a time."
+  "I do not need to catch up today. I need to be honest today.",
+  "Even when I feel numb, flat, or lost, I have not disappeared.",
+  "I do not need to shrink to stay safe.",
+  "I can stay warm and still take space.",
+  "Discomfort is not danger, and it is not a command.",
+  "When someone stronger appears, I do not need to become smaller to survive the comparison.",
+  "I choose the adult move, even when the child in me feels exposed.",
+  "I protect the child in me by leading him, not by hiding him.",
+  "I do not heal by hating where I am. I meet what is actually here, and I move from there.",
+  "The real man is whoever shows up honestly in the next hour.",
+  "Small honest steps rebuild a life. I owe myself loyalty now."
 ];
 
 const MORNING_SK = "yd2-morning-ritual";
@@ -14558,7 +14431,6 @@ function showPage(name) {
     renderCheckinMode();
     renderEodModeCards();
     loadEodModeChain();
-    renderAdlerChain();
     renderHaPracticeGrid();
     loadTomorrowEdgeField();
     renderEcTodayList();
@@ -15074,7 +14946,7 @@ if (getAccount() && getSettings().autoSync !== false) setTimeout(() => pullAllFr
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
     <div>
       <div class="mono" id="morning-date-label" style="font-size:9px;color:var(--text-dimmer);letter-spacing:2px;margin-bottom:3px"></div>
-      <div class="mono" style="font-size:13px;color:var(--text-heading);letter-spacing:2px;font-weight:600">MORNING RITUAL</div>
+      <div class="serif" style="font-size:17px;color:var(--text-heading);font-weight:500">Morning Ritual</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <button class="info-btn" onclick="openInfoModal('morning_ritual')"><span class="info-btn-circle">?</span></button>
@@ -15174,6 +15046,60 @@ if (getAccount() && getSettings().autoSync !== false) setTimeout(() => pullAllFr
       style="flex:1;padding:11px;border-radius:8px;border:none;background:#7A5FA8;color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;font-weight:600">Next →</button>
   </div>
 
+</div>
+
+<!-- ===== EMOTIONAL PROCESSING OVERLAY ===== -->
+<div id="ep-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center">
+  <div style="background:var(--bg);border-radius:14px 14px 0 0;width:100%;max-width:430px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div class="mono" style="font-size:9px;color:#7A5FA8;letter-spacing:2px">🔄 EMOTIONAL PROCESSING</div>
+        <div style="font-size:11px;color:var(--text-dimmer);margin-top:2px">Situation → Thought → Emotion → Behavior → Result</div>
+      </div>
+      <button onclick="closeEpModal()" style="background:none;border:none;color:var(--text-dimmer);font-size:20px;cursor:pointer;line-height:1;padding:0 4px">×</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px 18px">
+      <div style="margin-bottom:14px">
+        <div class="mono" style="font-size:8px;color:#4A90A4;letter-spacing:1px;margin-bottom:5px">1 — SITUATION</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px">What actually happened? The external event, stripped of interpretation.</div>
+        <textarea id="ep-situation" rows="2" placeholder="Where were you, who was there, what occurred..." style="width:100%;padding:9px 11px;font-size:12px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:'Inter',sans-serif;line-height:1.5"></textarea>
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="mono" style="font-size:8px;color:#7A5FA8;letter-spacing:1px;margin-bottom:5px">2 — AUTOMATIC THOUGHT</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px">What went through your mind the moment it happened? Write it raw.</div>
+        <textarea id="ep-thought" rows="2" placeholder='"They think I failed." / "I knew this would happen."' style="width:100%;padding:9px 11px;font-size:12px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:'Inter',sans-serif;line-height:1.5"></textarea>
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="mono" style="font-size:8px;color:#B05C5C;letter-spacing:1px;margin-bottom:5px">3 — EMOTION</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px">Name the emotion and its intensity (0–10).</div>
+        <div style="display:flex;gap:8px">
+          <textarea id="ep-emotion" rows="1" placeholder="Shame, anger, anxiety..." style="flex:3;padding:9px 11px;font-size:12px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:'Inter',sans-serif;line-height:1.5;min-height:38px"></textarea>
+          <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+            <div class="mono" style="font-size:8px;color:var(--text-dimmer)">0–10</div>
+            <input type="number" id="ep-intensity" min="0" max="10" placeholder="7" style="width:100%;padding:9px 6px;font-size:13px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);text-align:center">
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="mono" style="font-size:8px;color:#C8962A;letter-spacing:1px;margin-bottom:5px">4 — BEHAVIOR</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px">What did you actually do?</div>
+        <textarea id="ep-behavior" rows="2" placeholder="Went quiet, left the room, avoided the call..." style="width:100%;padding:9px 11px;font-size:12px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:'Inter',sans-serif;line-height:1.5"></textarea>
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="mono" style="font-size:8px;color:#3D8A5E;letter-spacing:1px;margin-bottom:5px">5 — RESULT</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px">What happened as a result of that behavior?</div>
+        <textarea id="ep-result" rows="2" placeholder="Lost the moment, avoided the conflict, missed the opportunity..." style="width:100%;padding:9px 11px;font-size:12px;box-sizing:border-box;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:none;font-family:'Inter',sans-serif;line-height:1.5"></textarea>
+      </div>
+      <div id="ep-history-wrap" style="display:none;margin-top:8px">
+        <div class="mono" style="font-size:8px;color:var(--text-dimmer);letter-spacing:1px;margin-bottom:8px">PAST ENTRIES</div>
+        <div id="ep-history-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+    </div>
+    <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0">
+      <button onclick="renderEpHistory()" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:6px;background:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dimmer);cursor:pointer">View past</button>
+      <button onclick="saveEpEntry()" style="flex:2;padding:10px;border:none;border-radius:6px;background:#7A5FA8;color:#fff;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;letter-spacing:0.5px">Save + Sync →</button>
+    </div>
+  </div>
 </div>
 
 </body>
